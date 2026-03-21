@@ -610,7 +610,7 @@ export default function EditorCanvas({ pdfDoc }: EditorCanvasProps) {
           if (ds.dragMode.includes('e') && !ds.dragMode.includes('w')) { nw = ob.w + dx }
           if (nw < 20) nw = 20
           const sx = nw / ob.w
-          const newFontSize = Math.max(8, Math.round(o.data.fontSize * sx))
+          const newFontSize = Math.max(1, Math.min(100, Math.round(o.data.fontSize * sx)))
           updateAnnotation(currentPage, ann.id, {
             data: { ...ann.data, fontSize: newFontSize } as unknown as typeof ann.data,
           })
@@ -981,17 +981,67 @@ export default function EditorCanvas({ pdfDoc }: EditorCanvasProps) {
     (window as unknown as Record<string, unknown>).__stampLegMode = enableStampLegMode
   }, [setStampPending, enableStampLegMode])
 
-  // Esc key to cancel polyline in progress
+  // Clipboard ref for copy/paste
+  const clipboardRef = useRef<Annotation | null>(null)
+
+  // Keyboard shortcuts: Esc, Copy (Ctrl+C), Paste (Ctrl+V)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Esc to cancel polyline
       if (e.key === 'Escape' && drawStateRef.current.polylinePoints.length > 0) {
         drawStateRef.current.polylinePoints = []
+        redrawAnnotations()
+        return
+      }
+
+      // Skip if typing in an input
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return
+
+      const isCtrl = e.ctrlKey || e.metaKey
+
+      // Ctrl+C: Copy selected annotation
+      if (isCtrl && e.key === 'c' && selectedAnnotationId) {
+        const pageAnns = annotations[currentPage] || []
+        const selected = pageAnns.find(a => a.id === selectedAnnotationId)
+        if (selected) {
+          clipboardRef.current = JSON.parse(JSON.stringify(selected))
+          e.preventDefault()
+        }
+      }
+
+      // Ctrl+V: Paste copied annotation with offset
+      if (isCtrl && e.key === 'v' && clipboardRef.current) {
+        e.preventDefault()
+        const source = clipboardRef.current
+        const newId = generateId()
+        const offset = 20 // pixel offset so it doesn't overlap exactly
+
+        // Deep clone and offset position
+        const cloned: Annotation = JSON.parse(JSON.stringify(source))
+        cloned.id = newId
+
+        // Offset based on annotation type
+        const d = cloned.data as unknown as Record<string, unknown>
+        if (typeof d.x === 'number') d.x = (d.x as number) + offset
+        if (typeof d.y === 'number') d.y = (d.y as number) + offset
+        if (typeof d.startX === 'number') {
+          d.startX = (d.startX as number) + offset
+          d.endX = (d.endX as number) + offset
+          d.startY = (d.startY as number) + offset
+          d.endY = (d.endY as number) + offset
+        }
+        if (Array.isArray(d.points)) {
+          d.points = (d.points as Point[]).map(p => ({ x: p.x + offset, y: p.y + offset }))
+        }
+
+        store.addAnnotation(currentPage, cloned)
+        store.setSelectedAnnotationId(newId)
         redrawAnnotations()
       }
     }
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [redrawAnnotations])
+  }, [redrawAnnotations, selectedAnnotationId, annotations, currentPage, store])
 
   // Reset polylinePoints when switching tools
   useEffect(() => {

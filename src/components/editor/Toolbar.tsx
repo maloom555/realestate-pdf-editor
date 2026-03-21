@@ -374,7 +374,7 @@ export default function Toolbar() {
               <div className="w-px h-5 bg-gray-300" />
               <div className="flex items-center gap-1.5">
                 <label className="text-xs text-gray-400 font-semibold">文字サイズ:</label>
-                <input type="range" min={12} max={120} value={displayFontSize}
+                <input type="range" min={1} max={100} value={displayFontSize}
                   onChange={(e) => handleSelectedFontSizeChange(parseInt(e.target.value))}
                   className="w-20 accent-indigo-500" />
                 <span className="text-xs text-gray-400 min-w-[30px]">{displayFontSize}px</span>

@@ -83,7 +83,7 @@ const initialState = {
   currentTool: 'rect' as ToolType,
   maskColor: '#000000',
   penSize: 2,
-  fontSize: 24,
+  fontSize: 15,
   fontFamily: 'Noto Sans JP',
   highlightOpacity: 0.3,
   elementOpacity: 1.0,

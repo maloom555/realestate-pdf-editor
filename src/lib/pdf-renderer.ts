@@ -352,6 +352,7 @@ export function drawAnnotation(ctx: CanvasRenderingContext2D, ann: Annotation) {
       if (d.arrowStart && pts.length >= 2) {
         const angle = Math.atan2(pts[0].y - pts[1].y, pts[0].x - pts[1].x)
         const headLen = Math.max(12, (ann.size || 3) * 4)
+        ctx.fillStyle = ann.color
         ctx.beginPath()
         ctx.moveTo(pts[0].x, pts[0].y)
         ctx.lineTo(pts[0].x - headLen * Math.cos(angle - Math.PI / 6), pts[0].y - headLen * Math.sin(angle - Math.PI / 6))
@@ -365,6 +366,7 @@ export function drawAnnotation(ctx: CanvasRenderingContext2D, ann: Annotation) {
         const prev = pts[pts.length - 2]
         const angle = Math.atan2(last.y - prev.y, last.x - prev.x)
         const headLen = Math.max(12, (ann.size || 3) * 4)
+        ctx.fillStyle = ann.color
         ctx.beginPath()
         ctx.moveTo(last.x, last.y)
         ctx.lineTo(last.x - headLen * Math.cos(angle - Math.PI / 6), last.y - headLen * Math.sin(angle - Math.PI / 6))
