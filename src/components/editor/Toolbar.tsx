@@ -159,6 +159,14 @@ export default function Toolbar() {
   const showFillForSelected = selectedAnn && fillToolTypes.includes(selectedAnn.type)
   // Close-applicable types (pen/polyline)
   const showCloseForSelected = selectedAnn && ['pen', 'polyline'].includes(selectedAnn.type)
+  // Dash-applicable types
+  const dashToolTypes = ['pen', 'circle', 'shape-rect', 'polyline']
+  const showDashForTool = dashToolTypes.includes(currentTool)
+  const showDashForSelected = selectedAnn && dashToolTypes.includes(selectedAnn.type)
+  // Border-radius applicable types
+  const radiusTypes = ['shape-rect']
+  const showRadiusForTool = radiusTypes.includes(currentTool)
+  const showRadiusForSelected = selectedAnn && (radiusTypes.includes(selectedAnn.type) || selectedAnn.type === 'callout' || (selectedAnn.type === 'text' && (selectedAnn.data as { textBox?: boolean }).textBox))
 
   // Handle color change
   const handleColorChange = (color: string) => {
@@ -512,6 +520,53 @@ export default function Toolbar() {
                     ? 'border-indigo-500 bg-indigo-50 text-indigo-700'
                     : 'border-gray-200 text-gray-500 hover:border-indigo-400'
                 }`}>終点→</button>
+            </>
+          )}
+
+          {/* Dash style toggle */}
+          {(showDashForTool || showDashForSelected) && (
+            <>
+              <div className="w-px h-5 bg-gray-300" />
+              <div className="flex items-center gap-0.5">
+                <label className="text-xs text-gray-400 font-semibold mr-1">線種:</label>
+                {([
+                  { id: 'solid', label: '─' },
+                  { id: 'dash', label: '┅' },
+                  { id: 'dot', label: '┈' },
+                  { id: 'dashdot', label: '┄' },
+                ] as const).map((ds) => {
+                  const currentDash = selectedAnn?.dashStyle || 'solid'
+                  const isActive = selectedAnn ? currentDash === ds.id : false
+                  return (
+                    <button key={ds.id} onClick={() => {
+                      if (selectedAnn) {
+                        updateAnnotation(currentPage, selectedAnn.id, { dashStyle: ds.id })
+                      }
+                    }}
+                      className={`px-1.5 py-0.5 text-sm border rounded ${
+                        isActive ? 'border-indigo-500 bg-indigo-50 text-indigo-700' : 'border-gray-200 text-gray-500 hover:border-indigo-400'
+                      }`} title={ds.id}>{ds.label}</button>
+                  )
+                })}
+              </div>
+            </>
+          )}
+
+          {/* Border radius */}
+          {(showRadiusForTool || showRadiusForSelected) && (
+            <>
+              <div className="w-px h-5 bg-gray-300" />
+              <div className="flex items-center gap-1.5">
+                <label className="text-xs text-gray-400 font-semibold">角丸:</label>
+                <input type="range" min={0} max={30} value={selectedAnn?.borderRadius || 0}
+                  onChange={(e) => {
+                    if (selectedAnn) {
+                      updateAnnotation(currentPage, selectedAnn.id, { borderRadius: parseInt(e.target.value) })
+                    }
+                  }}
+                  className="w-16 accent-indigo-500" />
+                <span className="text-xs text-gray-400 min-w-[24px]">{selectedAnn?.borderRadius || 0}</span>
+              </div>
             </>
           )}
 

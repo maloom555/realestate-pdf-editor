@@ -2,6 +2,41 @@ import type { Annotation, Point, RectData, ArrowData, CalloutData, PolylineData,
 
 const HANDLE_SIZE = 8
 
+function applyDash(ctx: CanvasRenderingContext2D, style?: string, lineWidth?: number) {
+  const w = lineWidth || 2
+  switch (style) {
+    case 'dash': ctx.setLineDash([w * 4, w * 3]); break
+    case 'dot': ctx.setLineDash([w, w * 2]); break
+    case 'dashdot': ctx.setLineDash([w * 4, w * 2, w, w * 2]); break
+    default: ctx.setLineDash([]); break
+  }
+}
+
+// Draw arrowhead with tip exactly at the endpoint.
+// Returns the "base center" point so the caller can shorten the line to avoid overlap.
+function drawArrowhead(
+  ctx: CanvasRenderingContext2D,
+  tipX: number, tipY: number,
+  fromX: number, fromY: number,
+  size: number, color: string,
+): { baseX: number; baseY: number } {
+  const angle = Math.atan2(tipY - fromY, tipX - fromX)
+  const headLen = Math.max(12, size * 4)
+  const p1x = tipX - headLen * Math.cos(angle - Math.PI / 6)
+  const p1y = tipY - headLen * Math.sin(angle - Math.PI / 6)
+  const p2x = tipX - headLen * Math.cos(angle + Math.PI / 6)
+  const p2y = tipY - headLen * Math.sin(angle + Math.PI / 6)
+  ctx.fillStyle = color
+  ctx.beginPath()
+  ctx.moveTo(tipX, tipY)
+  ctx.lineTo(p1x, p1y)
+  ctx.lineTo(p2x, p2y)
+  ctx.closePath()
+  ctx.fill()
+  // base center (midpoint of the two wing points)
+  return { baseX: (p1x + p2x) / 2, baseY: (p1y + p2y) / 2 }
+}
+
 export function drawAnnotation(ctx: CanvasRenderingContext2D, ann: Annotation) {
   ctx.save()
 
@@ -33,6 +68,7 @@ export function drawAnnotation(ctx: CanvasRenderingContext2D, ann: Annotation) {
       ctx.lineWidth = ann.size || 2
       ctx.lineCap = 'round'
       ctx.lineJoin = 'round'
+      applyDash(ctx, ann.dashStyle, ann.size || 2)
       ctx.beginPath()
       ctx.moveTo(pts[0].x, pts[0].y)
       for (let i = 1; i < pts.length; i++) {
@@ -53,24 +89,19 @@ export function drawAnnotation(ctx: CanvasRenderingContext2D, ann: Annotation) {
 
     case 'callout': {
       const d = ann.data as CalloutData
-      // Arrow line
+      const lineW = ann.size || 2
+      // Arrowhead at start (pointing to the target) - draw first to get base
+      const arrowBase = drawArrowhead(ctx, d.startX, d.startY, d.endX, d.endY, lineW, ann.color)
+      // Arrow line from base of arrowhead to end
       ctx.strokeStyle = ann.color
       ctx.fillStyle = ann.color
-      ctx.lineWidth = ann.size || 2
+      ctx.lineWidth = lineW
       ctx.lineCap = 'round'
+      ctx.setLineDash([])
       ctx.beginPath()
-      ctx.moveTo(d.startX, d.startY)
+      ctx.moveTo(arrowBase.baseX, arrowBase.baseY)
       ctx.lineTo(d.endX, d.endY)
       ctx.stroke()
-      // Arrowhead at start (pointing to the target)
-      const angle = Math.atan2(d.startY - d.endY, d.startX - d.endX)
-      const headLen = Math.max(10, (ann.size || 2) * 4)
-      ctx.beginPath()
-      ctx.moveTo(d.startX, d.startY)
-      ctx.lineTo(d.startX - headLen * Math.cos(angle - Math.PI / 6), d.startY - headLen * Math.sin(angle - Math.PI / 6))
-      ctx.lineTo(d.startX - headLen * Math.cos(angle + Math.PI / 6), d.startY - headLen * Math.sin(angle + Math.PI / 6))
-      ctx.closePath()
-      ctx.fill()
       // Text box - position depends on arrow direction
       if (d.text) {
         const lines = d.text.split('\n')
@@ -113,12 +144,17 @@ export function drawAnnotation(ctx: CanvasRenderingContext2D, ann: Annotation) {
             boxY = d.endY - boxH
           }
         }
+        const br = ann.borderRadius || 0
         ctx.fillStyle = 'rgba(255,255,255,0.95)'
-        ctx.fillRect(boxX, boxY, boxW, boxH)
+        ctx.beginPath()
+        ctx.roundRect(boxX, boxY, boxW, boxH, br)
+        ctx.fill()
         ctx.strokeStyle = ann.color
         ctx.lineWidth = 2
         ctx.setLineDash([])
-        ctx.strokeRect(boxX, boxY, boxW, boxH)
+        ctx.beginPath()
+        ctx.roundRect(boxX, boxY, boxW, boxH, br)
+        ctx.stroke()
         ctx.fillStyle = ann.color
         ctx.textBaseline = 'top'
         for (let i = 0; i < lines.length; i++) {
@@ -165,11 +201,16 @@ export function drawAnnotation(ctx: CanvasRenderingContext2D, ann: Annotation) {
         }
         const boxW = maxWidth + padding * 2
         const boxH = lines.length * lineHeight + padding * 2
+        const tbr = ann.borderRadius || 0
         ctx.fillStyle = 'rgba(255,255,255,0.9)'
-        ctx.fillRect(d.x - padding, d.y - padding, boxW, boxH)
+        ctx.beginPath()
+        ctx.roundRect(d.x - padding, d.y - padding, boxW, boxH, tbr)
+        ctx.fill()
         ctx.strokeStyle = ann.color
         ctx.lineWidth = 1.5
-        ctx.strokeRect(d.x - padding, d.y - padding, boxW, boxH)
+        ctx.beginPath()
+        ctx.roundRect(d.x - padding, d.y - padding, boxW, boxH, tbr)
+        ctx.stroke()
         ctx.fillStyle = ann.color
       }
 
@@ -191,30 +232,18 @@ export function drawAnnotation(ctx: CanvasRenderingContext2D, ann: Annotation) {
 
     case 'arrow': {
       const d = ann.data as ArrowData
+      const aw = ann.size || 3
       ctx.strokeStyle = ann.color
       ctx.fillStyle = ann.color
-      ctx.lineWidth = ann.size || 3
+      ctx.lineWidth = aw
       ctx.lineCap = 'round'
-      // Line
+      // Arrowhead at endpoint (tip exactly at endpoint)
+      const aBase = drawArrowhead(ctx, d.endX, d.endY, d.startX, d.startY, aw, ann.color)
+      // Line from start to arrowhead base (so line doesn't poke through)
       ctx.beginPath()
       ctx.moveTo(d.startX, d.startY)
-      ctx.lineTo(d.endX, d.endY)
+      ctx.lineTo(aBase.baseX, aBase.baseY)
       ctx.stroke()
-      // Arrowhead
-      const angle = Math.atan2(d.endY - d.startY, d.endX - d.startX)
-      const headLen = Math.max(12, (ann.size || 3) * 4)
-      ctx.beginPath()
-      ctx.moveTo(d.endX, d.endY)
-      ctx.lineTo(
-        d.endX - headLen * Math.cos(angle - Math.PI / 6),
-        d.endY - headLen * Math.sin(angle - Math.PI / 6)
-      )
-      ctx.lineTo(
-        d.endX - headLen * Math.cos(angle + Math.PI / 6),
-        d.endY - headLen * Math.sin(angle + Math.PI / 6)
-      )
-      ctx.closePath()
-      ctx.fill()
       break
     }
 
@@ -222,6 +251,7 @@ export function drawAnnotation(ctx: CanvasRenderingContext2D, ann: Annotation) {
       const d = ann.data as RectData
       ctx.strokeStyle = ann.color
       ctx.lineWidth = ann.size || 2
+      applyDash(ctx, ann.dashStyle, ann.size || 2)
       ctx.beginPath()
       const cx = d.x + d.w / 2
       const cy = d.y + d.h / 2
@@ -241,16 +271,22 @@ export function drawAnnotation(ctx: CanvasRenderingContext2D, ann: Annotation) {
 
     case 'shape-rect': {
       const d = ann.data as RectData
+      const rr = ann.borderRadius || 0
       ctx.strokeStyle = ann.color
       ctx.lineWidth = ann.size || 2
+      applyDash(ctx, ann.dashStyle, ann.size || 2)
       if (ann.fillEnabled) {
         const savedAlpha = ctx.globalAlpha
         ctx.globalAlpha = savedAlpha * (ann.fillOpacity ?? 0.3)
         ctx.fillStyle = ann.color
-        ctx.fillRect(d.x, d.y, d.w, d.h)
+        ctx.beginPath()
+        ctx.roundRect(d.x, d.y, d.w, d.h, rr)
+        ctx.fill()
         ctx.globalAlpha = savedAlpha
       }
-      ctx.strokeRect(d.x, d.y, d.w, d.h)
+      ctx.beginPath()
+      ctx.roundRect(d.x, d.y, d.w, d.h, rr)
+      ctx.stroke()
       break
     }
 
@@ -329,17 +365,43 @@ export function drawAnnotation(ctx: CanvasRenderingContext2D, ann: Annotation) {
       const d = ann.data as PolylineData
       const pts = d.points
       if (pts.length < 2) break
+      const plw = ann.size || 2
       ctx.strokeStyle = ann.color
-      ctx.lineWidth = ann.size || 2
+      ctx.lineWidth = plw
       ctx.lineCap = 'round'
       ctx.lineJoin = 'round'
+      applyDash(ctx, ann.dashStyle, plw)
+
+      // Compute shortened start/end points if arrows are present
+      let drawStart = pts[0]
+      let drawEnd = pts[pts.length - 1]
+      let startBase: { baseX: number; baseY: number } | null = null
+      let endBase: { baseX: number; baseY: number } | null = null
+
+      if (d.arrowStart && pts.length >= 2) {
+        ctx.setLineDash([]) // arrows are always solid
+        startBase = drawArrowhead(ctx, pts[0].x, pts[0].y, pts[1].x, pts[1].y, plw, ann.color)
+        drawStart = { x: startBase.baseX, y: startBase.baseY }
+        applyDash(ctx, ann.dashStyle, plw) // restore dash
+      }
+      if (d.arrowEnd && pts.length >= 2) {
+        const last = pts[pts.length - 1]
+        const prev = pts[pts.length - 2]
+        ctx.setLineDash([])
+        endBase = drawArrowhead(ctx, last.x, last.y, prev.x, prev.y, plw, ann.color)
+        drawEnd = { x: endBase.baseX, y: endBase.baseY }
+        applyDash(ctx, ann.dashStyle, plw)
+      }
+
+      // Draw polyline path with shortened endpoints
       ctx.beginPath()
-      ctx.moveTo(pts[0].x, pts[0].y)
-      for (let i = 1; i < pts.length; i++) {
+      ctx.moveTo(drawStart.x, drawStart.y)
+      for (let i = 1; i < pts.length - 1; i++) {
         ctx.lineTo(pts[i].x, pts[i].y)
       }
+      ctx.lineTo(drawEnd.x, drawEnd.y)
       if (ann.closed) ctx.closePath()
-      // Fill if enabled (auto-closes path for fill even if not explicitly closed)
+
       if (ann.fillEnabled) {
         const savedAlpha = ctx.globalAlpha
         ctx.globalAlpha = savedAlpha * (ann.fillOpacity ?? 0.3)
@@ -348,32 +410,6 @@ export function drawAnnotation(ctx: CanvasRenderingContext2D, ann: Annotation) {
         ctx.globalAlpha = savedAlpha
       }
       ctx.stroke()
-      // Arrowhead at start
-      if (d.arrowStart && pts.length >= 2) {
-        const angle = Math.atan2(pts[0].y - pts[1].y, pts[0].x - pts[1].x)
-        const headLen = Math.max(12, (ann.size || 3) * 4)
-        ctx.fillStyle = ann.color
-        ctx.beginPath()
-        ctx.moveTo(pts[0].x, pts[0].y)
-        ctx.lineTo(pts[0].x - headLen * Math.cos(angle - Math.PI / 6), pts[0].y - headLen * Math.sin(angle - Math.PI / 6))
-        ctx.lineTo(pts[0].x - headLen * Math.cos(angle + Math.PI / 6), pts[0].y - headLen * Math.sin(angle + Math.PI / 6))
-        ctx.closePath()
-        ctx.fill()
-      }
-      // Arrowhead at end
-      if (d.arrowEnd && pts.length >= 2) {
-        const last = pts[pts.length - 1]
-        const prev = pts[pts.length - 2]
-        const angle = Math.atan2(last.y - prev.y, last.x - prev.x)
-        const headLen = Math.max(12, (ann.size || 3) * 4)
-        ctx.fillStyle = ann.color
-        ctx.beginPath()
-        ctx.moveTo(last.x, last.y)
-        ctx.lineTo(last.x - headLen * Math.cos(angle - Math.PI / 6), last.y - headLen * Math.sin(angle - Math.PI / 6))
-        ctx.lineTo(last.x - headLen * Math.cos(angle + Math.PI / 6), last.y - headLen * Math.sin(angle + Math.PI / 6))
-        ctx.closePath()
-        ctx.fill()
-      }
       break
     }
   }

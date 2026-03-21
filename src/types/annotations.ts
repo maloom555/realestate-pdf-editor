@@ -69,6 +69,8 @@ interface BaseAnnotation {
   fillEnabled?: boolean
   fillOpacity?: number
   closed?: boolean
+  dashStyle?: 'solid' | 'dash' | 'dot' | 'dashdot'
+  borderRadius?: number
 }
 
 export interface RectAnnotation extends BaseAnnotation {
