@@ -94,7 +94,8 @@ export default function Toolbar() {
           store.setLoading(true, `フラット化中... ${current} / ${total} ページ`)
         }
       )
-      downloadBlob(result, 'edited_output.pdf', 'application/pdf')
+      const fileName = store.projectName ? `${store.projectName}_edited.pdf` : 'edited_output.pdf'
+      downloadBlob(result, fileName, 'application/pdf')
     } catch (err) {
       alert('PDF出力に失敗しました: ' + (err as Error).message)
     } finally {
@@ -116,7 +117,7 @@ export default function Toolbar() {
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = 'project.rpef'
+    a.download = store.projectName ? `${store.projectName}.rpef` : 'project.rpef'
     a.click()
     URL.revokeObjectURL(url)
   }
