@@ -7,7 +7,7 @@ export default function PrivacyPage() {
         <section>
           <h2 className="text-xl font-bold mt-6 mb-3">1. データの取り扱いについて</h2>
           <p className="text-gray-600">
-            当サービス「不動産PDF工房」では、お客様がアップロードしたPDFファイルは一切サーバーに送信されません。
+            当サービス「不動産工房」では、お客様がアップロードしたPDFファイルは一切サーバーに送信されません。
             すべてのPDF編集処理は、お客様のブラウザ内（クライアントサイド）で完結します。
             そのため、ファイルの内容が外部に漏洩するリスクはありません。
           </p>

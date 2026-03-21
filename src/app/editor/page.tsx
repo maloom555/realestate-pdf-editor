@@ -153,8 +153,7 @@ export default function EditorPage() {
         onClick={handleReset}
         title="トップに戻る"
       >
-        <h1 className="text-xl font-bold">不動産PDF工房</h1>
-        <p className="text-sm opacity-85 mt-0.5">無料オンラインPDF編集ツール</p>
+        <h1 className="text-xl font-bold">不動産工房 <span className="text-sm font-normal opacity-80">PDF編集</span></h1>
       </header>
 
       {pdfDoc ? (
