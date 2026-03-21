@@ -25,11 +25,11 @@ export default function EditorPage() {
     store.setLoading(true, 'PDFを読み込み中...')
     try {
       const arrayBuffer = await file.arrayBuffer()
-      let bytes = new Uint8Array(arrayBuffer)
+      let bytes: Uint8Array = new Uint8Array(arrayBuffer)
       const imageTypes = ['image/jpeg', 'image/png', 'image/webp']
       if (imageTypes.includes(file.type)) {
         const { imageToPdf } = await import('@/lib/image-to-pdf')
-        bytes = await imageToPdf(bytes, file.type)
+        bytes = new Uint8Array(await imageToPdf(bytes, file.type))
       }
       const doc = await window.pdfjsLib.getDocument({ data: bytes.slice() }).promise
 

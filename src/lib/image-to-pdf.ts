@@ -21,7 +21,7 @@ export async function imageToPdf(imageBytes: Uint8Array, mimeType: string): Prom
 }
 
 async function convertToJpeg(imageBytes: Uint8Array, mimeType: string): Promise<Uint8Array> {
-  const blob = new Blob([imageBytes], { type: mimeType })
+  const blob = new Blob([new Uint8Array(imageBytes)], { type: mimeType })
   const url = URL.createObjectURL(blob)
   const img = new Image()
   await new Promise<void>((resolve, reject) => { img.onload = () => resolve(); img.onerror = reject; img.src = url })
