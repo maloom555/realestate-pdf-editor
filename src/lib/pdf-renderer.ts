@@ -64,18 +64,39 @@ export function drawAnnotation(ctx: CanvasRenderingContext2D, ann: Annotation) {
     case 'pen': {
       const pts = ann.data as Point[]
       if (pts.length === 0) break
+      const penW = ann.size || 2
       ctx.strokeStyle = ann.color
-      ctx.lineWidth = ann.size || 2
+      ctx.lineWidth = penW
       ctx.lineCap = 'round'
       ctx.lineJoin = 'round'
-      applyDash(ctx, ann.dashStyle, ann.size || 2)
+      applyDash(ctx, ann.dashStyle, penW)
+
+      // Draw arrowheads and compute shortened endpoints
+      let drawStart = pts[0]
+      let drawEnd = pts[pts.length - 1]
+
+      if (ann.arrowStart && pts.length >= 2) {
+        ctx.setLineDash([])
+        const base = drawArrowhead(ctx, pts[0].x, pts[0].y, pts[1].x, pts[1].y, penW, ann.color)
+        drawStart = { x: base.baseX, y: base.baseY }
+        applyDash(ctx, ann.dashStyle, penW)
+      }
+      if (ann.arrowEnd && pts.length >= 2) {
+        const last = pts[pts.length - 1]
+        const prev = pts[pts.length - 2]
+        ctx.setLineDash([])
+        const base = drawArrowhead(ctx, last.x, last.y, prev.x, prev.y, penW, ann.color)
+        drawEnd = { x: base.baseX, y: base.baseY }
+        applyDash(ctx, ann.dashStyle, penW)
+      }
+
       ctx.beginPath()
-      ctx.moveTo(pts[0].x, pts[0].y)
-      for (let i = 1; i < pts.length; i++) {
+      ctx.moveTo(drawStart.x, drawStart.y)
+      for (let i = 1; i < pts.length - 1; i++) {
         ctx.lineTo(pts[i].x, pts[i].y)
       }
+      if (pts.length > 1) ctx.lineTo(drawEnd.x, drawEnd.y)
       if (ann.closed) ctx.closePath()
-      // Fill if enabled (auto-closes path for fill even if not explicitly closed)
       if (ann.fillEnabled) {
         const savedAlpha = ctx.globalAlpha
         ctx.globalAlpha = savedAlpha * (ann.fillOpacity ?? 0.3)
@@ -584,6 +605,16 @@ export function hitTestHandle(
     ty = p.y
   }
 
+  // Polyline: check individual vertex handles
+  if (ann?.type === 'polyline') {
+    const pd = ann.data as PolylineData
+    for (let i = 0; i < pd.points.length; i++) {
+      if (Math.hypot(tx - pd.points[i].x, ty - pd.points[i].y) < hs * 2.5) {
+        return `polyline-point-${i}`
+      }
+    }
+  }
+
   // Stamp: check leg handle
   if (ann?.type === 'stamp') {
     const sd = ann.data as StampData
@@ -713,8 +744,24 @@ export function drawSelectionUI(ctx: CanvasRenderingContext2D, bounds: RectData,
   ctx.lineWidth = 2
   ctx.stroke()
 
-  // Stamp leg: draw draggable endpoint handle (coords in PDF space → multiply by displayScale)
+  // Polyline: draw vertex handles
   const s = displayScale || 1
+  if (ann?.type === 'polyline') {
+    const pd = ann.data as PolylineData
+    for (let i = 0; i < pd.points.length; i++) {
+      const px = pd.points[i].x * s
+      const py = pd.points[i].y * s
+      ctx.beginPath()
+      ctx.arc(px, py, 5, 0, Math.PI * 2)
+      ctx.fillStyle = i === 0 ? '#34d399' : i === pd.points.length - 1 ? '#f87171' : '#ffffff'
+      ctx.fill()
+      ctx.strokeStyle = '#6366f1'
+      ctx.lineWidth = 2
+      ctx.stroke()
+    }
+  }
+
+  // Stamp leg: draw draggable endpoint handle (coords in PDF space → multiply by displayScale)
   if (ann?.type === 'stamp') {
     const sd = ann.data as StampData
     if (sd.legX != null && sd.legY != null) {

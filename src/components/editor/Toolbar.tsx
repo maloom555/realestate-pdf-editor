@@ -147,7 +147,7 @@ export default function Toolbar() {
 
   // Selected annotation conditions
   const canAdjustSize = selectedAnn && ['circle', 'shape-rect', 'arrow', 'polyline', 'pen'].includes(selectedAnn.type)
-  const isPolyline = selectedAnn && selectedAnn.type === 'polyline'
+  const isPolyline = selectedAnn && (selectedAnn.type === 'polyline' || selectedAnn.type === 'pen')
   const canChangeColor = !!selectedAnn
   const isSelectedText = selectedAnn?.type === 'text'
   const isSelectedCallout = selectedAnn?.type === 'callout'
@@ -494,60 +494,67 @@ export default function Toolbar() {
             </button>
           )}
 
-          {/* Polyline arrow toggles */}
+          {/* Arrow toggles (polyline + pen) */}
           {isPolyline && (
             <>
               <div className="w-px h-5 bg-gray-300" />
               <button onClick={() => {
-                const d = selectedAnn.data as { arrowStart: boolean; arrowEnd: boolean }
-                updateAnnotation(currentPage, selectedAnn.id, {
-                  data: { ...selectedAnn.data, arrowStart: !d.arrowStart } as unknown as typeof selectedAnn.data,
-                })
+                if (selectedAnn.type === 'polyline') {
+                  const d = selectedAnn.data as { arrowStart: boolean; arrowEnd: boolean }
+                  updateAnnotation(currentPage, selectedAnn.id, {
+                    data: { ...selectedAnn.data, arrowStart: !d.arrowStart } as unknown as typeof selectedAnn.data,
+                  })
+                } else {
+                  updateAnnotation(currentPage, selectedAnn.id, { arrowStart: !selectedAnn.arrowStart })
+                }
               }}
                 className={`px-2 py-1 text-xs border rounded-lg ${
-                  (selectedAnn.data as { arrowStart: boolean }).arrowStart
+                  (selectedAnn.type === 'polyline'
+                    ? (selectedAnn.data as { arrowStart: boolean }).arrowStart
+                    : selectedAnn.arrowStart)
                     ? 'border-indigo-500 bg-indigo-50 text-indigo-700'
                     : 'border-gray-200 text-gray-500 hover:border-indigo-400'
                 }`}>←始点</button>
               <button onClick={() => {
-                const d = selectedAnn.data as { arrowStart: boolean; arrowEnd: boolean }
-                updateAnnotation(currentPage, selectedAnn.id, {
-                  data: { ...selectedAnn.data, arrowEnd: !d.arrowEnd } as unknown as typeof selectedAnn.data,
-                })
+                if (selectedAnn.type === 'polyline') {
+                  const d = selectedAnn.data as { arrowStart: boolean; arrowEnd: boolean }
+                  updateAnnotation(currentPage, selectedAnn.id, {
+                    data: { ...selectedAnn.data, arrowEnd: !d.arrowEnd } as unknown as typeof selectedAnn.data,
+                  })
+                } else {
+                  updateAnnotation(currentPage, selectedAnn.id, { arrowEnd: !selectedAnn.arrowEnd })
+                }
               }}
                 className={`px-2 py-1 text-xs border rounded-lg ${
-                  (selectedAnn.data as { arrowEnd: boolean }).arrowEnd
+                  (selectedAnn.type === 'polyline'
+                    ? (selectedAnn.data as { arrowEnd: boolean }).arrowEnd
+                    : selectedAnn.arrowEnd)
                     ? 'border-indigo-500 bg-indigo-50 text-indigo-700'
                     : 'border-gray-200 text-gray-500 hover:border-indigo-400'
                 }`}>終点→</button>
             </>
           )}
 
-          {/* Dash style toggle */}
+          {/* Dash style dropdown */}
           {(showDashForTool || showDashForSelected) && (
             <>
               <div className="w-px h-5 bg-gray-300" />
-              <div className="flex items-center gap-0.5">
-                <label className="text-xs text-gray-400 font-semibold mr-1">線種:</label>
-                {([
-                  { id: 'solid', label: '─' },
-                  { id: 'dash', label: '┅' },
-                  { id: 'dot', label: '┈' },
-                  { id: 'dashdot', label: '┄' },
-                ] as const).map((ds) => {
-                  const currentDash = selectedAnn?.dashStyle || 'solid'
-                  const isActive = selectedAnn ? currentDash === ds.id : false
-                  return (
-                    <button key={ds.id} onClick={() => {
-                      if (selectedAnn) {
-                        updateAnnotation(currentPage, selectedAnn.id, { dashStyle: ds.id })
-                      }
-                    }}
-                      className={`px-1.5 py-0.5 text-sm border rounded ${
-                        isActive ? 'border-indigo-500 bg-indigo-50 text-indigo-700' : 'border-gray-200 text-gray-500 hover:border-indigo-400'
-                      }`} title={ds.id}>{ds.label}</button>
-                  )
-                })}
+              <div className="flex items-center gap-1">
+                <label className="text-xs text-gray-400 font-semibold">線種:</label>
+                <select
+                  value={selectedAnn?.dashStyle || 'solid'}
+                  onChange={(e) => {
+                    if (selectedAnn) {
+                      updateAnnotation(currentPage, selectedAnn.id, { dashStyle: e.target.value as 'solid' | 'dash' | 'dot' | 'dashdot' })
+                    }
+                  }}
+                  className="text-xs border border-gray-200 rounded px-1.5 py-0.5 bg-white text-gray-700"
+                >
+                  <option value="solid">── 実線</option>
+                  <option value="dash">╌╌ 破線</option>
+                  <option value="dot">··· 点線</option>
+                  <option value="dashdot">╌· 一点鎖線</option>
+                </select>
               </div>
             </>
           )}

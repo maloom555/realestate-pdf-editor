@@ -183,7 +183,10 @@ export default function EditorCanvas({ pdfDoc }: EditorCanvasProps) {
             if (handle) {
               ds.dragMode = handle
               ds.dragStart = pos
-              if (handle === 'stamp-leg') {
+              if (handle.startsWith('polyline-point-')) {
+                const pd = selected.data as PolylineData
+                ds.origData = JSON.parse(JSON.stringify(pd.points))
+              } else if (handle === 'stamp-leg') {
                 const sd = selected.data as StampData
                 ds.origData = { legX: sd.legX, legY: sd.legY }
               } else if (handle === 'callout-start') {
@@ -429,7 +432,18 @@ export default function EditorCanvas({ pdfDoc }: EditorCanvasProps) {
 
       const orig = ds.origData
 
-      if (ds.dragMode === 'stamp-leg') {
+      if (ds.dragMode.startsWith('polyline-point-')) {
+        if (ann.type === 'polyline') {
+          const idx = parseInt(ds.dragMode.split('-')[2])
+          const origPts = orig as unknown as Point[]
+          const newPoints = origPts.map((p, i) =>
+            i === idx ? { x: p.x + dx, y: p.y + dy } : { ...p }
+          )
+          updateAnnotation(currentPage, ann.id, {
+            data: { ...ann.data, points: newPoints } as unknown as typeof ann.data,
+          })
+        }
+      } else if (ds.dragMode === 'stamp-leg') {
         if (ann.type === 'stamp') {
           const o = orig as { legX: number; legY: number }
           updateAnnotation(currentPage, ann.id, {

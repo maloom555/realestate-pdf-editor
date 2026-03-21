@@ -71,6 +71,8 @@ interface BaseAnnotation {
   closed?: boolean
   dashStyle?: 'solid' | 'dash' | 'dot' | 'dashdot'
   borderRadius?: number
+  arrowStart?: boolean
+  arrowEnd?: boolean
 }
 
 export interface RectAnnotation extends BaseAnnotation {
