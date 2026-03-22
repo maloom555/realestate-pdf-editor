@@ -80,7 +80,7 @@ const initialState = {
   totalPages: 0,
   scale: 1.0,
   fitMode: 2, // 0=縦フィット, 1=横フィット, 2=100%
-  currentTool: 'rect' as ToolType,
+  currentTool: 'select' as ToolType,
   maskColor: '#000000',
   penSize: 2,
   fontSize: 15,
