@@ -235,6 +235,49 @@ export default function PageEditor({ pdfDoc, onReloadPdf }: PageEditorProps) {
   }
 
   const [showRotateMenu, setShowRotateMenu] = useState(false)
+  const [showCompressMenu, setShowCompressMenu] = useState(false)
+
+  const handleExportPdf = async () => {
+    if (!pdfBytes) return
+    const { exportFlattenedPdf, downloadBlob: dlBlob } = await import('@/lib/export-engine')
+    store.setLoading(true, 'マスク済みPDFを生成中...')
+    try {
+      const doc = await window.pdfjsLib.getDocument({ data: pdfBytes.slice() }).promise
+      const result = await exportFlattenedPdf(doc, store.annotations, (current, total) => {
+        store.setLoading(true, `フラット化中... ${current} / ${total} ページ`)
+      })
+      const fileName = store.projectName ? `${store.projectName}_edited.pdf` : 'edited_output.pdf'
+      dlBlob(result, fileName, 'application/pdf')
+    } catch (err) {
+      alert('PDF出力に失敗しました: ' + (err as Error).message)
+    } finally {
+      store.setLoading(false)
+    }
+  }
+
+  const handleCompress = async (level: 'high' | 'standard' | 'light') => {
+    setShowCompressMenu(false)
+    if (!pdfBytes) return
+    const { compressPdf, downloadBlob: dlBlob } = await import('@/lib/export-engine')
+    store.setLoading(true, 'PDFを圧縮中...')
+    try {
+      const doc = await window.pdfjsLib.getDocument({ data: pdfBytes.slice() }).promise
+      const originalSize = pdfBytes.length
+      const result = await compressPdf(doc, level, (current, total) => {
+        store.setLoading(true, `圧縮中... ${current} / ${total} ページ`)
+      })
+      const ratio = Math.round((1 - result.length / originalSize) * 100)
+      const sizeStr = (sz: number) => sz > 1048576 ? (sz / 1048576).toFixed(1) + ' MB' : Math.round(sz / 1024) + ' KB'
+      store.setLoading(false)
+      alert(`圧縮完了！\n${sizeStr(originalSize)} → ${sizeStr(result.length)}（${ratio}%削減）`)
+      const fileName = store.projectName ? `${store.projectName}_compressed.pdf` : 'compressed.pdf'
+      dlBlob(result, fileName, 'application/pdf')
+    } catch (err) {
+      alert('圧縮に失敗しました: ' + (err as Error).message)
+    } finally {
+      store.setLoading(false)
+    }
+  }
 
   return (
     <div className="flex-1 min-h-0 flex flex-col">
@@ -264,7 +307,7 @@ export default function PageEditor({ pdfDoc, onReloadPdf }: PageEditorProps) {
         </button>
         <button onClick={() => importInputRef.current?.click()}
           className="px-3 py-1.5 text-sm sm:text-xs border border-blue-300 text-blue-600 rounded-lg hover:bg-blue-50">
-          PDF読込
+          PDF追加
         </button>
         <input ref={importInputRef} type="file" accept=".pdf" className="hidden" onChange={handleImport} />
 
@@ -297,6 +340,27 @@ export default function PageEditor({ pdfDoc, onReloadPdf }: PageEditorProps) {
           className="px-3 py-1.5 text-sm sm:text-xs border border-gray-200 text-gray-600 rounded-lg hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed">
           ↩ 元に戻す
         </button>
+
+        <div className="w-px h-5 bg-gray-200" />
+
+        {/* Export & Compress */}
+        <button onClick={handleExportPdf}
+          className="px-3 py-1.5 text-sm sm:text-xs border border-indigo-300 text-indigo-600 rounded-lg hover:bg-indigo-50 font-semibold">
+          PDFダウンロード
+        </button>
+        <div className="relative">
+          <button onClick={() => setShowCompressMenu(!showCompressMenu)}
+            className="px-3 py-1.5 text-sm sm:text-xs border border-orange-300 text-orange-600 rounded-lg hover:bg-orange-50">
+            圧縮 ▾
+          </button>
+          {showCompressMenu && (
+            <div className="absolute top-full left-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-10 min-w-[140px]">
+              <button onClick={() => handleCompress('light')} className="block w-full px-4 py-2 text-sm text-left hover:bg-gray-50">軽量圧縮</button>
+              <button onClick={() => handleCompress('standard')} className="block w-full px-4 py-2 text-sm text-left hover:bg-gray-50">標準圧縮</button>
+              <button onClick={() => handleCompress('high')} className="block w-full px-4 py-2 text-sm text-left hover:bg-gray-50">最大圧縮</button>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Thumbnail grid */}
