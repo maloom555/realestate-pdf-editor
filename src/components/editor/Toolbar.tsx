@@ -7,14 +7,14 @@ import { useState, useRef, useEffect } from 'react'
 
 const tools: { id: ToolType; label: string; icon: string }[] = [
   { id: 'rect', label: '墨消し', icon: '■' },
-  { id: 'pen', label: '自由線', icon: '〰' },
   { id: 'circle', label: '円', icon: '○' },
   { id: 'shape-rect', label: '四角', icon: '□' },
+  { id: 'pen', label: '自由線', icon: '〰' },
   { id: 'polyline', label: '折線', icon: '📐' },
   { id: 'arrow', label: '矢印', icon: '→' },
+  { id: 'highlight', label: 'ハイライト', icon: '🖍' },
   { id: 'text', label: 'テキスト', icon: 'A' },
   { id: 'callout', label: '矢印テキスト', icon: '💬' },
-  { id: 'highlight', label: 'ハイライト', icon: '🖍' },
   { id: 'stamp', label: 'スタンプ', icon: '印' },
   { id: 'select', label: '選択', icon: '↖' },
 ]
