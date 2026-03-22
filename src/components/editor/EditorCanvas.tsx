@@ -20,7 +20,7 @@ export default function EditorCanvas({ pdfDoc }: EditorCanvasProps) {
     currentPage, scale, currentTool, maskColor, penSize, fontSize, fontFamily, highlightOpacity,
     elementOpacity, fillEnabled, fillOpacity, textBold, textUnderline, textBox,
     annotations, selectedAnnotationId,
-    addAnnotation, updateAnnotation, setSelectedAnnotationId,
+    addAnnotation, updateAnnotation, setSelectedAnnotationId, setCurrentTool,
   } = store
 
   // Drawing state (local, not in store)
@@ -255,6 +255,45 @@ export default function EditorCanvas({ pdfDoc }: EditorCanvasProps) {
     }
 
     if (currentTool === 'stamp') {
+      // Signature stamp
+      const sig = pendingSignatureRef.current
+      if (sig) {
+        // Calculate size from text
+        const lines = sig.text.split('\n')
+        const lineHeight = sig.fontSize * 1.4
+        const canvas = document.createElement('canvas')
+        const measureCtx = canvas.getContext('2d')!
+        measureCtx.font = `${sig.fontSize}px ${sig.fontFamily}`
+        let maxW = 0
+        for (const line of lines) {
+          const m = measureCtx.measureText(line)
+          if (m.width > maxW) maxW = m.width
+        }
+        const padding = 12
+        const sw = (maxW + padding * 2) / scale
+        const sh = (lines.length * lineHeight + padding * 2) / scale
+        addAndSelect(currentPage, {
+          id: generateId(),
+          type: 'stamp',
+          color: sig.color,
+          data: {
+            x: pos.x - sw / 2,
+            y: pos.y - sh / 2,
+            w: sw,
+            h: sh,
+            stampId: 'signature',
+            label: '',
+            isSignature: true,
+            multiLineText: sig.text,
+            fontSize: sig.fontSize,
+            fontFamily: sig.fontFamily,
+          },
+        })
+        pendingSignatureRef.current = null
+        return
+      }
+
+      // Regular stamp
       const ps = pendingStampRef.current
       if (ps) {
         const sw = 160 / scale
@@ -1000,11 +1039,20 @@ export default function EditorCanvas({ pdfDoc }: EditorCanvasProps) {
     stampLegModeRef.current = true
   }, [])
 
-  // Expose setStampPending and stampLegMode
+  // Signature stamp placement
+  const pendingSignatureRef = useRef<{ text: string; color: string; fontSize: number; fontFamily: string } | null>(null)
+
+  const setSignaturePending = useCallback((text: string, color: string, fontSize: number, fontFamily: string) => {
+    pendingSignatureRef.current = { text, color, fontSize, fontFamily }
+    setCurrentTool('stamp')
+  }, [setCurrentTool])
+
+  // Expose setStampPending, stampLegMode, and signature placement
   useEffect(() => {
     (window as unknown as Record<string, unknown>).__placeStamp = setStampPending;
-    (window as unknown as Record<string, unknown>).__stampLegMode = enableStampLegMode
-  }, [setStampPending, enableStampLegMode])
+    (window as unknown as Record<string, unknown>).__stampLegMode = enableStampLegMode;
+    (window as unknown as Record<string, unknown>).__placeSignatureStamp = setSignaturePending
+  }, [setStampPending, enableStampLegMode, setSignaturePending])
 
   // Clipboard ref for copy/paste
   const clipboardRef = useRef<Annotation | null>(null)

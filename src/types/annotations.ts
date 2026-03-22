@@ -34,6 +34,23 @@ export interface StampData {
   label: string
   legX?: number  // Arrow/leg target X
   legY?: number  // Arrow/leg target Y
+  // Signature stamp fields
+  isSignature?: boolean
+  multiLineText?: string  // Full multi-line text (after variable substitution)
+  fontSize?: number
+  fontFamily?: string
+}
+
+// Signature template definition (stored in IndexedDB)
+export interface SignatureTemplate {
+  id: string
+  name: string
+  template: string  // Raw text with {variables}
+  variables: Record<string, string>  // variable name -> value
+  fontSize: number
+  fontFamily: string
+  color: string
+  borderStyle: 'solid' | 'double' | 'dashed' | 'ornament'
 }
 
 export interface ArrowData {

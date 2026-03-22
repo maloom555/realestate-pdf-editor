@@ -374,13 +374,49 @@ export function drawAnnotation(ctx: CanvasRenderingContext2D, ann: Annotation) {
         ctx.fill()
       }
 
-      // Single solid border
+      // Signature stamp (multi-line)
+      if (d.isSignature && d.multiLineText) {
+        const fs = d.fontSize || 11
+        const ff = d.fontFamily || '"Noto Sans JP", "Hiragino Sans", sans-serif'
+        const padding = 10
+        const lineHeight = fs * 1.4
+        const lines = d.multiLineText.split('\n')
+
+        // White background
+        ctx.fillStyle = 'rgba(255,255,255,0.95)'
+        ctx.beginPath()
+        ctx.roundRect(d.x, d.y, d.w, d.h, radius)
+        ctx.fill()
+
+        // Border
+        ctx.strokeStyle = stampColor
+        ctx.lineWidth = 2
+        ctx.beginPath()
+        ctx.roundRect(d.x, d.y, d.w, d.h, radius)
+        ctx.stroke()
+
+        // Text
+        ctx.fillStyle = stampColor
+        ctx.font = `${fs}px ${ff}`
+        ctx.textBaseline = 'top'
+        const totalTextH = lines.length * lineHeight
+        const startY = d.y + (d.h - totalTextH) / 2
+        for (let i = 0; i < lines.length; i++) {
+          const lineW = ctx.measureText(lines[i]).width
+          const lineX = d.x + (d.w - lineW) / 2 // Center each line
+          ctx.fillText(lines[i], lineX, startY + i * lineHeight)
+        }
+
+        ctx.globalAlpha = savedStampAlpha
+        break
+      }
+
+      // Regular stamp (single-line)
       ctx.strokeStyle = stampColor
       ctx.lineWidth = 3
       ctx.beginPath()
       ctx.roundRect(d.x, d.y, d.w, d.h, radius)
       ctx.stroke()
-      // Text
       ctx.fillStyle = stampColor
       const label = d.label || ''
       const padding = 10

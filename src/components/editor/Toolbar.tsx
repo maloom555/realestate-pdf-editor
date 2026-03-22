@@ -4,6 +4,7 @@ import { useEditorStore } from '@/hooks/useEditorStore'
 import type { ToolType, StampData } from '@/types/annotations'
 import { STAMP_PRESETS } from '@/components/stamps/stamps-data'
 import { useState, useRef, useEffect } from 'react'
+import SignatureEditor from './SignatureEditor'
 
 const tools: { id: ToolType; label: string; icon: string }[] = [
   { id: 'rect', label: '墨消し', icon: '■' },
@@ -57,6 +58,7 @@ export default function Toolbar() {
   } = store
 
   const [showStampPicker, setShowStampPicker] = useState(false)
+  const [showSignatureEditor, setShowSignatureEditor] = useState(false)
   const [showMobileMenu, setShowMobileMenu] = useState(false)
   const [showExportMenu, setShowExportMenu] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
@@ -83,6 +85,14 @@ export default function Toolbar() {
   const handleStampSelect = (stampId: string, label: string, color: string) => {
     const fn = (window as unknown as Record<string, (...args: unknown[]) => void>).__placeStamp
     if (fn) fn(stampId, label, color)
+    setShowStampPicker(false)
+    setShowSignatureEditor(false)
+  }
+
+  const handleSignaturePlace = (text: string, color: string, fontSize: number, fontFamily: string) => {
+    const fn = (window as unknown as Record<string, (...args: unknown[]) => void>).__placeSignatureStamp
+    if (fn) fn(text, color, fontSize, fontFamily)
+    setShowSignatureEditor(false)
     setShowStampPicker(false)
   }
 
@@ -688,7 +698,7 @@ export default function Toolbar() {
         )}
 
         {/* Stamp Picker (mobile) */}
-        {showStampPicker && (
+        {showStampPicker && !showSignatureEditor && (
           <div className="px-3 py-2 border-t border-gray-100 bg-gray-50 max-h-44 overflow-y-auto">
             {Object.entries(stampsByCategory).map(([category, stamps]) => (
               <div key={category} className="mb-2">
@@ -705,7 +715,16 @@ export default function Toolbar() {
                 </div>
               </div>
             ))}
+            <div className="mt-2 pt-2 border-t border-gray-200">
+              <button onClick={() => setShowSignatureEditor(true)}
+                className="px-3 py-1.5 text-sm border-2 border-dashed border-indigo-300 text-indigo-500 rounded hover:border-indigo-500">
+                署名スタンプを管理
+              </button>
+            </div>
           </div>
+        )}
+        {showSignatureEditor && (
+          <SignatureEditor onPlace={handleSignaturePlace} onClose={() => setShowSignatureEditor(false)} />
         )}
       </div>
     )
@@ -812,7 +831,7 @@ export default function Toolbar() {
       )}
 
       {/* Stamp Picker */}
-      {showStampPicker && (
+      {showStampPicker && !showSignatureEditor && (
         <div className="px-3 py-3 border-t border-gray-100 bg-gray-50">
           {Object.entries(stampsByCategory).map(([category, stamps]) => (
             <div key={category} className="mb-2">
@@ -829,7 +848,20 @@ export default function Toolbar() {
               </div>
             </div>
           ))}
+          <div className="mt-2 pt-2 border-t border-gray-200">
+            <div className="text-xs text-gray-400 font-semibold mb-1">署名スタンプ</div>
+            <button onClick={() => setShowSignatureEditor(true)}
+              className="px-3 py-1.5 text-sm border-2 border-dashed border-indigo-300 text-indigo-500 rounded hover:border-indigo-500 hover:bg-indigo-50 transition-all">
+              署名スタンプを管理
+            </button>
+          </div>
         </div>
+      )}
+      {showSignatureEditor && (
+        <SignatureEditor
+          onPlace={handleSignaturePlace}
+          onClose={() => setShowSignatureEditor(false)}
+        />
       )}
     </div>
   )
