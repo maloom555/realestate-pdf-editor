@@ -48,6 +48,31 @@ export default function EditorPage() {
     }
   }, [store, pdfJsLoaded])
 
+  // Multiple files → merge into one PDF
+  const handleFilesLoad = useCallback(async (files: File[]) => {
+    if (!pdfJsLoaded) return
+    store.setLoading(true, `${files.length}ファイルを結合中...`)
+    try {
+      const { mergeFiles } = await import('@/lib/merge-files')
+      const bytes = await mergeFiles(files, (current, total) => {
+        store.setLoading(true, `結合中... ${current} / ${total} ファイル`)
+      })
+      const doc = await window.pdfjsLib.getDocument({ data: bytes.slice() }).promise
+
+      store.setPdfBytes(bytes, doc.numPages)
+      const projectId = 'proj_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6)
+      store.setProjectId(projectId)
+      store.setProjectName('merged_' + files.length + 'files')
+      store.setScale(1.0)
+      store.setFitMode(2)
+      setPdfDoc(doc)
+    } catch (err) {
+      alert('ファイルの結合に失敗しました: ' + (err as Error).message)
+    } finally {
+      store.setLoading(false)
+    }
+  }, [store, pdfJsLoaded])
+
   const handleReset = useCallback(() => {
     if (!pdfDoc) return
     if (!confirm('現在の編集内容は破棄されます。トップに戻りますか？')) return
@@ -209,7 +234,7 @@ export default function EditorPage() {
         </>
       ) : (
         <main className="flex-1 flex justify-center items-start px-4">
-          <DropZone onFileLoad={handleFileLoad} onProjectLoad={handleProjectLoad} />
+          <DropZone onFileLoad={handleFileLoad} onFilesLoad={handleFilesLoad} onProjectLoad={handleProjectLoad} />
         </main>
       )}
 

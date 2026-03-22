@@ -5,10 +5,11 @@ import type { ProjectRecord } from '@/lib/project-db'
 
 interface DropZoneProps {
   onFileLoad: (file: File) => void
+  onFilesLoad?: (files: File[]) => void
   onProjectLoad?: (projectId: string) => void
 }
 
-export default function DropZone({ onFileLoad, onProjectLoad }: DropZoneProps) {
+export default function DropZone({ onFileLoad, onFilesLoad, onProjectLoad }: DropZoneProps) {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [isDragOver, setIsDragOver] = useState(false)
   const [savedProjects, setSavedProjects] = useState<ProjectRecord[]>([])
@@ -22,17 +23,29 @@ export default function DropZone({ onFileLoad, onProjectLoad }: DropZoneProps) {
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault()
     setIsDragOver(false)
-    const file = e.dataTransfer.files[0]
     const acceptedTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/webp']
-    if (file && acceptedTypes.includes(file.type)) {
-      onFileLoad(file)
+    const validFiles = Array.from(e.dataTransfer.files).filter((f) => acceptedTypes.includes(f.type))
+    if (validFiles.length === 0) return
+    if (validFiles.length === 1) {
+      onFileLoad(validFiles[0])
+    } else if (onFilesLoad) {
+      onFilesLoad(validFiles)
+    } else {
+      onFileLoad(validFiles[0])
     }
-  }, [onFileLoad])
+  }, [onFileLoad, onFilesLoad])
 
   const handleFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (file) onFileLoad(file)
-  }, [onFileLoad])
+    const files = Array.from(e.target.files || [])
+    if (files.length === 0) return
+    if (files.length === 1) {
+      onFileLoad(files[0])
+    } else if (onFilesLoad) {
+      onFilesLoad(files)
+    } else {
+      onFileLoad(files[0])
+    }
+  }, [onFileLoad, onFilesLoad])
 
   const handleDelete = useCallback(async (e: React.MouseEvent, projectId: string) => {
     e.stopPropagation()
@@ -73,6 +86,7 @@ export default function DropZone({ onFileLoad, onProjectLoad }: DropZoneProps) {
             <path d="M46 39V53M39 46H53" stroke="white" strokeWidth="3" strokeLinecap="round"/>
           </svg>
           <p className="text-base sm:text-lg text-gray-600 font-medium">PDF・画像ファイルをドラッグ＆ドロップ</p>
+          <p className="text-gray-300 text-xs mt-1">複数ファイルをまとめてドロップで自動結合</p>
           <p className="text-gray-400 text-sm my-2 sm:my-3">または</p>
           <button
             onClick={() => fileInputRef.current?.click()}
@@ -84,6 +98,7 @@ export default function DropZone({ onFileLoad, onProjectLoad }: DropZoneProps) {
             ref={fileInputRef}
             type="file"
             accept=".pdf,.jpg,.jpeg,.png,.webp"
+            multiple
             onChange={handleFileChange}
             className="hidden"
           />

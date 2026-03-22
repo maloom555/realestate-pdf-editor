@@ -57,6 +57,7 @@ export default function Toolbar() {
 
   const [showStampPicker, setShowStampPicker] = useState(false)
   const [showMobileMenu, setShowMobileMenu] = useState(false)
+  const [showExportMenu, setShowExportMenu] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
   const loadProjectInputRef = useRef<HTMLInputElement>(null)
 
@@ -90,7 +91,8 @@ export default function Toolbar() {
     }
   }
 
-  const handleExport = async () => {
+  const handleExport = async (pageNumbers: 'none' | 'bottom-center' | 'bottom-right' | 'bottom-left' = 'none') => {
+    setShowExportMenu(false)
     const { exportFlattenedPdf, downloadBlob } = await import('@/lib/export-engine')
     if (!pdfBytes) return
 
@@ -102,12 +104,41 @@ export default function Toolbar() {
         store.annotations,
         (current, total) => {
           store.setLoading(true, `フラット化中... ${current} / ${total} ページ`)
-        }
+        },
+        undefined,
+        pageNumbers
       )
       const fileName = store.projectName ? `${store.projectName}_edited.pdf` : 'edited_output.pdf'
       downloadBlob(result, fileName, 'application/pdf')
     } catch (err) {
       alert('PDF出力に失敗しました: ' + (err as Error).message)
+    } finally {
+      store.setLoading(false)
+    }
+  }
+
+  const [showCompressMenu, setShowCompressMenu] = useState(false)
+
+  const handleCompress = async (level: 'high' | 'standard' | 'light') => {
+    setShowCompressMenu(false)
+    if (!pdfBytes) return
+    const { compressPdf, downloadBlob } = await import('@/lib/export-engine')
+
+    store.setLoading(true, 'PDFを圧縮中...')
+    try {
+      const pdfDoc = await window.pdfjsLib.getDocument({ data: pdfBytes.slice() }).promise
+      const originalSize = pdfBytes.length
+      const result = await compressPdf(pdfDoc, level, (current, total) => {
+        store.setLoading(true, `圧縮中... ${current} / ${total} ページ`)
+      })
+      const ratio = Math.round((1 - result.length / originalSize) * 100)
+      const sizeStr = (sz: number) => sz > 1048576 ? (sz / 1048576).toFixed(1) + ' MB' : Math.round(sz / 1024) + ' KB'
+      store.setLoading(false)
+      alert(`圧縮完了！\n${sizeStr(originalSize)} → ${sizeStr(result.length)}（${ratio}%削減）`)
+      const fileName = store.projectName ? `${store.projectName}_compressed.pdf` : 'compressed.pdf'
+      downloadBlob(result, fileName, 'application/pdf')
+    } catch (err) {
+      alert('圧縮に失敗しました: ' + (err as Error).message)
     } finally {
       store.setLoading(false)
     }
@@ -597,8 +628,21 @@ export default function Toolbar() {
             <input ref={loadProjectInputRef} type="file" accept=".rpef,.json" className="hidden" onChange={handleLoadProject} />
             <button onClick={() => clearPage(currentPage)}
               className="px-3 py-2 text-sm border border-gray-200 text-gray-500 rounded-lg">クリア</button>
-            <button onClick={handleExport}
+            <button onClick={() => handleExport('none')}
               className="px-3 py-2 text-sm bg-indigo-600 text-white rounded-lg font-semibold">PDFダウンロード</button>
+            <button onClick={() => handleExport('bottom-center')}
+              className="px-3 py-2 text-sm border border-indigo-300 text-indigo-600 rounded-lg">+頁番号</button>
+            <div className="relative">
+              <button onClick={() => setShowCompressMenu(!showCompressMenu)}
+                className="px-3 py-2 text-sm border border-orange-300 text-orange-600 rounded-lg">圧縮 ▾</button>
+              {showCompressMenu && (
+                <div className="absolute bottom-full left-0 mb-1 bg-white border border-gray-200 rounded-lg shadow-lg z-10 min-w-[160px]">
+                  <button onClick={() => handleCompress('light')} className="block w-full px-4 py-2 text-sm text-left hover:bg-gray-50">軽量圧縮（高品質）</button>
+                  <button onClick={() => handleCompress('standard')} className="block w-full px-4 py-2 text-sm text-left hover:bg-gray-50">標準圧縮</button>
+                  <button onClick={() => handleCompress('high')} className="block w-full px-4 py-2 text-sm text-left hover:bg-gray-50">最大圧縮（小サイズ）</button>
+                </div>
+              )}
+            </div>
           </div>
         )}
 
@@ -683,10 +727,41 @@ export default function Toolbar() {
 
         <div className="w-px h-6 bg-gray-200" />
 
-        <button onClick={handleExport}
-          className="px-4 py-1.5 text-xs bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 transition-colors">
-          PDFダウンロード
-        </button>
+        <div className="relative">
+          <div className="flex">
+            <button onClick={() => handleExport('none')}
+              className="px-4 py-1.5 text-xs bg-indigo-600 text-white rounded-l-lg font-semibold hover:bg-indigo-700 transition-colors">
+              PDFダウンロード
+            </button>
+            <button onClick={() => setShowExportMenu(!showExportMenu)}
+              className="px-1.5 py-1.5 text-xs bg-indigo-700 text-white rounded-r-lg hover:bg-indigo-800 transition-colors border-l border-indigo-500">
+              ▾
+            </button>
+          </div>
+          {showExportMenu && (
+            <div className="absolute top-full right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-10 min-w-[200px]">
+              <div className="px-3 py-1.5 text-[10px] text-gray-400 font-semibold border-b border-gray-100">ページ番号付きで出力</div>
+              <button onClick={() => handleExport('bottom-center')} className="block w-full px-4 py-2 text-xs text-left hover:bg-gray-50">ページ番号（中央下）</button>
+              <button onClick={() => handleExport('bottom-right')} className="block w-full px-4 py-2 text-xs text-left hover:bg-gray-50">ページ番号（右下）</button>
+              <button onClick={() => handleExport('bottom-left')} className="block w-full px-4 py-2 text-xs text-left hover:bg-gray-50">ページ番号（左下）</button>
+            </div>
+          )}
+        </div>
+
+        <div className="relative">
+          <button onClick={() => setShowCompressMenu(!showCompressMenu)} disabled={!pdfBytes}
+            className="px-3 py-1.5 text-xs border border-orange-300 text-orange-600 rounded-lg hover:bg-orange-50 disabled:opacity-30 disabled:cursor-not-allowed"
+            title="PDFファイルサイズを圧縮します">
+            圧縮 ▾
+          </button>
+          {showCompressMenu && (
+            <div className="absolute top-full right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-10 min-w-[170px]">
+              <button onClick={() => handleCompress('light')} className="block w-full px-4 py-2 text-xs text-left hover:bg-gray-50">軽量圧縮（高品質）</button>
+              <button onClick={() => handleCompress('standard')} className="block w-full px-4 py-2 text-xs text-left hover:bg-gray-50">標準圧縮</button>
+              <button onClick={() => handleCompress('high')} className="block w-full px-4 py-2 text-xs text-left hover:bg-gray-50">最大圧縮（小サイズ）</button>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Sub-menu bar */}
