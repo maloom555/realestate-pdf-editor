@@ -77,15 +77,28 @@ export function drawAnnotation(ctx: CanvasRenderingContext2D, ann: Annotation) {
 
       if (ann.arrowStart && pts.length >= 2) {
         ctx.setLineDash([])
-        const base = drawArrowhead(ctx, pts[0].x, pts[0].y, pts[1].x, pts[1].y, penW, ann.color)
+        // Find a point far enough from start to determine direction
+        const minDist = Math.max(12, penW * 4)
+        let fromPt = pts[1]
+        for (let i = 1; i < pts.length; i++) {
+          const dx = pts[i].x - pts[0].x, dy = pts[i].y - pts[0].y
+          if (Math.hypot(dx, dy) >= minDist) { fromPt = pts[i]; break }
+        }
+        const base = drawArrowhead(ctx, pts[0].x, pts[0].y, fromPt.x, fromPt.y, penW, ann.color)
         drawStart = { x: base.baseX, y: base.baseY }
         applyDash(ctx, ann.dashStyle, penW)
       }
       if (ann.arrowEnd && pts.length >= 2) {
         const last = pts[pts.length - 1]
-        const prev = pts[pts.length - 2]
+        // Find a point far enough from end to determine direction
+        const minDist = Math.max(12, penW * 4)
+        let fromPt = pts[pts.length - 2]
+        for (let i = pts.length - 2; i >= 0; i--) {
+          const dx = pts[i].x - last.x, dy = pts[i].y - last.y
+          if (Math.hypot(dx, dy) >= minDist) { fromPt = pts[i]; break }
+        }
         ctx.setLineDash([])
-        const base = drawArrowhead(ctx, last.x, last.y, prev.x, prev.y, penW, ann.color)
+        const base = drawArrowhead(ctx, last.x, last.y, fromPt.x, fromPt.y, penW, ann.color)
         drawEnd = { x: base.baseX, y: base.baseY }
         applyDash(ctx, ann.dashStyle, penW)
       }

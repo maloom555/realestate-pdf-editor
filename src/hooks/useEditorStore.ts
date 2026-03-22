@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import type { Annotation, ToolType, HistoryEntry, EditorMode } from '@/types/annotations'
+import { generateId } from '@/lib/id'
 
 interface EditorState {
   // Project
@@ -44,6 +45,9 @@ interface EditorState {
   // Page operation history
   pageUndoStack: { pdfBytes: Uint8Array; totalPages: number; annotations: Record<number, Annotation[]> }[]
 
+  // Clipboard
+  clipboardAnnotation: Annotation | null
+
   // UI state
   isLoading: boolean
   loadingText: string
@@ -82,6 +86,8 @@ interface EditorState {
   setProjectId: (id: string | null) => void
   setProjectName: (name: string) => void
   setLoading: (loading: boolean, text?: string) => void
+  copyAnnotation: () => void
+  pasteAnnotation: () => void
   resetEditor: () => void
 }
 
@@ -112,6 +118,7 @@ const initialState = {
   editorMode: 'drawing' as EditorMode,
   selectedPages: new Set<number>(),
   pageUndoStack: [] as { pdfBytes: Uint8Array; totalPages: number; annotations: Record<number, Annotation[]> }[],
+  clipboardAnnotation: null as Annotation | null,
   isLoading: false,
   loadingText: '',
 }
@@ -312,6 +319,51 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   },
 
   setLoading: (loading, text = '') => set({ isLoading: loading, loadingText: text }),
+
+  copyAnnotation: () => {
+    const state = get()
+    if (!state.selectedAnnotationId) return
+    const anns = state.annotations[state.currentPage] || []
+    const selected = anns.find((a) => a.id === state.selectedAnnotationId)
+    if (selected) {
+      set({ clipboardAnnotation: structuredClone(selected) })
+    }
+  },
+
+  pasteAnnotation: () => {
+    const state = get()
+    if (!state.clipboardAnnotation) return
+    const offset = 15
+    const newAnn: Annotation = structuredClone(state.clipboardAnnotation)
+    newAnn.id = generateId()
+    const data = newAnn.data as unknown as Record<string, unknown>
+    if ('x' in data && 'y' in data) {
+      data.x = (data.x as number) + offset
+      data.y = (data.y as number) + offset
+    }
+    if ('startX' in data && 'startY' in data) {
+      data.startX = (data.startX as number) + offset
+      data.startY = (data.startY as number) + offset
+    }
+    if ('endX' in data && 'endY' in data) {
+      data.endX = (data.endX as number) + offset
+      data.endY = (data.endY as number) + offset
+    }
+    if ('points' in data && Array.isArray(data.points)) {
+      data.points = (data.points as { x: number; y: number }[]).map((p) => ({
+        x: p.x + offset, y: p.y + offset,
+      }))
+    }
+    // Push to undo stack
+    const pageAnns = state.annotations[state.currentPage] || []
+    const newAnnotations = { ...state.annotations, [state.currentPage]: [...pageAnns, newAnn] }
+    set({
+      annotations: newAnnotations,
+      selectedAnnotationId: newAnn.id,
+      undoStack: [...state.undoStack, { pageNum: state.currentPage, annotations: state.annotations[state.currentPage] || [] }],
+      redoStack: [],
+    })
+  },
 
   resetEditor: () => set(initialState),
 }))
