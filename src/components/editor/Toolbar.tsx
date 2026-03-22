@@ -857,12 +857,10 @@ export default function Toolbar() {
         </div>
       </div>
 
-      {/* Sub-menu bar */}
-      {showSubMenu && (
-        <div className="px-3 py-2 border-t border-gray-100 bg-gray-50 flex items-center justify-center gap-3 flex-wrap">
-          {subMenuContent()}
-        </div>
-      )}
+      {/* Sub-menu bar - fixed height to prevent canvas shift */}
+      <div className="px-3 py-2 border-t border-gray-100 bg-gray-50 flex items-center justify-center gap-3 flex-wrap min-h-[44px]">
+        {showSubMenu && subMenuContent()}
+      </div>
 
       {/* Stamp Picker */}
       {showStampPicker && !showSignatureEditor && (
