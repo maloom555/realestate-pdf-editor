@@ -294,11 +294,11 @@ export default function Toolbar() {
       {/* Color palette */}
       {(showColorPicker || canChangeColor) && (
         <div className="flex items-center gap-1.5">
-          <label className="text-xs text-gray-400 font-semibold shrink-0">色:</label>
+          <label className="text-sm sm:text-xs text-gray-400 font-semibold shrink-0">色:</label>
           <div className="flex items-center gap-0.5 flex-wrap">
             {COLOR_PALETTE.map((c) => (
               <button key={c} onClick={() => handleColorChange(c)}
-                className={`w-5 h-5 rounded-sm border-2 transition-all ${
+                className={`w-6 h-6 sm:w-5 sm:h-5 rounded-sm border-2 transition-all ${
                   (canChangeColor ? selectedAnn.color : maskColor) === c
                     ? 'border-indigo-500 scale-125' : 'border-gray-300 hover:border-indigo-400'
                 }`}
@@ -316,7 +316,7 @@ export default function Toolbar() {
         <>
           <div className="w-px h-5 bg-gray-300 hidden sm:block" />
           <div className="flex items-center gap-1.5">
-            <label className="text-xs text-gray-400 font-semibold shrink-0">太さ:</label>
+            <label className="text-sm sm:text-xs text-gray-400 font-semibold shrink-0">太さ:</label>
             <input type="range" min={1} max={20}
               value={canAdjustSize ? (selectedAnn.size || 2) : penSize}
               onChange={(e) => {
@@ -325,7 +325,7 @@ export default function Toolbar() {
                 else setPenSize(v)
               }}
               className="w-20 accent-indigo-500" />
-            <span className="text-xs text-gray-400 min-w-[30px]">
+            <span className="text-sm sm:text-xs text-gray-400 min-w-[30px]">
               {canAdjustSize ? (selectedAnn.size || 2) : penSize}px
             </span>
           </div>
@@ -337,15 +337,15 @@ export default function Toolbar() {
         <>
           <div className="w-px h-5 bg-gray-300 hidden sm:block" />
           <div className="flex items-center gap-1.5">
-            <label className="text-xs text-gray-400 font-semibold shrink-0">文字:</label>
+            <label className="text-sm sm:text-xs text-gray-400 font-semibold shrink-0">文字:</label>
             <input type="range" min={1} max={100} value={displayFontSize}
               onChange={(e) => handleSelectedFontSizeChange(parseInt(e.target.value))}
               className="w-20 accent-indigo-500" />
-            <span className="text-xs text-gray-400 min-w-[30px]">{displayFontSize}px</span>
+            <span className="text-sm sm:text-xs text-gray-400 min-w-[30px]">{displayFontSize}px</span>
           </div>
           {(currentTool === 'text' || isSelectedText) && (
             <select value={displayFontFamily} onChange={(e) => handleFontFamilyChange(e.target.value)}
-              className="text-xs border border-gray-200 rounded px-1 py-0.5 bg-white text-gray-700">
+              className="text-sm sm:text-xs border border-gray-200 rounded px-2 py-1 sm:px-1 sm:py-0.5 bg-white text-gray-700">
               {FONT_FAMILIES.map((f) => (
                 <option key={f.value} value={f.value}>{f.label}</option>
               ))}
@@ -361,7 +361,7 @@ export default function Toolbar() {
                 })
               }
             }}
-              className={`px-2 py-1 text-xs font-bold border rounded-lg ${
+              className={`px-2.5 py-1.5 text-sm sm:px-2 sm:py-1 sm:text-xs font-bold border rounded-lg ${
                 displayBold ? 'border-indigo-500 bg-indigo-50 text-indigo-700' : 'border-gray-200 text-gray-500'
               }`}>B</button>
             <button onClick={() => {
@@ -373,7 +373,7 @@ export default function Toolbar() {
                 })
               }
             }}
-              className={`px-2 py-1 text-xs underline border rounded-lg ${
+              className={`px-2.5 py-1.5 text-sm sm:px-2 sm:py-1 sm:text-xs underline border rounded-lg ${
                 displayUnderline ? 'border-indigo-500 bg-indigo-50 text-indigo-700' : 'border-gray-200 text-gray-500'
               }`}>U</button>
             {(currentTool === 'text' || isSelectedText) && (
@@ -386,7 +386,7 @@ export default function Toolbar() {
                   })
                 }
               }}
-                className={`px-2 py-1 text-xs border rounded-lg ${
+                className={`px-2.5 py-1.5 text-sm sm:px-2 sm:py-1 sm:text-xs border rounded-lg ${
                   displayTextBox ? 'border-indigo-500 bg-indigo-50 text-indigo-700' : 'border-gray-200 text-gray-500'
                 }`} title="テキストボックス">枠</button>
             )}
@@ -396,27 +396,27 @@ export default function Toolbar() {
 
       {/* Opacity */}
       <div className="flex items-center gap-1.5">
-        <label className="text-xs text-gray-400 font-semibold shrink-0">透過:</label>
+        <label className="text-sm sm:text-xs text-gray-400 font-semibold shrink-0">透過:</label>
         <input type="range" min={5} max={100} value={displayOpacity}
           onChange={(e) => handleOpacityChange(parseInt(e.target.value))}
           className="w-16 accent-indigo-500" />
-        <span className="text-xs text-gray-400 min-w-[30px]">{displayOpacity}%</span>
+        <span className="text-sm sm:text-xs text-gray-400 min-w-[30px]">{displayOpacity}%</span>
       </div>
 
       {/* Fill controls */}
       {(showFillForTool || showFillForSelected) && (
         <>
           <button onClick={handleFillToggle}
-            className={`px-2 py-1 text-xs border rounded-lg ${
+            className={`px-2.5 py-1.5 text-sm sm:px-2 sm:py-1 sm:text-xs border rounded-lg ${
               displayFillEnabled ? 'border-indigo-500 bg-indigo-50 text-indigo-700' : 'border-gray-200 text-gray-500'
             }`}>塗り</button>
           {displayFillEnabled && (
             <div className="flex items-center gap-1">
-              <label className="text-xs text-gray-400">濃さ:</label>
+              <label className="text-sm sm:text-xs text-gray-400">濃さ:</label>
               <input type="range" min={5} max={100} value={displayFillOpacity}
                 onChange={(e) => handleFillOpacityChange(parseInt(e.target.value))}
                 className="w-14 accent-indigo-500" />
-              <span className="text-xs text-gray-400 min-w-[24px]">{displayFillOpacity}%</span>
+              <span className="text-sm sm:text-xs text-gray-400 min-w-[24px]">{displayFillOpacity}%</span>
             </div>
           )}
         </>
@@ -425,7 +425,7 @@ export default function Toolbar() {
       {/* Close path toggle */}
       {showCloseForSelected && (
         <button onClick={handleCloseToggle}
-          className={`px-2 py-1 text-xs border rounded-lg ${
+          className={`px-2.5 py-1.5 text-sm sm:px-2 sm:py-1 sm:text-xs border rounded-lg ${
             selectedAnn.closed ? 'border-indigo-500 bg-indigo-50 text-indigo-700' : 'border-gray-200 text-gray-500'
           }`}>閉じる</button>
       )}
@@ -443,7 +443,7 @@ export default function Toolbar() {
               updateAnnotation(currentPage, selectedAnn.id, { arrowStart: !selectedAnn.arrowStart })
             }
           }}
-            className={`px-2 py-1 text-xs border rounded-lg ${
+            className={`px-2.5 py-1.5 text-sm sm:px-2 sm:py-1 sm:text-xs border rounded-lg ${
               (selectedAnn.type === 'polyline'
                 ? (selectedAnn.data as { arrowStart: boolean }).arrowStart
                 : selectedAnn.arrowStart)
@@ -460,7 +460,7 @@ export default function Toolbar() {
               updateAnnotation(currentPage, selectedAnn.id, { arrowEnd: !selectedAnn.arrowEnd })
             }
           }}
-            className={`px-2 py-1 text-xs border rounded-lg ${
+            className={`px-2.5 py-1.5 text-sm sm:px-2 sm:py-1 sm:text-xs border rounded-lg ${
               (selectedAnn.type === 'polyline'
                 ? (selectedAnn.data as { arrowEnd: boolean }).arrowEnd
                 : selectedAnn.arrowEnd)
@@ -473,7 +473,7 @@ export default function Toolbar() {
       {/* Dash style dropdown */}
       {(showDashForTool || showDashForSelected) && (
         <div className="flex items-center gap-1">
-          <label className="text-xs text-gray-400 font-semibold shrink-0">線種:</label>
+          <label className="text-sm sm:text-xs text-gray-400 font-semibold shrink-0">線種:</label>
           <select
             value={selectedAnn?.dashStyle || 'solid'}
             onChange={(e) => {
@@ -481,7 +481,7 @@ export default function Toolbar() {
                 updateAnnotation(currentPage, selectedAnn.id, { dashStyle: e.target.value as 'solid' | 'dash' | 'dot' | 'dashdot' })
               }
             }}
-            className="text-xs border border-gray-200 rounded px-1.5 py-0.5 bg-white text-gray-700"
+            className="text-sm sm:text-xs border border-gray-200 rounded px-2 py-1 sm:px-1.5 sm:py-0.5 bg-white text-gray-700"
           >
             <option value="solid">── 実線</option>
             <option value="dash">╌╌ 破線</option>
@@ -494,7 +494,7 @@ export default function Toolbar() {
       {/* Border radius */}
       {(showRadiusForTool || showRadiusForSelected) && (
         <div className="flex items-center gap-1.5">
-          <label className="text-xs text-gray-400 font-semibold shrink-0">角丸:</label>
+          <label className="text-sm sm:text-xs text-gray-400 font-semibold shrink-0">角丸:</label>
           <input type="range" min={0} max={30} value={selectedAnn?.borderRadius || 0}
             onChange={(e) => {
               if (selectedAnn) {
@@ -502,7 +502,7 @@ export default function Toolbar() {
               }
             }}
             className="w-16 accent-indigo-500" />
-          <span className="text-xs text-gray-400 min-w-[24px]">{selectedAnn?.borderRadius || 0}</span>
+          <span className="text-sm sm:text-xs text-gray-400 min-w-[24px]">{selectedAnn?.borderRadius || 0}</span>
         </div>
       )}
 
@@ -519,7 +519,7 @@ export default function Toolbar() {
             if (fn) fn()
           }
         }}
-          className={`px-2 py-1 text-xs border rounded-lg ${
+          className={`px-2.5 py-1.5 text-sm sm:px-2 sm:py-1 sm:text-xs border rounded-lg ${
             (selectedAnn.data as StampData).legX != null
               ? 'border-indigo-500 bg-indigo-50 text-indigo-700'
               : 'border-gray-200 text-gray-500'
@@ -542,7 +542,7 @@ export default function Toolbar() {
           )}
           {selectedAnnotationId && (
             <button onClick={handleDelete}
-              className="px-3 py-1 text-xs border border-red-300 text-red-500 rounded-lg hover:bg-red-50">削除</button>
+              className="px-3 py-1.5 text-sm sm:text-xs border border-red-300 text-red-500 rounded-lg hover:bg-red-50">削除</button>
           )}
         </>
       )}
@@ -552,87 +552,84 @@ export default function Toolbar() {
   // ===== MOBILE LAYOUT =====
   if (isMobile) {
     return (
-      <>
-        {/* Mobile bottom toolbar */}
-        <div className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 shadow-[0_-2px_10px_rgba(0,0,0,0.1)] safe-bottom">
-          {/* Sub-menu (slides up above toolbar) */}
-          {(showSubMenu || showMobileMenu) && (
-            <div className="px-3 py-2 border-b border-gray-100 bg-gray-50 flex items-center gap-2 flex-wrap overflow-x-auto">
-              {subMenuContent()}
-            </div>
-          )}
-
-          {/* Stamp Picker (mobile) */}
-          {showStampPicker && (
-            <div className="px-3 py-2 border-b border-gray-100 bg-gray-50 max-h-40 overflow-y-auto">
-              {Object.entries(stampsByCategory).map(([category, stamps]) => (
-                <div key={category} className="mb-2">
-                  <div className="text-xs text-gray-400 font-semibold mb-1">{category}</div>
-                  <div className="flex flex-wrap gap-1">
-                    {stamps.map((stamp) => (
-                      <button key={stamp.id}
-                        onClick={() => handleStampSelect(stamp.id, stamp.label, stamp.color)}
-                        className="px-2 py-1 text-xs border-2 rounded hover:shadow transition-all font-bold"
-                        style={{ borderColor: stamp.color, color: stamp.color }}>
-                        {stamp.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* Main tool row */}
-          <div className="flex items-center gap-1 px-2 py-1.5">
-            {/* Scrollable tool buttons */}
-            <div className="flex-1 overflow-x-auto flex items-center gap-1 min-w-0">
-              {tools.map((tool) => (
-                <button
-                  key={tool.id}
-                  onClick={() => handleToolSelect(tool.id)}
-                  className={`flex-shrink-0 flex items-center justify-center w-9 h-9 rounded-lg text-base transition-all
-                    ${currentTool === tool.id
-                      ? 'bg-indigo-100 text-indigo-700 font-semibold'
-                      : 'text-gray-500 active:bg-gray-100'
-                    }`}
-                  title={tool.label}
-                >
-                  {tool.icon}
-                </button>
-              ))}
-            </div>
-
-            {/* Action buttons */}
-            <div className="flex items-center gap-1 flex-shrink-0 border-l border-gray-200 pl-1">
-              <button onClick={undo} disabled={undoStack.length === 0}
-                className="w-8 h-8 flex items-center justify-center text-gray-500 disabled:opacity-30 rounded active:bg-gray-100"
-                title="戻す">↩</button>
-              <button onClick={redo} disabled={redoStack.length === 0}
-                className="w-8 h-8 flex items-center justify-center text-gray-500 disabled:opacity-30 rounded active:bg-gray-100"
-                title="やり直し">↪</button>
-              <button onClick={() => setShowMobileMenu(!showMobileMenu)}
-                className={`w-8 h-8 flex items-center justify-center rounded ${showMobileMenu ? 'bg-indigo-100 text-indigo-700' : 'text-gray-500 active:bg-gray-100'}`}
-                title="メニュー">⋯</button>
-            </div>
+      <div className="bg-white border-b border-gray-200 shadow-sm">
+        {/* Main tool row */}
+        <div className="flex items-center gap-1.5 px-2 py-2">
+          {/* Scrollable tool buttons */}
+          <div className="flex-1 overflow-x-auto flex items-center gap-1.5 min-w-0">
+            {tools.map((tool) => (
+              <button
+                key={tool.id}
+                onClick={() => handleToolSelect(tool.id)}
+                className={`flex-shrink-0 flex items-center justify-center w-10 h-10 rounded-lg text-lg transition-all
+                  ${currentTool === tool.id
+                    ? 'bg-indigo-100 text-indigo-700 font-semibold'
+                    : 'text-gray-500 active:bg-gray-100'
+                  }`}
+                title={tool.label}
+              >
+                {tool.icon}
+              </button>
+            ))}
           </div>
 
-          {/* More menu (mobile) */}
-          {showMobileMenu && (
-            <div className="px-3 py-2 border-t border-gray-100 bg-white flex items-center gap-2 flex-wrap">
-              <button onClick={handleSaveProject} disabled={!pdfBytes}
-                className="px-3 py-1.5 text-xs border border-green-300 text-green-700 rounded-lg disabled:opacity-30">💾 保存</button>
-              <button onClick={() => { loadProjectInputRef.current?.click(); setShowMobileMenu(false) }}
-                className="px-3 py-1.5 text-xs border border-blue-300 text-blue-700 rounded-lg">📂 読込</button>
-              <input ref={loadProjectInputRef} type="file" accept=".rpef,.json" className="hidden" onChange={handleLoadProject} />
-              <button onClick={() => clearPage(currentPage)}
-                className="px-3 py-1.5 text-xs border border-gray-200 text-gray-500 rounded-lg">クリア</button>
-              <button onClick={handleExport}
-                className="px-3 py-1.5 text-xs bg-indigo-600 text-white rounded-lg font-semibold">PDFダウンロード</button>
-            </div>
-          )}
+          {/* Action buttons */}
+          <div className="flex items-center gap-1 flex-shrink-0 border-l border-gray-200 pl-1.5">
+            <button onClick={undo} disabled={undoStack.length === 0}
+              className="w-9 h-9 flex items-center justify-center text-lg text-gray-500 disabled:opacity-30 rounded active:bg-gray-100"
+              title="戻す">↩</button>
+            <button onClick={redo} disabled={redoStack.length === 0}
+              className="w-9 h-9 flex items-center justify-center text-lg text-gray-500 disabled:opacity-30 rounded active:bg-gray-100"
+              title="やり直し">↪</button>
+            <button onClick={() => setShowMobileMenu(!showMobileMenu)}
+              className={`w-9 h-9 flex items-center justify-center text-lg rounded ${showMobileMenu ? 'bg-indigo-100 text-indigo-700' : 'text-gray-500 active:bg-gray-100'}`}
+              title="メニュー">⋯</button>
+          </div>
         </div>
-      </>
+
+        {/* More menu (mobile) */}
+        {showMobileMenu && (
+          <div className="px-3 py-2 border-t border-gray-100 bg-white flex items-center gap-2 flex-wrap">
+            <button onClick={handleSaveProject} disabled={!pdfBytes}
+              className="px-3 py-2 text-sm border border-green-300 text-green-700 rounded-lg disabled:opacity-30">💾 保存</button>
+            <button onClick={() => { loadProjectInputRef.current?.click(); setShowMobileMenu(false) }}
+              className="px-3 py-2 text-sm border border-blue-300 text-blue-700 rounded-lg">📂 読込</button>
+            <input ref={loadProjectInputRef} type="file" accept=".rpef,.json" className="hidden" onChange={handleLoadProject} />
+            <button onClick={() => clearPage(currentPage)}
+              className="px-3 py-2 text-sm border border-gray-200 text-gray-500 rounded-lg">クリア</button>
+            <button onClick={handleExport}
+              className="px-3 py-2 text-sm bg-indigo-600 text-white rounded-lg font-semibold">PDFダウンロード</button>
+          </div>
+        )}
+
+        {/* Sub-menu */}
+        {showSubMenu && (
+          <div className="px-3 py-2 border-t border-gray-100 bg-gray-50 flex items-center gap-2.5 flex-wrap overflow-x-auto">
+            {subMenuContent()}
+          </div>
+        )}
+
+        {/* Stamp Picker (mobile) */}
+        {showStampPicker && (
+          <div className="px-3 py-2 border-t border-gray-100 bg-gray-50 max-h-44 overflow-y-auto">
+            {Object.entries(stampsByCategory).map(([category, stamps]) => (
+              <div key={category} className="mb-2">
+                <div className="text-sm text-gray-400 font-semibold mb-1">{category}</div>
+                <div className="flex flex-wrap gap-1.5">
+                  {stamps.map((stamp) => (
+                    <button key={stamp.id}
+                      onClick={() => handleStampSelect(stamp.id, stamp.label, stamp.color)}
+                      className="px-3 py-1.5 text-sm border-2 rounded hover:shadow transition-all font-bold"
+                      style={{ borderColor: stamp.color, color: stamp.color }}>
+                      {stamp.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     )
   }
 

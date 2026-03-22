@@ -161,7 +161,7 @@ export default function EditorPage() {
           {/* Desktop: toolbar at top. Mobile: toolbar is fixed at bottom (rendered by Toolbar component) */}
           <Toolbar />
           <PageNavigator pdfDoc={pdfDoc} />
-          <main className="flex-1 min-h-0 flex justify-center items-start overflow-auto p-2 sm:p-4 pb-20 sm:pb-4">
+          <main className="flex-1 min-h-0 flex justify-center items-start overflow-auto p-2 sm:p-4">
             <EditorCanvas pdfDoc={pdfDoc} />
           </main>
         </>
