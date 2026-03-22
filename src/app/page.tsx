@@ -3,6 +3,8 @@ import Link from 'next/link'
 // SVG icon components
 const icons = {
   pdf: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-8 h-8"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="15" x2="15" y2="15"/></svg>,
+  aiMask: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-8 h-8"><path d="M12 2a4 4 0 014 4v2H8V6a4 4 0 014-4z"/><rect x="3" y="8" width="18" height="14" rx="2"/><circle cx="9" cy="15" r="1.5" fill="currentColor"/><circle cx="15" cy="15" r="1.5" fill="currentColor"/><path d="M9 19h6"/></svg>,
+  photo: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-8 h-8"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>,
   comingSoon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-8 h-8"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>,
   shield: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-6 h-6"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>,
   globe: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-6 h-6"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>,
@@ -24,22 +26,22 @@ const tools = [
     tags: ['PDF', '写真', '墨消し', 'スタンプ', '注釈'],
   },
   {
-    id: 'coming-1',
-    icon: icons.comingSoon,
-    title: '物件情報管理（予定）',
-    desc: '物件情報の一元管理、帯チラシの自動生成、物件写真の整理など。',
+    id: 'ai-masking',
+    icon: icons.aiMask,
+    title: '不動産AIマスキング工房',
+    desc: 'AIが個人情報（氏名・住所・電話番号・口座番号）を自動検出。確認して一括墨消し。AI送信前・外部共有前の機密情報除去に。',
     href: '#',
     status: 'coming' as const,
-    tags: ['物件管理', '帯チラシ'],
+    tags: ['AI自動検出', '個人情報', '一括墨消し', 'PDF'],
   },
   {
-    id: 'coming-2',
-    icon: icons.comingSoon,
-    title: '書類テンプレート（予定）',
-    desc: '重説・契約書・案内図などの定型書類をテンプレートから素早く作成。',
+    id: 'photo-tool',
+    icon: icons.photo,
+    title: '不動産写真工房',
+    desc: '物件写真の一括リサイズ・圧縮・透かし入れ・明るさ補正。ポータルサイトの規定サイズに合わせて一発変換。',
     href: '#',
     status: 'coming' as const,
-    tags: ['重説', '契約書', 'テンプレート'],
+    tags: ['一括リサイズ', '圧縮', '透かし', '明るさ補正'],
   },
 ]
 
@@ -92,7 +94,7 @@ export default function HomePage() {
             不動産業務を効率化する、無料オンラインツール集
           </p>
           <p className="text-sm md:text-base opacity-75 mb-8 max-w-xl mx-auto">
-            PDF編集・写真注釈・スタンプなど、日常業務で使えるツールを<br className="hidden sm:inline" />
+            PDF編集・AIマスキング・写真加工など、日常業務で使えるツールを<br className="hidden sm:inline" />
             ブラウザだけで。アカウント登録不要・サーバー送信なし。
           </p>
           <div className="flex flex-wrap justify-center gap-3 text-sm">
