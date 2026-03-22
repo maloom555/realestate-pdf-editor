@@ -1,5 +1,7 @@
 export type ToolType = 'rect' | 'pen' | 'callout' | 'select' | 'text' | 'highlight' | 'arrow' | 'polyline' | 'circle' | 'shape-rect' | 'stamp'
 
+export type EditorMode = 'drawing' | 'pageEditor'
+
 export interface Point {
   x: number
   y: number

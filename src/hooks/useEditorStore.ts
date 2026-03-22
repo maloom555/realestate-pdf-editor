@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import type { Annotation, ToolType, HistoryEntry } from '@/types/annotations'
+import type { Annotation, ToolType, HistoryEntry, EditorMode } from '@/types/annotations'
 
 interface EditorState {
   // Project
@@ -37,11 +37,20 @@ interface EditorState {
   undoStack: HistoryEntry[]
   redoStack: HistoryEntry[]
 
+  // Editor mode
+  editorMode: EditorMode
+  selectedPages: Set<number>
+
   // UI state
   isLoading: boolean
   loadingText: string
 
   // Actions
+  setEditorMode: (mode: EditorMode) => void
+  togglePageSelection: (pageNum: number) => void
+  selectAllPages: () => void
+  clearPageSelection: () => void
+  applyPageOperation: (newPdfBytes: Uint8Array, newTotalPages: number, newAnnotations: Record<number, Annotation[]>) => void
   setPdfBytes: (bytes: Uint8Array, totalPages: number) => void
   setCurrentPage: (page: number) => void
   setScale: (scale: number) => void
@@ -96,6 +105,8 @@ const initialState = {
   selectedAnnotationId: null,
   undoStack: [] as HistoryEntry[],
   redoStack: [] as HistoryEntry[],
+  editorMode: 'drawing' as EditorMode,
+  selectedPages: new Set<number>(),
   isLoading: false,
   loadingText: '',
 }
@@ -227,6 +238,34 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   setProjectId: (id) => set({ projectId: id }),
 
   setProjectName: (name) => set({ projectName: name }),
+
+  setEditorMode: (mode) => set({ editorMode: mode, selectedPages: new Set() }),
+
+  togglePageSelection: (pageNum) => {
+    const pages = new Set(get().selectedPages)
+    if (pages.has(pageNum)) pages.delete(pageNum)
+    else pages.add(pageNum)
+    set({ selectedPages: pages })
+  },
+
+  selectAllPages: () => {
+    const pages = new Set<number>()
+    for (let i = 1; i <= get().totalPages; i++) pages.add(i)
+    set({ selectedPages: pages })
+  },
+
+  clearPageSelection: () => set({ selectedPages: new Set() }),
+
+  applyPageOperation: (newPdfBytes, newTotalPages, newAnnotations) => set({
+    pdfBytes: newPdfBytes,
+    totalPages: newTotalPages,
+    annotations: newAnnotations,
+    currentPage: Math.min(get().currentPage, newTotalPages) || 1,
+    selectedPages: new Set(),
+    undoStack: [],
+    redoStack: [],
+    selectedAnnotationId: null,
+  }),
 
   setLoading: (loading, text = '') => set({ isLoading: loading, loadingText: text }),
 

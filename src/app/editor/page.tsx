@@ -6,6 +6,7 @@ import DropZone from '@/components/editor/DropZone'
 import Toolbar from '@/components/editor/Toolbar'
 import PageNavigator from '@/components/editor/PageNavigator'
 import EditorCanvas from '@/components/editor/EditorCanvas'
+import PageEditor from '@/components/editor/PageEditor'
 import LoadingOverlay from '@/components/editor/LoadingOverlay'
 import Script from 'next/script'
 
@@ -118,6 +119,12 @@ export default function EditorPage() {
     return () => { if (saveTimerRef.current) clearTimeout(saveTimerRef.current) }
   }, [store.annotations, store.currentPage, store.pdfBytes, store.projectId, store.projectName, store.totalPages])
 
+  // Reload pdf.js document after page operations
+  const reloadPdfDoc = useCallback(async (newBytes: Uint8Array) => {
+    const doc = await window.pdfjsLib.getDocument({ data: newBytes.slice() }).promise
+    setPdfDoc(doc)
+  }, [])
+
   const handleProjectLoad = useCallback(async (projectId: string) => {
     if (!pdfJsLoaded) return
     store.setLoading(true, 'プロジェクトを読み込み中...')
@@ -158,12 +165,47 @@ export default function EditorPage() {
 
       {pdfDoc ? (
         <>
-          {/* Desktop: toolbar at top. Mobile: toolbar is fixed at bottom (rendered by Toolbar component) */}
-          <Toolbar />
-          <PageNavigator pdfDoc={pdfDoc} />
-          <main className="flex-1 min-h-0 flex justify-center items-start overflow-auto p-2 sm:p-4">
-            <EditorCanvas pdfDoc={pdfDoc} />
-          </main>
+          {/* Mode tabs */}
+          <div className="flex bg-white border-b border-gray-200">
+            <button
+              onClick={() => store.setEditorMode('drawing')}
+              className={`flex-1 sm:flex-none px-6 py-2 text-sm font-medium transition-colors relative
+                ${store.editorMode === 'drawing'
+                  ? 'text-indigo-700'
+                  : 'text-gray-400 hover:text-gray-600'
+                }`}
+            >
+              描画編集
+              {store.editorMode === 'drawing' && (
+                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-indigo-600" />
+              )}
+            </button>
+            <button
+              onClick={() => store.setEditorMode('pageEditor')}
+              className={`flex-1 sm:flex-none px-6 py-2 text-sm font-medium transition-colors relative
+                ${store.editorMode === 'pageEditor'
+                  ? 'text-indigo-700'
+                  : 'text-gray-400 hover:text-gray-600'
+                }`}
+            >
+              ページ編集
+              {store.editorMode === 'pageEditor' && (
+                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-indigo-600" />
+              )}
+            </button>
+          </div>
+
+          {store.editorMode === 'drawing' ? (
+            <>
+              <Toolbar />
+              <PageNavigator pdfDoc={pdfDoc} />
+              <main className="flex-1 min-h-0 flex justify-center items-start overflow-auto p-2 sm:p-4">
+                <EditorCanvas pdfDoc={pdfDoc} />
+              </main>
+            </>
+          ) : (
+            <PageEditor pdfDoc={pdfDoc} onReloadPdf={reloadPdfDoc} />
+          )}
         </>
       ) : (
         <main className="flex-1 flex justify-center items-start px-4">
