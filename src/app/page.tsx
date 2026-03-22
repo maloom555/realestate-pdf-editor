@@ -19,7 +19,7 @@ const tools = [
   {
     id: 'pdf-editor',
     icon: icons.pdf,
-    title: 'PDF・写真 編集ツール',
+    title: '不動産PDF工房',
     desc: '墨消し・テキスト注釈・スタンプ・ハイライト・矢印・図形描画など11種のツールで物件資料を編集。フラット化PDF出力対応。',
     href: '/editor',
     status: 'available' as const,
@@ -29,10 +29,10 @@ const tools = [
     id: 'ai-masking',
     icon: icons.aiMask,
     title: '不動産AIマスキング工房',
-    desc: 'AIが個人情報（氏名・住所・電話番号・口座番号）を自動検出。確認して一括墨消し。AI送信前・外部共有前の機密情報除去に。',
+    desc: 'ChatGPTやClaudeにPDFを送る前に、個人情報や機密情報を素早くマスキング。AIへの安全な資料送信の下準備を簡単に。',
     href: '#',
     status: 'coming' as const,
-    tags: ['AI自動検出', '個人情報', '一括墨消し', 'PDF'],
+    tags: ['AI送信前', '個人情報保護', '簡単マスキング', 'PDF'],
   },
   {
     id: 'photo-tool',
