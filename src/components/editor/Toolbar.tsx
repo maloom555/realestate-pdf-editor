@@ -759,13 +759,24 @@ export default function Toolbar() {
           </div>
         )}
         {showSignatureEditor && (
-          <SignatureEditor onPlace={handleSignaturePlace} onClose={() => {
-            setShowSignatureEditor(false)
-            setShowStampPicker(true)
-            import('@/lib/signature-db').then(({ getAllSignatureTemplates }) =>
-              getAllSignatureTemplates().then(setSignatureTemplates)
-            )
-          }} />
+          <>
+            <div className="fixed inset-0 z-10" onClick={() => {
+              setShowSignatureEditor(false)
+              setShowStampPicker(true)
+              import('@/lib/signature-db').then(({ getAllSignatureTemplates }) =>
+                getAllSignatureTemplates().then(setSignatureTemplates)
+              )
+            }} />
+            <div className="relative z-20">
+              <SignatureEditor onPlace={handleSignaturePlace} onClose={() => {
+                setShowSignatureEditor(false)
+                setShowStampPicker(true)
+                import('@/lib/signature-db').then(({ getAllSignatureTemplates }) =>
+                  getAllSignatureTemplates().then(setSignatureTemplates)
+                )
+              }} />
+            </div>
+          </>
         )}
       </div>
     )
@@ -864,11 +875,11 @@ export default function Toolbar() {
         </div>
       </div>
 
-      {/* Sub-menu bar - fixed single row, scrollable */}
-      <div className="h-[40px] border-t border-gray-100 bg-gray-50 flex items-center">
+      {/* Sub-menu bar - fixed height, wraps content */}
+      <div className="min-h-[40px] border-t border-gray-100 bg-gray-50 flex items-center">
         {showSubMenu ? (
-          <div className="flex-1 overflow-x-auto px-3">
-            <div className="flex items-center gap-3 whitespace-nowrap min-w-max">
+          <div className="flex-1 px-3 py-1">
+            <div className="flex items-center gap-x-3 gap-y-1 flex-wrap">
               {subMenuContent()}
             </div>
           </div>
@@ -879,6 +890,8 @@ export default function Toolbar() {
 
       {/* Stamp Picker - overlay */}
       {showStampPicker && !showSignatureEditor && (
+        <>
+        <div className="fixed inset-0 z-10" onClick={() => setShowStampPicker(false)} />
         <div className="absolute left-0 right-0 top-full z-20 px-3 py-3 bg-white/95 backdrop-blur-sm border-b border-gray-200 shadow-md">
           {Object.entries(stampsByCategory).map(([category, stamps]) => (
             <div key={category} className="mb-2">
@@ -913,21 +926,31 @@ export default function Toolbar() {
             </div>
           </div>
         </div>
+        </>
       )}
       {showSignatureEditor && (
-        <div className="absolute left-0 right-0 top-full z-20 bg-white border-b border-gray-200 shadow-lg">
-          <SignatureEditor
-            onPlace={handleSignaturePlace}
-            onClose={() => {
-              setShowSignatureEditor(false)
-              setShowStampPicker(true)
-              // Reload templates after management
-              import('@/lib/signature-db').then(({ getAllSignatureTemplates }) =>
-                getAllSignatureTemplates().then(setSignatureTemplates)
-              )
-            }}
-          />
-        </div>
+        <>
+          {/* Backdrop to close on outside click */}
+          <div className="fixed inset-0 z-10" onClick={() => {
+            setShowSignatureEditor(false)
+            setShowStampPicker(true)
+            import('@/lib/signature-db').then(({ getAllSignatureTemplates }) =>
+              getAllSignatureTemplates().then(setSignatureTemplates)
+            )
+          }} />
+          <div className="absolute left-0 right-0 top-full z-20 bg-white border-b border-gray-200 shadow-lg">
+            <SignatureEditor
+              onPlace={handleSignaturePlace}
+              onClose={() => {
+                setShowSignatureEditor(false)
+                setShowStampPicker(true)
+                import('@/lib/signature-db').then(({ getAllSignatureTemplates }) =>
+                  getAllSignatureTemplates().then(setSignatureTemplates)
+                )
+              }}
+            />
+          </div>
+        </>
       )}
     </div>
   )
