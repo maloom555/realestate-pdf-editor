@@ -62,7 +62,17 @@ export default function Toolbar() {
   const [showMobileMenu, setShowMobileMenu] = useState(false)
   const [showExportMenu, setShowExportMenu] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
+  const [signatureTemplates, setSignatureTemplates] = useState<import('@/types/annotations').SignatureTemplate[]>([])
   const loadProjectInputRef = useRef<HTMLInputElement>(null)
+
+  // Load signature templates when stamp picker opens
+  useEffect(() => {
+    if (showStampPicker) {
+      import('@/lib/signature-db').then(({ getAllSignatureTemplates }) =>
+        getAllSignatureTemplates().then(setSignatureTemplates)
+      )
+    }
+  }, [showStampPicker])
 
   // Detect mobile viewport
   useEffect(() => {
@@ -94,6 +104,13 @@ export default function Toolbar() {
     if (fn) fn(text, color, fontSize, fontFamily)
     setShowSignatureEditor(false)
     setShowStampPicker(false)
+  }
+
+  const handleQuickPlaceSignature = (tmpl: import('@/types/annotations').SignatureTemplate) => {
+    import('@/lib/signature-db').then(({ applyVariables }) => {
+      const text = applyVariables(tmpl.template, tmpl.variables)
+      handleSignaturePlace(text, tmpl.color, tmpl.fontSize, tmpl.fontFamily)
+    })
   }
 
   const handleDelete = () => {
@@ -715,16 +732,33 @@ export default function Toolbar() {
                 </div>
               </div>
             ))}
+            {/* Signature stamps - quick place */}
             <div className="mt-2 pt-2 border-t border-gray-200">
-              <button onClick={() => setShowSignatureEditor(true)}
-                className="px-3 py-1.5 text-sm border-2 border-dashed border-indigo-300 text-indigo-500 rounded hover:border-indigo-500">
-                署名スタンプを管理
-              </button>
+              <div className="text-sm text-gray-400 font-semibold mb-1">署名スタンプ</div>
+              <div className="flex flex-wrap gap-1.5">
+                {signatureTemplates.map((tmpl) => (
+                  <button key={tmpl.id}
+                    onClick={() => handleQuickPlaceSignature(tmpl)}
+                    className="px-3 py-1.5 text-sm border-2 border-indigo-400 text-indigo-600 rounded hover:shadow hover:bg-indigo-50 transition-all font-bold">
+                    {tmpl.name}
+                  </button>
+                ))}
+                <button onClick={() => setShowSignatureEditor(true)}
+                  className="px-3 py-1.5 text-sm border-2 border-dashed border-gray-300 text-gray-400 rounded hover:border-indigo-400 hover:text-indigo-500">
+                  + 管理
+                </button>
+              </div>
             </div>
           </div>
         )}
         {showSignatureEditor && (
-          <SignatureEditor onPlace={handleSignaturePlace} onClose={() => setShowSignatureEditor(false)} />
+          <SignatureEditor onPlace={handleSignaturePlace} onClose={() => {
+            setShowSignatureEditor(false)
+            setShowStampPicker(true)
+            import('@/lib/signature-db').then(({ getAllSignatureTemplates }) =>
+              getAllSignatureTemplates().then(setSignatureTemplates)
+            )
+          }} />
         )}
       </div>
     )
@@ -848,19 +882,36 @@ export default function Toolbar() {
               </div>
             </div>
           ))}
+          {/* Signature stamps - quick place */}
           <div className="mt-2 pt-2 border-t border-gray-200">
             <div className="text-xs text-gray-400 font-semibold mb-1">署名スタンプ</div>
-            <button onClick={() => setShowSignatureEditor(true)}
-              className="px-3 py-1.5 text-sm border-2 border-dashed border-indigo-300 text-indigo-500 rounded hover:border-indigo-500 hover:bg-indigo-50 transition-all">
-              署名スタンプを管理
-            </button>
+            <div className="flex flex-wrap gap-1.5">
+              {signatureTemplates.map((tmpl) => (
+                <button key={tmpl.id}
+                  onClick={() => handleQuickPlaceSignature(tmpl)}
+                  className="px-3 py-1.5 text-sm border-2 border-indigo-400 text-indigo-600 rounded hover:shadow hover:bg-indigo-50 transition-all font-bold">
+                  {tmpl.name}
+                </button>
+              ))}
+              <button onClick={() => setShowSignatureEditor(true)}
+                className="px-3 py-1.5 text-sm border-2 border-dashed border-gray-300 text-gray-400 rounded hover:border-indigo-400 hover:text-indigo-500 transition-all">
+                + 管理
+              </button>
+            </div>
           </div>
         </div>
       )}
       {showSignatureEditor && (
         <SignatureEditor
           onPlace={handleSignaturePlace}
-          onClose={() => setShowSignatureEditor(false)}
+          onClose={() => {
+            setShowSignatureEditor(false)
+            setShowStampPicker(true)
+            // Reload templates after management
+            import('@/lib/signature-db').then(({ getAllSignatureTemplates }) =>
+              getAllSignatureTemplates().then(setSignatureTemplates)
+            )
+          }}
         />
       )}
     </div>

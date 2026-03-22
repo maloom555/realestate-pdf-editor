@@ -157,7 +157,7 @@ export default function EditorPage() {
       } catch (err) {
         console.error('Auto-save failed:', err)
       }
-    }, 2000)
+    }, debounceMs)
     return () => { if (saveTimerRef.current) clearTimeout(saveTimerRef.current) }
   }, [store.annotations, store.currentPage, store.pdfBytes, store.projectId, store.projectName, store.totalPages])
 
