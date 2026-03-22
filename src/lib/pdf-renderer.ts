@@ -441,17 +441,25 @@ export function drawAnnotation(ctx: CanvasRenderingContext2D, ann: Annotation, s
               const imgX = isLeft ? d.x + padding : d.x + d.w - padding - drawW
               const imgY = d.y + (d.h - drawH) / 2
               ctx.drawImage(cachedImg, imgX, imgY, drawW, drawH)
-              // Draw text on the other side
+              // Draw text on the other side (clipped to remaining space)
               if (hasText) {
                 ctx.fillStyle = stampColor
                 ctx.font = `${fs}px ${ff}`
                 ctx.textBaseline = 'top'
                 const textX = isLeft ? imgX + drawW + padding * 0.5 : d.x + padding
+                const textMaxW = isLeft
+                  ? d.x + d.w - padding - textX
+                  : imgX - padding * 0.5 - (d.x + padding)
                 const totalTextH = lines.length * lineHeight
                 const textStartY = d.y + (d.h - totalTextH) / 2
+                ctx.save()
+                ctx.beginPath()
+                ctx.rect(textX, d.y, Math.max(textMaxW, 0), d.h)
+                ctx.clip()
                 for (let i = 0; i < lines.length; i++) {
                   ctx.fillText(lines[i], textX, textStartY + i * lineHeight)
                 }
+                ctx.restore()
               }
             }
           }

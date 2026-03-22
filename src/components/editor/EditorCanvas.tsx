@@ -271,9 +271,10 @@ export default function EditorCanvas({ pdfDoc }: EditorCanvasProps) {
         }
         const textH = lines.length * lineHeight
         const padding = 12
-        // Estimate image size in stamp
-        const imgW = sig.imageData ? 120 : 0
-        const imgH = sig.imageData ? 80 : 0
+        // Estimate image size in stamp (with scale)
+        const iScale = (sig.imageScale || 100) / 100
+        const imgW = sig.imageData ? 120 * iScale : 0
+        const imgH = sig.imageData ? 80 * iScale : 0
         let sw: number, sh: number
         if (sig.imagePosition === 'left' || sig.imagePosition === 'right') {
           sw = (textW + imgW + (sig.imageData ? 10 : 0) + padding * 2) / scale
