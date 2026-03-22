@@ -159,9 +159,16 @@ export default function Toolbar() {
       const result = await compressPdf(pdfDoc, level, (current, total) => {
         store.setLoading(true, `圧縮中... ${current} / ${total} ページ`)
       })
-      const ratio = Math.round((1 - result.length / originalSize) * 100)
       const sizeStr = (sz: number) => sz > 1048576 ? (sz / 1048576).toFixed(1) + ' MB' : Math.round(sz / 1024) + ' KB'
       store.setLoading(false)
+
+      // If compressed is larger than original, use original
+      if (result.length >= originalSize) {
+        alert(`このPDFは既に十分小さいため、これ以上の圧縮はできません。\n現在のサイズ: ${sizeStr(originalSize)}`)
+        return
+      }
+
+      const ratio = Math.round((1 - result.length / originalSize) * 100)
       alert(`圧縮完了！\n${sizeStr(originalSize)} → ${sizeStr(result.length)}（${ratio}%削減）`)
       const fileName = store.projectName ? `${store.projectName}_compressed.pdf` : 'compressed.pdf'
       downloadBlob(result, fileName, 'application/pdf')
