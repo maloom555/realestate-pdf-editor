@@ -1068,6 +1068,13 @@ export default function EditorCanvas({ pdfDoc }: EditorCanvasProps) {
   // Keyboard shortcuts: Esc, Copy (Ctrl+C), Paste (Ctrl+V)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Delete/Backspace to undo last polyline point
+      if ((e.key === 'Delete' || e.key === 'Backspace') && drawStateRef.current.polylinePoints.length > 0) {
+        e.preventDefault()
+        drawStateRef.current.polylinePoints.pop()
+        redrawAnnotations()
+        return
+      }
       // Esc to cancel polyline
       if (e.key === 'Escape' && drawStateRef.current.polylinePoints.length > 0) {
         drawStateRef.current.polylinePoints = []
