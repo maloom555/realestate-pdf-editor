@@ -240,6 +240,21 @@ export default function EditorCanvas({ pdfDoc }: EditorCanvasProps) {
       return
     }
 
+    // While using a drawing tool, clicking on an existing annotation switches to select mode
+    if (currentTool !== 'select') {
+      for (let i = pageAnns.length - 1; i >= 0; i--) {
+        if (hitTestAnnotation(pos.x, pos.y, pageAnns[i])) {
+          store.setCurrentTool('select')
+          setSelectedAnnotationId(pageAnns[i].id)
+          ds.dragMode = 'move'
+          ds.dragStart = pos
+          ds.origData = JSON.parse(JSON.stringify(pageAnns[i].data))
+          setIsDrawing(true)
+          return
+        }
+      }
+    }
+
     if (currentTool === 'text') {
       // Show text input at click position (pos is in PDF space, convert to display)
       const canvas = maskCanvasRef.current!
