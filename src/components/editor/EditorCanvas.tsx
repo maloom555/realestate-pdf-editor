@@ -154,11 +154,12 @@ export default function EditorCanvas({ pdfDoc }: EditorCanvasProps) {
     }
   }, [scale])
 
-  // Add annotation and keep current tool (no auto-switch to select)
+  // Add annotation and auto-switch to select mode with the new annotation selected
   const addAndSelect = useCallback((pageNum: number, ann: Annotation) => {
     addAnnotation(pageNum, ann)
-    setSelectedAnnotationId(null)
-  }, [addAnnotation, setSelectedAnnotationId])
+    store.setCurrentTool('select')
+    setSelectedAnnotationId(ann.id)
+  }, [addAnnotation, store, setSelectedAnnotationId])
 
   const handleMouseDown = useCallback((e: React.MouseEvent | React.TouchEvent) => {
     if ('touches' in e) e.preventDefault()
@@ -238,23 +239,6 @@ export default function EditorCanvas({ pdfDoc }: EditorCanvasProps) {
 
       setSelectedAnnotationId(null)
       return
-    }
-
-    // While using a drawing tool, clicking on an existing annotation switches to select mode
-    // (except text/callout/stamp which have their own click handling)
-    if (currentTool !== 'text' && currentTool !== 'callout' && currentTool !== 'stamp' && currentTool !== 'polyline') {
-      for (let i = pageAnns.length - 1; i >= 0; i--) {
-        if (hitTestAnnotation(pos.x, pos.y, pageAnns[i])) {
-          store.setCurrentTool('select')
-          setSelectedAnnotationId(pageAnns[i].id)
-          ds.dragMode = 'move'
-          ds.dragStart = pos
-          ds.origData = JSON.parse(JSON.stringify(pageAnns[i].data))
-          setIsDrawing(true)
-          redrawAnnotations()
-          return
-        }
-      }
     }
 
     if (currentTool === 'text') {
@@ -358,7 +342,7 @@ export default function EditorCanvas({ pdfDoc }: EditorCanvasProps) {
     if (currentTool === 'pen') {
       ds.currentPath = [{ x: pos.x, y: pos.y }]
     }
-  }, [currentTool, getPos, annotations, currentPage, selectedAnnotationId, setSelectedAnnotationId, store, redrawAnnotations, addAndSelect, updateAnnotation, scale])
+  }, [currentTool, getPos, annotations, currentPage, selectedAnnotationId, setSelectedAnnotationId, addAndSelect, updateAnnotation, scale])
 
   // Double-click to re-edit text/callout or commit polyline
   const handleDoubleClick = useCallback((e: React.MouseEvent) => {
