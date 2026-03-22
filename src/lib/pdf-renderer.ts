@@ -251,19 +251,39 @@ export function drawAnnotation(ctx: CanvasRenderingContext2D, ann: Annotation) {
         ctx.roundRect(d.x - padding, d.y - padding, boxW, boxH, tbr)
         ctx.stroke()
         ctx.fillStyle = ann.color
+
+        // Center text vertically within box
+        const totalTextH = lines.length * lineHeight - (lineHeight - d.fontSize)
+        const innerH = boxH - padding * 2
+        const textOffsetY = (innerH - totalTextH) / 2
+        for (let i = 0; i < lines.length; i++) {
+          const ly = d.y - padding + padding + textOffsetY + i * lineHeight
+          ctx.fillText(lines[i], d.x, ly)
+          if (d.underline) {
+            const m = ctx.measureText(lines[i])
+            ctx.strokeStyle = ann.color
+            ctx.lineWidth = Math.max(1, d.fontSize / 14)
+            ctx.beginPath()
+            ctx.moveTo(d.x, ly + d.fontSize)
+            ctx.lineTo(d.x + m.width, ly + d.fontSize)
+            ctx.stroke()
+          }
+        }
       }
 
-      for (let i = 0; i < lines.length; i++) {
-        const ly = d.y + i * lineHeight
-        ctx.fillText(lines[i], d.x, ly)
-        if (d.underline) {
-          const m = ctx.measureText(lines[i])
-          ctx.strokeStyle = ann.color
-          ctx.lineWidth = Math.max(1, d.fontSize / 14)
-          ctx.beginPath()
-          ctx.moveTo(d.x, ly + d.fontSize)
-          ctx.lineTo(d.x + m.width, ly + d.fontSize)
-          ctx.stroke()
+      if (!d.textBox) {
+        for (let i = 0; i < lines.length; i++) {
+          const ly = d.y + i * lineHeight
+          ctx.fillText(lines[i], d.x, ly)
+          if (d.underline) {
+            const m = ctx.measureText(lines[i])
+            ctx.strokeStyle = ann.color
+            ctx.lineWidth = Math.max(1, d.fontSize / 14)
+            ctx.beginPath()
+            ctx.moveTo(d.x, ly + d.fontSize)
+            ctx.lineTo(d.x + m.width, ly + d.fontSize)
+            ctx.stroke()
+          }
         }
       }
       break

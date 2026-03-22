@@ -579,6 +579,12 @@ export default function EditorCanvas({ pdfDoc }: EditorCanvasProps) {
           if (mode === 'resize-s' || mode === 'resize-se' || mode === 'resize-sw') { nh = o.h + dy }
           if (nw < 10) nw = 10
           if (nh < 10) nh = 10
+          // Shift: constrain circle to perfect circle
+          if (ann.type === 'circle' && e.shiftKey) {
+            const size = Math.max(nw, nh)
+            nw = size
+            nh = size
+          }
           updateAnnotation(currentPage, ann.id, {
             data: { ...ann.data, x: nx, y: ny, w: nw, h: nh } as unknown as typeof ann.data,
           })
