@@ -723,8 +723,9 @@ export function hitTestHandle(
     { name: 'resize-sw', cx: bounds.x, cy: bounds.y + bounds.h },
     { name: 'resize-se', cx: bounds.x + bounds.w, cy: bounds.y + bounds.h },
   ]
+  const hitRadius = hs * 1.5
   for (const c of corners) {
-    if (Math.abs(tx - c.cx) < hs * 2 && Math.abs(ty - c.cy) < hs * 2) {
+    if (Math.abs(tx - c.cx) < hitRadius && Math.abs(ty - c.cy) < hitRadius) {
       return c.name
     }
   }
@@ -739,7 +740,7 @@ export function hitTestHandle(
       { name: 'resize-e', cx: bounds.x + bounds.w, cy: cy },
     ]
     for (const m of midpoints) {
-      if (Math.abs(tx - m.cx) < hs * 2 && Math.abs(ty - m.cy) < hs * 2) {
+      if (Math.abs(tx - m.cx) < hitRadius && Math.abs(ty - m.cy) < hitRadius) {
         return m.name
       }
     }
