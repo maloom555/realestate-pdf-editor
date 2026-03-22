@@ -249,7 +249,10 @@ export default function SignatureEditor({ onPlace, onClose }: Props) {
               editingTemplate.imagePosition === 'right' ? 'flex-row-reverse' : 'flex-col'
             } items-center`}>
               {editingTemplate.imageData && (
-                <img src={editingTemplate.imageData} alt="ロゴ" className="max-w-[100px] max-h-[60px] object-contain" />
+                <img src={editingTemplate.imageData} alt="ロゴ" className="object-contain" style={{
+                  maxWidth: `${100 * (editingTemplate.imageScale || 100) / 100}px`,
+                  maxHeight: `${60 * (editingTemplate.imageScale || 100) / 100}px`,
+                }} />
               )}
               {preview.trim() && (
                 <pre className="text-xs leading-relaxed whitespace-pre-wrap" style={{
