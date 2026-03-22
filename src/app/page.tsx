@@ -3,7 +3,7 @@ import Link from 'next/link'
 // SVG icon components
 const icons = {
   pdf: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-8 h-8"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="15" x2="15" y2="15"/></svg>,
-  aiMask: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-8 h-8"><path d="M12 2a4 4 0 014 4v2H8V6a4 4 0 014-4z"/><rect x="3" y="8" width="18" height="14" rx="2"/><circle cx="9" cy="15" r="1.5" fill="currentColor"/><circle cx="15" cy="15" r="1.5" fill="currentColor"/><path d="M9 19h6"/></svg>,
+  mask: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-8 h-8"><path d="M12 2a4 4 0 014 4v2H8V6a4 4 0 014-4z"/><rect x="3" y="8" width="18" height="14" rx="2"/><circle cx="9" cy="15" r="1.5" fill="currentColor"/><circle cx="15" cy="15" r="1.5" fill="currentColor"/><path d="M9 19h6"/></svg>,
   photo: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-8 h-8"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>,
   comingSoon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-8 h-8"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>,
   shield: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-6 h-6"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>,
@@ -26,8 +26,8 @@ const tools = [
     tags: ['PDF', '写真', '墨消し', 'スタンプ', '注釈'],
   },
   {
-    id: 'ai-masking',
-    icon: icons.aiMask,
+    id: 'masking',
+    icon: icons.mask,
     title: '不動産マスキング工房',
     desc: 'ChatGPTやClaudeにPDFを送る前に、個人情報や機密情報を素早くマスキング。AIへの安全な資料送信の下準備を簡単に。',
     href: '#',
@@ -94,7 +94,7 @@ export default function HomePage() {
             不動産業務を効率化する、無料オンラインツール集
           </p>
           <p className="text-sm md:text-base opacity-75 mb-8 max-w-xl mx-auto">
-            PDF編集・AIマスキング・写真加工など、日常業務で使えるツールを<br className="hidden sm:inline" />
+            PDF編集・マスキング・写真加工など、日常業務で使えるツールを<br className="hidden sm:inline" />
             ブラウザだけで。アカウント登録不要・サーバー送信なし。
           </p>
           <div className="flex flex-wrap justify-center gap-3 text-sm">
