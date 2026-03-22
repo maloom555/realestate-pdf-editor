@@ -9,6 +9,8 @@ import EditorCanvas from '@/components/editor/EditorCanvas'
 import PageEditor from '@/components/editor/PageEditor'
 import LoadingOverlay from '@/components/editor/LoadingOverlay'
 import Script from 'next/script'
+import { generateId } from '@/lib/id'
+import type { Annotation } from '@/types/annotations'
 
 export default function EditorPage() {
   const store = useEditorStore()
@@ -101,9 +103,16 @@ export default function EditorPage() {
     }
   }, [store, pdfJsLoaded])
 
+  // Clipboard for copy/paste
+  const clipboardRef = useRef<{ annotation: Annotation; page: number } | null>(null)
+
   // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Skip if typing in an input/textarea
+      const tag = (e.target as HTMLElement)?.tagName
+      if (tag === 'INPUT' || tag === 'TEXTAREA') return
+
       if (e.ctrlKey && e.key === 'z') {
         e.preventDefault()
         store.undo()
@@ -114,6 +123,47 @@ export default function EditorPage() {
       }
       if (e.key === 'Delete' && store.selectedAnnotationId) {
         store.removeAnnotation(store.currentPage, store.selectedAnnotationId)
+      }
+      // Copy (Ctrl+C)
+      if (e.ctrlKey && e.key === 'c' && store.selectedAnnotationId) {
+        e.preventDefault()
+        const anns = store.annotations[store.currentPage] || []
+        const selected = anns.find((a) => a.id === store.selectedAnnotationId)
+        if (selected) {
+          clipboardRef.current = { annotation: structuredClone(selected), page: store.currentPage }
+        }
+      }
+      // Paste (Ctrl+V)
+      if (e.ctrlKey && e.key === 'v' && clipboardRef.current) {
+        e.preventDefault()
+        const { annotation: src } = clipboardRef.current
+        const offset = 15 // Offset so pasted element is visibly separate
+        const newAnn: Annotation = structuredClone(src)
+        newAnn.id = generateId()
+
+        // Offset position based on annotation type
+        const data = newAnn.data as unknown as Record<string, unknown>
+        if ('x' in data && 'y' in data) {
+          data.x = (data.x as number) + offset
+          data.y = (data.y as number) + offset
+        }
+        if ('startX' in data && 'startY' in data) {
+          data.startX = (data.startX as number) + offset
+          data.startY = (data.startY as number) + offset
+        }
+        if ('endX' in data && 'endY' in data) {
+          data.endX = (data.endX as number) + offset
+          data.endY = (data.endY as number) + offset
+        }
+        if ('points' in data && Array.isArray(data.points)) {
+          data.points = (data.points as { x: number; y: number }[]).map((p) => ({
+            x: p.x + offset,
+            y: p.y + offset,
+          }))
+        }
+
+        store.addAnnotation(store.currentPage, newAnn)
+        store.setSelectedAnnotationId(newAnn.id)
       }
     }
     window.addEventListener('keydown', handleKeyDown)
