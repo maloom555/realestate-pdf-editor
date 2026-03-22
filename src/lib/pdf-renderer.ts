@@ -382,19 +382,21 @@ export function drawAnnotation(ctx: CanvasRenderingContext2D, ann: Annotation, s
         const lines = d.multiLineText ? d.multiLineText.split('\n') : []
         const hasText = lines.length > 0 && d.multiLineText?.trim()
         const imgPos = d.imagePosition || 'top'
+        const imageOnly = d.imageData && !hasText
 
-        // White background
-        ctx.fillStyle = 'rgba(255,255,255,0.95)'
-        ctx.beginPath()
-        ctx.roundRect(d.x, d.y, d.w, d.h, radius)
-        ctx.fill()
+        // White background + border (skip for image-only stamps)
+        if (!imageOnly) {
+          ctx.fillStyle = 'rgba(255,255,255,0.95)'
+          ctx.beginPath()
+          ctx.roundRect(d.x, d.y, d.w, d.h, radius)
+          ctx.fill()
 
-        // Border
-        ctx.strokeStyle = stampColor
-        ctx.lineWidth = 2
-        ctx.beginPath()
-        ctx.roundRect(d.x, d.y, d.w, d.h, radius)
-        ctx.stroke()
+          ctx.strokeStyle = stampColor
+          ctx.lineWidth = 2
+          ctx.beginPath()
+          ctx.roundRect(d.x, d.y, d.w, d.h, radius)
+          ctx.stroke()
+        }
 
         // Draw image if present
         if (d.imageData && signatureImages) {
