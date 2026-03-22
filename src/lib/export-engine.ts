@@ -12,10 +12,21 @@ function dataURLtoBytes(dataURL: string): Uint8Array {
   return bytes
 }
 
+export interface WatermarkOptions {
+  text: string       // 透かしテキスト（例: "不動産工房"、有料版では自社名）
+  enabled: boolean   // 透かし表示のON/OFF（有料版ではfalseに設定可能）
+}
+
+const DEFAULT_WATERMARK: WatermarkOptions = {
+  text: '不動産工房',
+  enabled: true,
+}
+
 export async function exportFlattenedPdf(
   pdfDoc: pdfjsLib.PDFDocumentProxy,
   annotations: Record<number, Annotation[]>,
-  onProgress?: (current: number, total: number) => void
+  onProgress?: (current: number, total: number) => void,
+  watermark: WatermarkOptions = DEFAULT_WATERMARK
 ): Promise<Uint8Array> {
   const newPdf = await PDFDocument.create()
   const exportScale = 2
@@ -42,6 +53,20 @@ export async function exportFlattenedPdf(
       for (const ann of pageAnnotations) {
         drawAnnotation(pageCtx, ann)
       }
+      pageCtx.restore()
+    }
+
+    // Draw watermark (bottom-right corner)
+    if (watermark.enabled && watermark.text) {
+      pageCtx.save()
+      const wmFontSize = Math.max(12, Math.min(viewport.width * 0.018, 24))
+      pageCtx.font = `${wmFontSize}px "Noto Sans JP", "Hiragino Sans", "Meiryo", sans-serif`
+      pageCtx.fillStyle = 'rgba(120, 120, 120, 0.45)'
+      const textMetrics = pageCtx.measureText(watermark.text)
+      const padding = wmFontSize * 0.8
+      const x = viewport.width - textMetrics.width - padding
+      const y = viewport.height - padding
+      pageCtx.fillText(watermark.text, x, y)
       pageCtx.restore()
     }
 
