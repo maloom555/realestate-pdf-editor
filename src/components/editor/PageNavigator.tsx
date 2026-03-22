@@ -22,7 +22,8 @@ export default function PageNavigator({ pdfDoc }: PageNavigatorProps) {
         const pageAnns = annotations[currentPage] || []
         const ann = pageAnns.find((a) => a.id === selectedAnnotationId)
         if (ann?.type === 'callout') return 'ダブルクリックで編集 / 黄◆で矢印移動'
-        return 'ダブルクリックで再編集'
+        if (ann?.type === 'text') return 'ダブルクリックで再編集'
+        return 'ドラッグで移動 / 角をドラッグでリサイズ'
       }
       return 'クリックで選択'
     }
