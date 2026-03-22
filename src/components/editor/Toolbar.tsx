@@ -773,7 +773,7 @@ export default function Toolbar() {
 
   // ===== DESKTOP LAYOUT =====
   return (
-    <div className="bg-white border-b border-gray-200 shadow-sm">
+    <div className="bg-white border-b border-gray-200 shadow-sm relative">
       {/* Main tool bar */}
       <div className="px-3 py-2 flex items-center justify-center gap-3 flex-wrap">
         <div className="flex items-center gap-1">
@@ -864,14 +864,16 @@ export default function Toolbar() {
         </div>
       </div>
 
-      {/* Sub-menu bar - fixed height to prevent canvas shift */}
-      <div className="px-3 py-2 border-t border-gray-100 bg-gray-50 flex items-center justify-center gap-3 flex-wrap min-h-[44px]">
-        {showSubMenu && subMenuContent()}
-      </div>
+      {/* Sub-menu bar - overlay on top of canvas so canvas never shifts */}
+      {showSubMenu && (
+        <div className="absolute left-0 right-0 top-full z-20 px-3 py-2 bg-white/95 backdrop-blur-sm border-b border-gray-200 shadow-md flex items-center justify-center gap-3 flex-wrap">
+          {subMenuContent()}
+        </div>
+      )}
 
-      {/* Stamp Picker */}
+      {/* Stamp Picker - overlay */}
       {showStampPicker && !showSignatureEditor && (
-        <div className="px-3 py-3 border-t border-gray-100 bg-gray-50">
+        <div className="absolute left-0 right-0 top-full z-20 px-3 py-3 bg-white/95 backdrop-blur-sm border-b border-gray-200 shadow-md">
           {Object.entries(stampsByCategory).map(([category, stamps]) => (
             <div key={category} className="mb-2">
               <div className="text-xs text-gray-400 font-semibold mb-1">{category}</div>
@@ -907,17 +909,19 @@ export default function Toolbar() {
         </div>
       )}
       {showSignatureEditor && (
-        <SignatureEditor
-          onPlace={handleSignaturePlace}
-          onClose={() => {
-            setShowSignatureEditor(false)
-            setShowStampPicker(true)
-            // Reload templates after management
-            import('@/lib/signature-db').then(({ getAllSignatureTemplates }) =>
-              getAllSignatureTemplates().then(setSignatureTemplates)
-            )
-          }}
-        />
+        <div className="absolute left-0 right-0 top-full z-20 bg-white border-b border-gray-200 shadow-lg">
+          <SignatureEditor
+            onPlace={handleSignaturePlace}
+            onClose={() => {
+              setShowSignatureEditor(false)
+              setShowStampPicker(true)
+              // Reload templates after management
+              import('@/lib/signature-db').then(({ getAllSignatureTemplates }) =>
+                getAllSignatureTemplates().then(setSignatureTemplates)
+              )
+            }}
+          />
+        </div>
       )}
     </div>
   )
