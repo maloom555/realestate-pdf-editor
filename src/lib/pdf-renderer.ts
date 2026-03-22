@@ -376,9 +376,14 @@ export function drawAnnotation(ctx: CanvasRenderingContext2D, ann: Annotation) {
 
       // Signature stamp (multi-line)
       if (d.isSignature && d.multiLineText) {
-        const fs = d.fontSize || 11
+        const baseFontSize = d.fontSize || 11
+        // Scale font size based on current size vs original size
+        const scaleRatio = d.origW && d.origH
+          ? Math.min(d.w / d.origW, d.h / d.origH)
+          : 1
+        const fs = baseFontSize * scaleRatio
         const ff = d.fontFamily || '"Noto Sans JP", "Hiragino Sans", sans-serif'
-        const padding = 10
+        const padding = 10 * scaleRatio
         const lineHeight = fs * 1.4
         const lines = d.multiLineText.split('\n')
 

@@ -39,6 +39,8 @@ export interface StampData {
   multiLineText?: string  // Full multi-line text (after variable substitution)
   fontSize?: number
   fontFamily?: string
+  origW?: number  // Original width at creation (for font scaling)
+  origH?: number  // Original height at creation
 }
 
 // Signature template definition (stored in IndexedDB)

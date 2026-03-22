@@ -287,6 +287,8 @@ export default function EditorCanvas({ pdfDoc }: EditorCanvasProps) {
             multiLineText: sig.text,
             fontSize: sig.fontSize,
             fontFamily: sig.fontFamily,
+            origW: sw,
+            origH: sh,
           },
         })
         pendingSignatureRef.current = null
