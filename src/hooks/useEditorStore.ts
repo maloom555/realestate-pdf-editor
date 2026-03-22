@@ -41,6 +41,9 @@ interface EditorState {
   editorMode: EditorMode
   selectedPages: Set<number>
 
+  // Page operation history
+  pageUndoStack: { pdfBytes: Uint8Array; totalPages: number; annotations: Record<number, Annotation[]> }[]
+
   // UI state
   isLoading: boolean
   loadingText: string
@@ -51,6 +54,7 @@ interface EditorState {
   selectAllPages: () => void
   clearPageSelection: () => void
   applyPageOperation: (newPdfBytes: Uint8Array, newTotalPages: number, newAnnotations: Record<number, Annotation[]>) => void
+  undoPageOperation: () => { pdfBytes: Uint8Array; totalPages: number; annotations: Record<number, Annotation[]> } | null
   setPdfBytes: (bytes: Uint8Array, totalPages: number) => void
   setCurrentPage: (page: number) => void
   setScale: (scale: number) => void
@@ -91,7 +95,7 @@ const initialState = {
   fitMode: 2, // 0=縦フィット, 1=横フィット, 2=100%
   currentTool: 'select' as ToolType,
   maskColor: '#000000',
-  penSize: 2,
+  penSize: 3,
   fontSize: 15,
   fontFamily: 'Noto Sans JP',
   highlightOpacity: 0.3,
@@ -107,6 +111,7 @@ const initialState = {
   redoStack: [] as HistoryEntry[],
   editorMode: 'drawing' as EditorMode,
   selectedPages: new Set<number>(),
+  pageUndoStack: [] as { pdfBytes: Uint8Array; totalPages: number; annotations: Record<number, Annotation[]> }[],
   isLoading: false,
   loadingText: '',
 }
@@ -256,16 +261,43 @@ export const useEditorStore = create<EditorState>((set, get) => ({
 
   clearPageSelection: () => set({ selectedPages: new Set() }),
 
-  applyPageOperation: (newPdfBytes, newTotalPages, newAnnotations) => set({
-    pdfBytes: newPdfBytes,
-    totalPages: newTotalPages,
-    annotations: newAnnotations,
-    currentPage: Math.min(get().currentPage, newTotalPages) || 1,
-    selectedPages: new Set(),
-    undoStack: [],
-    redoStack: [],
-    selectedAnnotationId: null,
-  }),
+  applyPageOperation: (newPdfBytes, newTotalPages, newAnnotations) => {
+    const state = get()
+    const undoEntry = {
+      pdfBytes: state.pdfBytes!,
+      totalPages: state.totalPages,
+      annotations: state.annotations,
+    }
+    set({
+      pdfBytes: newPdfBytes,
+      totalPages: newTotalPages,
+      annotations: newAnnotations,
+      currentPage: Math.min(state.currentPage, newTotalPages) || 1,
+      selectedPages: new Set(),
+      undoStack: [],
+      redoStack: [],
+      selectedAnnotationId: null,
+      pageUndoStack: [...state.pageUndoStack.slice(-9), undoEntry], // Keep last 10
+    })
+  },
+
+  undoPageOperation: () => {
+    const state = get()
+    if (state.pageUndoStack.length === 0) return null
+    const entry = state.pageUndoStack[state.pageUndoStack.length - 1]
+    set({
+      pdfBytes: entry.pdfBytes,
+      totalPages: entry.totalPages,
+      annotations: entry.annotations,
+      currentPage: Math.min(state.currentPage, entry.totalPages) || 1,
+      selectedPages: new Set(),
+      undoStack: [],
+      redoStack: [],
+      selectedAnnotationId: null,
+      pageUndoStack: state.pageUndoStack.slice(0, -1),
+    })
+    return entry
+  },
 
   setLoading: (loading, text = '') => set({ isLoading: loading, loadingText: text }),
 

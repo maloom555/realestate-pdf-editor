@@ -179,6 +179,13 @@ export default function PageEditor({ pdfDoc, onReloadPdf }: PageEditorProps) {
     else store.selectAllPages()
   }
 
+  const handleUndo = async () => {
+    const entry = store.undoPageOperation()
+    if (entry) {
+      await onReloadPdf(entry.pdfBytes)
+    }
+  }
+
   const [showRotateMenu, setShowRotateMenu] = useState(false)
 
   return (
@@ -227,14 +234,21 @@ export default function PageEditor({ pdfDoc, onReloadPdf }: PageEditorProps) {
           {showRotateMenu && (
             <div className="absolute top-full left-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-10">
               <button onClick={() => { handleRotate(90); setShowRotateMenu(false) }}
-                className="block w-full px-4 py-2 text-sm text-left hover:bg-gray-50">90° 右回転</button>
+                className="block w-full px-4 py-2 text-sm text-left hover:bg-gray-50">90° 右</button>
               <button onClick={() => { handleRotate(180); setShowRotateMenu(false) }}
-                className="block w-full px-4 py-2 text-sm text-left hover:bg-gray-50">180° 回転</button>
+                className="block w-full px-4 py-2 text-sm text-left hover:bg-gray-50">180°</button>
               <button onClick={() => { handleRotate(270); setShowRotateMenu(false) }}
-                className="block w-full px-4 py-2 text-sm text-left hover:bg-gray-50">90° 左回転</button>
+                className="block w-full px-4 py-2 text-sm text-left hover:bg-gray-50">90° 左</button>
             </div>
           )}
         </div>
+
+        <div className="w-px h-5 bg-gray-200" />
+
+        <button onClick={handleUndo} disabled={store.pageUndoStack.length === 0}
+          className="px-3 py-1.5 text-sm sm:text-xs border border-gray-200 text-gray-600 rounded-lg hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed">
+          ↩ 元に戻す
+        </button>
       </div>
 
       {/* Thumbnail grid */}

@@ -178,8 +178,12 @@ export function drawAnnotation(ctx: CanvasRenderingContext2D, ann: Annotation) {
         ctx.stroke()
         ctx.fillStyle = ann.color
         ctx.textBaseline = 'top'
+        // Center text vertically: total text height vs box inner height
+        const totalTextH = lines.length * lineHeight - (lineHeight - fs)
+        const innerH = boxH - padding * 2
+        const textOffsetY = (innerH - totalTextH) / 2
         for (let i = 0; i < lines.length; i++) {
-          const ly = boxY + padding + i * lineHeight
+          const ly = boxY + padding + textOffsetY + i * lineHeight
           ctx.fillText(lines[i], boxX + padding, ly)
           if (d.underline) {
             const m = ctx.measureText(lines[i])

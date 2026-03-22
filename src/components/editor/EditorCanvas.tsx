@@ -941,7 +941,8 @@ export default function EditorCanvas({ pdfDoc }: EditorCanvasProps) {
         id: generateId(),
         type: 'callout',
         color: maskColor,
-        size: 2,
+        size: penSize,
+        borderRadius: 5,
         data: {
           startX: cp.startX,
           startY: cp.startY,
