@@ -154,12 +154,11 @@ export default function EditorCanvas({ pdfDoc }: EditorCanvasProps) {
     }
   }, [scale])
 
-  // Add annotation and auto-switch to select mode with the new annotation selected
+  // Add annotation and keep current tool (no auto-switch to select)
   const addAndSelect = useCallback((pageNum: number, ann: Annotation) => {
     addAnnotation(pageNum, ann)
-    store.setCurrentTool('select')
-    setSelectedAnnotationId(ann.id)
-  }, [addAnnotation, store, setSelectedAnnotationId])
+    setSelectedAnnotationId(null)
+  }, [addAnnotation, setSelectedAnnotationId])
 
   const handleMouseDown = useCallback((e: React.MouseEvent | React.TouchEvent) => {
     if ('touches' in e) e.preventDefault()
