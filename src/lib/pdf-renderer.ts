@@ -37,7 +37,11 @@ function drawArrowhead(
   return { baseX: (p1x + p2x) / 2, baseY: (p1y + p2y) / 2 }
 }
 
-export function drawAnnotation(ctx: CanvasRenderingContext2D, ann: Annotation) {
+// Global image cache for signature stamp images
+export const signatureImageCache = new Map<string, HTMLImageElement>()
+
+export function drawAnnotation(ctx: CanvasRenderingContext2D, ann: Annotation, signatureImages?: Map<string, HTMLImageElement>) {
+  if (!signatureImages) signatureImages = signatureImageCache
   ctx.save()
 
   // Apply rotation around annotation center
@@ -365,10 +369,9 @@ export function drawAnnotation(ctx: CanvasRenderingContext2D, ann: Annotation) {
         ctx.fill()
       }
 
-      // Signature stamp (multi-line)
-      if (d.isSignature && d.multiLineText) {
+      // Signature stamp (multi-line + optional image)
+      if (d.isSignature) {
         const baseFontSize = d.fontSize || 11
-        // Scale font size based on current size vs original size
         const scaleRatio = d.origW && d.origH
           ? Math.min(d.w / d.origW, d.h / d.origH)
           : 1
@@ -376,7 +379,9 @@ export function drawAnnotation(ctx: CanvasRenderingContext2D, ann: Annotation) {
         const ff = d.fontFamily || '"Noto Sans JP", "Hiragino Sans", sans-serif'
         const padding = 10 * scaleRatio
         const lineHeight = fs * 1.4
-        const lines = d.multiLineText.split('\n')
+        const lines = d.multiLineText ? d.multiLineText.split('\n') : []
+        const hasText = lines.length > 0 && d.multiLineText?.trim()
+        const imgPos = d.imagePosition || 'top'
 
         // White background
         ctx.fillStyle = 'rgba(255,255,255,0.95)'
@@ -391,16 +396,74 @@ export function drawAnnotation(ctx: CanvasRenderingContext2D, ann: Annotation) {
         ctx.roundRect(d.x, d.y, d.w, d.h, radius)
         ctx.stroke()
 
-        // Text
-        ctx.fillStyle = stampColor
-        ctx.font = `${fs}px ${ff}`
-        ctx.textBaseline = 'top'
-        const totalTextH = lines.length * lineHeight
-        const startY = d.y + (d.h - totalTextH) / 2
-        for (let i = 0; i < lines.length; i++) {
-          const lineW = ctx.measureText(lines[i]).width
-          const lineX = d.x + (d.w - lineW) / 2 // Center each line
-          ctx.fillText(lines[i], lineX, startY + i * lineHeight)
+        // Draw image if present
+        if (d.imageData && signatureImages) {
+          let cachedImg = signatureImages.get(d.imageData)
+          if (!cachedImg) {
+            // Start loading - will render on next redraw
+            const img = new Image()
+            img.src = d.imageData
+            img.onload = () => {
+              signatureImages.set(d.imageData!, img)
+              // Trigger a redraw if possible
+            }
+            signatureImages.set(d.imageData, null as unknown as HTMLImageElement)
+          }
+          if (cachedImg) {
+            const imgMaxW = imgPos === 'top' ? d.w - padding * 2 : (d.w - padding * 2) * 0.4
+            const imgMaxH = imgPos === 'top' ? (hasText ? d.h * 0.4 : d.h - padding * 2) : d.h - padding * 2
+            const imgRatio = Math.min(imgMaxW / cachedImg.width, imgMaxH / cachedImg.height, 1)
+            const drawW = cachedImg.width * imgRatio
+            const drawH = cachedImg.height * imgRatio
+
+            if (imgPos === 'top') {
+              const imgX = d.x + (d.w - drawW) / 2
+              const imgY = d.y + padding
+              ctx.drawImage(cachedImg, imgX, imgY, drawW, drawH)
+              // Draw text below image
+              if (hasText) {
+                ctx.fillStyle = stampColor
+                ctx.font = `${fs}px ${ff}`
+                ctx.textBaseline = 'top'
+                const textStartY = imgY + drawH + padding * 0.5
+                for (let i = 0; i < lines.length; i++) {
+                  const lineW = ctx.measureText(lines[i]).width
+                  const lineX = d.x + (d.w - lineW) / 2
+                  ctx.fillText(lines[i], lineX, textStartY + i * lineHeight)
+                }
+              }
+            } else {
+              // left or right
+              const isLeft = imgPos === 'left'
+              const imgX = isLeft ? d.x + padding : d.x + d.w - padding - drawW
+              const imgY = d.y + (d.h - drawH) / 2
+              ctx.drawImage(cachedImg, imgX, imgY, drawW, drawH)
+              // Draw text on the other side
+              if (hasText) {
+                ctx.fillStyle = stampColor
+                ctx.font = `${fs}px ${ff}`
+                ctx.textBaseline = 'top'
+                const textX = isLeft ? imgX + drawW + padding * 0.5 : d.x + padding
+                const totalTextH = lines.length * lineHeight
+                const textStartY = d.y + (d.h - totalTextH) / 2
+                for (let i = 0; i < lines.length; i++) {
+                  ctx.fillText(lines[i], textX, textStartY + i * lineHeight)
+                }
+              }
+            }
+          }
+        } else if (hasText) {
+          // Text only (no image)
+          ctx.fillStyle = stampColor
+          ctx.font = `${fs}px ${ff}`
+          ctx.textBaseline = 'top'
+          const totalTextH = lines.length * lineHeight
+          const startY = d.y + (d.h - totalTextH) / 2
+          for (let i = 0; i < lines.length; i++) {
+            const lineW = ctx.measureText(lines[i]).width
+            const lineX = d.x + (d.w - lineW) / 2
+            ctx.fillText(lines[i], lineX, startY + i * lineHeight)
+          }
         }
 
         ctx.globalAlpha = savedStampAlpha

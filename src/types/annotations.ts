@@ -41,6 +41,8 @@ export interface StampData {
   fontFamily?: string
   origW?: number  // Original width at creation (for font scaling)
   origH?: number  // Original height at creation
+  imageData?: string  // Base64 data URL for embedded image
+  imagePosition?: 'top' | 'left' | 'right'
 }
 
 // Signature template definition (stored in IndexedDB)
@@ -53,6 +55,8 @@ export interface SignatureTemplate {
   fontFamily: string
   color: string
   borderStyle: 'solid' | 'double' | 'dashed' | 'ornament'
+  imageData?: string  // Base64 data URL for logo/business card image
+  imagePosition?: 'top' | 'left' | 'right' // Where image appears relative to text
 }
 
 export interface ArrowData {

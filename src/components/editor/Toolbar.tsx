@@ -99,9 +99,9 @@ export default function Toolbar() {
     setShowSignatureEditor(false)
   }
 
-  const handleSignaturePlace = (text: string, color: string, fontSize: number, fontFamily: string) => {
+  const handleSignaturePlace = (text: string, color: string, fontSize: number, fontFamily: string, imageData?: string, imagePosition?: 'top' | 'left' | 'right') => {
     const fn = (window as unknown as Record<string, (...args: unknown[]) => void>).__placeSignatureStamp
-    if (fn) fn(text, color, fontSize, fontFamily)
+    if (fn) fn(text, color, fontSize, fontFamily, imageData, imagePosition)
     setShowSignatureEditor(false)
     setShowStampPicker(false)
   }
@@ -109,7 +109,7 @@ export default function Toolbar() {
   const handleQuickPlaceSignature = (tmpl: import('@/types/annotations').SignatureTemplate) => {
     import('@/lib/signature-db').then(({ applyVariables }) => {
       const text = applyVariables(tmpl.template, tmpl.variables)
-      handleSignaturePlace(text, tmpl.color, tmpl.fontSize, tmpl.fontFamily)
+      handleSignaturePlace(text, tmpl.color, tmpl.fontSize, tmpl.fontFamily, tmpl.imageData, tmpl.imagePosition)
     })
   }
 

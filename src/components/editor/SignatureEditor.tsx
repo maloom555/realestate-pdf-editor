@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import type { SignatureTemplate } from '@/types/annotations'
 import { extractVariables, applyVariables, saveSignatureTemplate, getAllSignatureTemplates, deleteSignatureTemplate } from '@/lib/signature-db'
 import { generateId } from '@/lib/id'
@@ -15,8 +15,36 @@ Mobile:{携帯番号}
 E-Mail:{メール}
 ◆◇◆◇◆◇◆◇◆◇◆◇◆◇◆◇◆◇◆`
 
+// Resize image to max dimensions and return base64
+function resizeImage(file: File, maxW = 400, maxH = 400, quality = 0.8): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => {
+      const img = new Image()
+      img.onload = () => {
+        let w = img.width, h = img.height
+        if (w > maxW || h > maxH) {
+          const ratio = Math.min(maxW / w, maxH / h)
+          w = Math.round(w * ratio)
+          h = Math.round(h * ratio)
+        }
+        const canvas = document.createElement('canvas')
+        canvas.width = w
+        canvas.height = h
+        const ctx = canvas.getContext('2d')!
+        ctx.drawImage(img, 0, 0, w, h)
+        resolve(canvas.toDataURL('image/jpeg', quality))
+      }
+      img.onerror = reject
+      img.src = reader.result as string
+    }
+    reader.onerror = reject
+    reader.readAsDataURL(file)
+  })
+}
+
 interface Props {
-  onPlace: (text: string, color: string, fontSize: number, fontFamily: string) => void
+  onPlace: (text: string, color: string, fontSize: number, fontFamily: string, imageData?: string, imagePosition?: 'top' | 'left' | 'right') => void
   onClose: () => void
 }
 
@@ -24,6 +52,7 @@ export default function SignatureEditor({ onPlace, onClose }: Props) {
   const [templates, setTemplates] = useState<SignatureTemplate[]>([])
   const [editingTemplate, setEditingTemplate] = useState<SignatureTemplate | null>(null)
   const [mode, setMode] = useState<'list' | 'edit'>('list')
+  const imageInputRef = useRef<HTMLInputElement>(null)
 
   // Load templates
   useEffect(() => {
@@ -72,8 +101,15 @@ export default function SignatureEditor({ onPlace, onClose }: Props) {
 
   const handlePlace = useCallback((tmpl: SignatureTemplate) => {
     const text = applyVariables(tmpl.template, tmpl.variables)
-    onPlace(text, tmpl.color, tmpl.fontSize, tmpl.fontFamily)
+    onPlace(text, tmpl.color, tmpl.fontSize, tmpl.fontFamily, tmpl.imageData, tmpl.imagePosition)
   }, [onPlace])
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!editingTemplate || !e.target.files?.[0]) return
+    const base64 = await resizeImage(e.target.files[0])
+    setEditingTemplate({ ...editingTemplate, imageData: base64, imagePosition: editingTemplate.imagePosition || 'top' })
+    e.target.value = ''
+  }
 
   const handleEdit = (tmpl: SignatureTemplate) => {
     setEditingTemplate({ ...tmpl })
@@ -116,6 +152,43 @@ export default function SignatureEditor({ onPlace, onClose }: Props) {
             className="w-full px-2 py-1.5 text-xs border border-gray-200 rounded-lg font-mono leading-relaxed resize-y" />
         </div>
 
+        {/* Image upload */}
+        <div className="mb-3">
+          <label className="text-xs text-gray-500 mb-1 block">画像（ロゴ・名刺など）</label>
+          <input ref={imageInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
+          {editingTemplate.imageData ? (
+            <div className="flex items-start gap-3">
+              <img src={editingTemplate.imageData} alt="ロゴ" className="max-w-[120px] max-h-[80px] border border-gray-200 rounded object-contain" />
+              <div className="flex flex-col gap-1.5">
+                <div className="flex items-center gap-1.5">
+                  <label className="text-[10px] text-gray-400">配置:</label>
+                  {(['top', 'left', 'right'] as const).map((pos) => (
+                    <button key={pos} onClick={() => setEditingTemplate({ ...editingTemplate, imagePosition: pos })}
+                      className={`px-2 py-0.5 text-[10px] rounded border ${
+                        (editingTemplate.imagePosition || 'top') === pos
+                          ? 'border-indigo-500 bg-indigo-50 text-indigo-700'
+                          : 'border-gray-200 text-gray-400'
+                      }`}>
+                      {pos === 'top' ? '上' : pos === 'left' ? '左' : '右'}
+                    </button>
+                  ))}
+                </div>
+                <div className="flex gap-1.5">
+                  <button onClick={() => imageInputRef.current?.click()}
+                    className="px-2 py-0.5 text-[10px] border border-gray-200 text-gray-400 rounded hover:bg-gray-50">変更</button>
+                  <button onClick={() => setEditingTemplate({ ...editingTemplate, imageData: undefined, imagePosition: undefined })}
+                    className="px-2 py-0.5 text-[10px] border border-red-200 text-red-400 rounded hover:bg-red-50">削除</button>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <button onClick={() => imageInputRef.current?.click()}
+              className="px-3 py-2 text-xs border-2 border-dashed border-gray-300 text-gray-400 rounded-lg hover:border-indigo-400 hover:text-indigo-500 w-full">
+              + 画像を追加
+            </button>
+          )}
+        </div>
+
         {/* Variable settings */}
         {vars.length > 0 && (
           <div className="mb-3">
@@ -155,13 +228,23 @@ export default function SignatureEditor({ onPlace, onClose }: Props) {
         <div className="mb-3">
           <label className="text-xs text-gray-500 mb-1 block">プレビュー</label>
           <div className="bg-white border-2 rounded-lg p-3 inline-block" style={{ borderColor: editingTemplate.color }}>
-            <pre className="text-xs leading-relaxed whitespace-pre-wrap" style={{
-              color: editingTemplate.color,
-              fontSize: `${editingTemplate.fontSize}px`,
-              fontFamily: editingTemplate.fontFamily,
-            }}>
-              {preview}
-            </pre>
+            <div className={`flex gap-2 ${
+              editingTemplate.imagePosition === 'left' ? 'flex-row' :
+              editingTemplate.imagePosition === 'right' ? 'flex-row-reverse' : 'flex-col'
+            } items-center`}>
+              {editingTemplate.imageData && (
+                <img src={editingTemplate.imageData} alt="ロゴ" className="max-w-[100px] max-h-[60px] object-contain" />
+              )}
+              {preview.trim() && (
+                <pre className="text-xs leading-relaxed whitespace-pre-wrap" style={{
+                  color: editingTemplate.color,
+                  fontSize: `${editingTemplate.fontSize}px`,
+                  fontFamily: editingTemplate.fontFamily,
+                }}>
+                  {preview}
+                </pre>
+              )}
+            </div>
           </div>
         </div>
 

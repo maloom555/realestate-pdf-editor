@@ -258,20 +258,30 @@ export default function EditorCanvas({ pdfDoc }: EditorCanvasProps) {
       // Signature stamp
       const sig = pendingSignatureRef.current
       if (sig) {
-        // Calculate size from text
-        const lines = sig.text.split('\n')
+        // Calculate size from text + image
+        const lines = sig.text ? sig.text.split('\n') : []
         const lineHeight = sig.fontSize * 1.4
         const canvas = document.createElement('canvas')
         const measureCtx = canvas.getContext('2d')!
         measureCtx.font = `${sig.fontSize}px ${sig.fontFamily}`
-        let maxW = 0
+        let textW = 0
         for (const line of lines) {
           const m = measureCtx.measureText(line)
-          if (m.width > maxW) maxW = m.width
+          if (m.width > textW) textW = m.width
         }
+        const textH = lines.length * lineHeight
         const padding = 12
-        const sw = (maxW + padding * 2) / scale
-        const sh = (lines.length * lineHeight + padding * 2) / scale
+        // Estimate image size in stamp
+        const imgW = sig.imageData ? 120 : 0
+        const imgH = sig.imageData ? 80 : 0
+        let sw: number, sh: number
+        if (sig.imagePosition === 'left' || sig.imagePosition === 'right') {
+          sw = (textW + imgW + (sig.imageData ? 10 : 0) + padding * 2) / scale
+          sh = (Math.max(textH, imgH) + padding * 2) / scale
+        } else {
+          sw = (Math.max(textW, imgW) + padding * 2) / scale
+          sh = (textH + imgH + (sig.imageData ? 10 : 0) + padding * 2) / scale
+        }
         addAndSelect(currentPage, {
           id: generateId(),
           type: 'stamp',
@@ -284,11 +294,13 @@ export default function EditorCanvas({ pdfDoc }: EditorCanvasProps) {
             stampId: 'signature',
             label: '',
             isSignature: true,
-            multiLineText: sig.text,
+            multiLineText: sig.text || '',
             fontSize: sig.fontSize,
             fontFamily: sig.fontFamily,
             origW: sw,
             origH: sh,
+            imageData: sig.imageData,
+            imagePosition: sig.imagePosition,
           },
         })
         pendingSignatureRef.current = null
@@ -1048,10 +1060,10 @@ export default function EditorCanvas({ pdfDoc }: EditorCanvasProps) {
   }, [])
 
   // Signature stamp placement
-  const pendingSignatureRef = useRef<{ text: string; color: string; fontSize: number; fontFamily: string } | null>(null)
+  const pendingSignatureRef = useRef<{ text: string; color: string; fontSize: number; fontFamily: string; imageData?: string; imagePosition?: 'top' | 'left' | 'right' } | null>(null)
 
-  const setSignaturePending = useCallback((text: string, color: string, fontSize: number, fontFamily: string) => {
-    pendingSignatureRef.current = { text, color, fontSize, fontFamily }
+  const setSignaturePending = useCallback((text: string, color: string, fontSize: number, fontFamily: string, imageData?: string, imagePosition?: 'top' | 'left' | 'right') => {
+    pendingSignatureRef.current = { text, color, fontSize, fontFamily, imageData, imagePosition }
     setCurrentTool('stamp')
   }, [setCurrentTool])
 
