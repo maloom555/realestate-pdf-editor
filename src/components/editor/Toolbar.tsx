@@ -864,12 +864,18 @@ export default function Toolbar() {
         </div>
       </div>
 
-      {/* Sub-menu bar - overlay on top of canvas so canvas never shifts */}
-      {showSubMenu && (
-        <div className="absolute left-0 right-0 top-full z-20 px-3 py-2 bg-white/95 backdrop-blur-sm border-b border-gray-200 shadow-md flex items-center justify-center gap-3 flex-wrap">
-          {subMenuContent()}
-        </div>
-      )}
+      {/* Sub-menu bar - fixed single row, scrollable */}
+      <div className="h-[40px] border-t border-gray-100 bg-gray-50 flex items-center">
+        {showSubMenu ? (
+          <div className="flex-1 overflow-x-auto px-3">
+            <div className="flex items-center gap-3 whitespace-nowrap min-w-max">
+              {subMenuContent()}
+            </div>
+          </div>
+        ) : (
+          <div className="flex-1" />
+        )}
+      </div>
 
       {/* Stamp Picker - overlay */}
       {showStampPicker && !showSignatureEditor && (
