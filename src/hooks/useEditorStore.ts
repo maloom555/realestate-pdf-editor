@@ -277,7 +277,19 @@ export const useEditorStore = create<EditorState>((set, get) => ({
       undoStack: [],
       redoStack: [],
       selectedAnnotationId: null,
-      pageUndoStack: [...state.pageUndoStack.slice(-9), undoEntry], // Keep last 10
+      // Limit undo stack by total memory: ~50MB max
+      pageUndoStack: (() => {
+        const stack = [...state.pageUndoStack, undoEntry]
+        const MB = 1024 * 1024
+        let totalSize = 0
+        const limited: typeof stack = []
+        for (let i = stack.length - 1; i >= 0; i--) {
+          totalSize += stack[i].pdfBytes.length
+          if (totalSize > 50 * MB) break
+          limited.unshift(stack[i])
+        }
+        return limited.length > 0 ? limited : [undoEntry]
+      })(),
     })
   },
 

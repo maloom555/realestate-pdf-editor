@@ -125,6 +125,9 @@ export default function EditorPage() {
   useEffect(() => {
     if (!store.pdfBytes || !store.projectId) return
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
+    // Larger files get longer debounce to avoid frequent writes
+    const fileSize = store.pdfBytes?.length || 0
+    const debounceMs = fileSize > 5 * 1024 * 1024 ? 5000 : 2000
     saveTimerRef.current = setTimeout(async () => {
       try {
         const { saveProject } = await import('@/lib/project-db')

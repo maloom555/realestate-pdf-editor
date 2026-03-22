@@ -20,33 +20,81 @@ export default function PageEditor({ pdfDoc, onReloadPdf }: PageEditorProps) {
   const [thumbnails, setThumbnails] = useState<Map<number, string>>(new Map())
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null)
   const [dragPageNum, setDragPageNum] = useState<number | null>(null)
+  const [visiblePages, setVisiblePages] = useState<Set<number>>(new Set())
   const importInputRef = useRef<HTMLInputElement>(null)
+  const thumbRefs = useRef<Map<number, HTMLDivElement>>(new Map())
+  const renderingRef = useRef<Set<number>>(new Set())
 
-  // Render thumbnails
+  // IntersectionObserver for lazy thumbnail loading
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const newVisible = new Set(visiblePages)
+        let changed = false
+        for (const entry of entries) {
+          const pageNum = Number(entry.target.getAttribute('data-page'))
+          if (entry.isIntersecting && !newVisible.has(pageNum)) {
+            newVisible.add(pageNum)
+            changed = true
+          }
+        }
+        if (changed) setVisiblePages(newVisible)
+      },
+      { rootMargin: '200px' } // Pre-load 200px before visible
+    )
+
+    thumbRefs.current.forEach((el) => observer.observe(el))
+    return () => observer.disconnect()
+  }, [totalPages, pdfDoc, visiblePages])
+
+  // Render only visible thumbnails, in batches
   useEffect(() => {
     if (!pdfDoc) return
     let cancelled = false
-    const renderThumbnails = async () => {
-      const newThumbs = new Map<number, string>()
-      for (let i = 1; i <= pdfDoc.numPages; i++) {
+
+    const renderBatch = async () => {
+      const toRender = Array.from(visiblePages).filter(
+        (p) => !thumbnails.has(p) && !renderingRef.current.has(p)
+      )
+      if (toRender.length === 0) return
+
+      for (const pageNum of toRender) {
         if (cancelled) return
+        renderingRef.current.add(pageNum)
         try {
-          const page = await pdfDoc.getPage(i)
+          const page = await pdfDoc.getPage(pageNum)
           const viewport = page.getViewport({ scale: 0.3 })
           const canvas = document.createElement('canvas')
           canvas.width = viewport.width
           canvas.height = viewport.height
           const ctx = canvas.getContext('2d')!
           await page.render({ canvasContext: ctx, viewport }).promise
-          newThumbs.set(i, canvas.toDataURL('image/jpeg', 0.7))
+          if (!cancelled) {
+            setThumbnails((prev) => {
+              const next = new Map(prev)
+              next.set(pageNum, canvas.toDataURL('image/jpeg', 0.6))
+              return next
+            })
+          }
         } catch {
           // Skip failed pages
+        } finally {
+          renderingRef.current.delete(pageNum)
         }
+        // Yield to UI between pages
+        await new Promise((r) => requestAnimationFrame(r))
       }
-      if (!cancelled) setThumbnails(newThumbs)
     }
-    renderThumbnails()
+
+    renderBatch()
     return () => { cancelled = true }
+  }, [pdfDoc, visiblePages, thumbnails])
+
+  // Clear thumbnails when pdfDoc changes
+  useEffect(() => {
+    setThumbnails(new Map())
+    setVisiblePages(new Set())
+    renderingRef.current.clear()
   }, [pdfDoc])
 
   // Execute page operation with loading state
@@ -263,6 +311,8 @@ export default function PageEditor({ pdfDoc, onReloadPdf }: PageEditorProps) {
             return (
               <div
                 key={pageNum}
+                ref={(el) => { if (el) thumbRefs.current.set(pageNum, el); else thumbRefs.current.delete(pageNum) }}
+                data-page={pageNum}
                 draggable
                 onDragStart={() => handleDragStart(pageNum)}
                 onDragOver={(e) => handleDragOver(e, pageNum - 1)}
