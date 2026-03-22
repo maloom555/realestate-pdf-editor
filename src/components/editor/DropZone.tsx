@@ -56,24 +56,24 @@ export default function DropZone({ onFileLoad, onProjectLoad }: DropZoneProps) {
   }
 
   return (
-    <div className="w-full max-w-2xl mx-auto my-12 px-4">
+    <div className="w-full max-w-2xl mx-auto my-6 sm:my-12 px-4">
       {/* Drop zone */}
       <div
-        className={`flex justify-center items-center w-full border-3 border-dashed rounded-2xl p-16 bg-white transition-all
+        className={`flex justify-center items-center w-full border-3 border-dashed rounded-2xl p-8 sm:p-16 bg-white transition-all
           ${isDragOver ? 'border-indigo-500 bg-indigo-50 scale-[1.02]' : 'border-indigo-200'}`}
         onDragOver={(e) => { e.preventDefault(); setIsDragOver(true) }}
         onDragLeave={() => setIsDragOver(false)}
         onDrop={handleDrop}
       >
         <div className="text-center">
-          <svg width="64" height="64" viewBox="0 0 64 64" fill="none" className="mx-auto mb-4">
+          <svg width="48" height="48" viewBox="0 0 64 64" fill="none" className="mx-auto mb-3 sm:mb-4 sm:w-16 sm:h-16">
             <rect x="8" y="4" width="48" height="56" rx="4" stroke="#6366f1" strokeWidth="3"/>
             <path d="M20 20H44M20 28H44M20 36H36" stroke="#6366f1" strokeWidth="2" strokeLinecap="round"/>
             <circle cx="46" cy="46" r="14" fill="#6366f1"/>
             <path d="M46 39V53M39 46H53" stroke="white" strokeWidth="3" strokeLinecap="round"/>
           </svg>
-          <p className="text-lg text-gray-600 font-medium">PDF・画像ファイルをドラッグ＆ドロップ</p>
-          <p className="text-gray-400 text-sm my-3">または</p>
+          <p className="text-base sm:text-lg text-gray-600 font-medium">PDF・画像ファイルをドラッグ＆ドロップ</p>
+          <p className="text-gray-400 text-sm my-2 sm:my-3">または</p>
           <button
             onClick={() => fileInputRef.current?.click()}
             className="px-7 py-2.5 bg-indigo-600 text-white rounded-xl text-base font-semibold hover:bg-indigo-700 transition-colors"
@@ -115,7 +115,7 @@ export default function DropZone({ onFileLoad, onProjectLoad }: DropZoneProps) {
                 </div>
                 <button
                   onClick={(e) => handleDelete(e, project.id)}
-                  className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 transition-all p-1 rounded"
+                  className="opacity-100 sm:opacity-0 sm:group-hover:opacity-100 text-gray-400 hover:text-red-500 transition-all p-1 rounded"
                   title="削除"
                 >
                   <svg width="16" height="16" viewBox="0 0 16 16" fill="none">

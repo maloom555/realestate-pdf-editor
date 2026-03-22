@@ -147,25 +147,26 @@ export default function EditorPage() {
         onLoad={handlePdfJsLoad}
       />
 
-      {/* Header */}
+      {/* Header - compact on mobile */}
       <header
-        className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-6 py-3 text-center cursor-pointer hover:opacity-90 transition-opacity"
+        className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-4 sm:px-6 py-2 sm:py-3 text-center cursor-pointer hover:opacity-90 transition-opacity"
         onClick={handleReset}
         title="トップに戻る"
       >
-        <h1 className="text-xl font-bold">不動産工房 <span className="text-sm font-normal opacity-80">PDF編集</span></h1>
+        <h1 className="text-base sm:text-xl font-bold">不動産工房 <span className="text-xs sm:text-sm font-normal opacity-80">PDF編集</span></h1>
       </header>
 
       {pdfDoc ? (
         <>
+          {/* Desktop: toolbar at top. Mobile: toolbar is fixed at bottom (rendered by Toolbar component) */}
           <Toolbar />
           <PageNavigator pdfDoc={pdfDoc} />
-          <main className="flex-1 min-h-0 flex justify-center items-start overflow-auto p-4">
+          <main className="flex-1 min-h-0 flex justify-center items-start overflow-auto p-2 sm:p-4 pb-20 sm:pb-4">
             <EditorCanvas pdfDoc={pdfDoc} />
           </main>
         </>
       ) : (
-        <main className="flex-1 flex justify-center items-start">
+        <main className="flex-1 flex justify-center items-start px-4">
           <DropZone onFileLoad={handleFileLoad} onProjectLoad={handleProjectLoad} />
         </main>
       )}

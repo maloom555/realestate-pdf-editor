@@ -1,5 +1,13 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import './globals.css'
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  viewportFit: 'cover',
+}
 
 export const metadata: Metadata = {
   title: '不動産工房 - 不動産業務を効率化する無料ツール集',
@@ -9,6 +17,11 @@ export const metadata: Metadata = {
     '不動産', '業務効率化', 'PDF編集', '無料', 'オンライン',
     'PDF マスキング', '物件資料', '不動産ツール',
   ],
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'black-translucent',
+    title: '不動産工房',
+  },
 }
 
 export default function RootLayout({
@@ -18,7 +31,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="ja">
-      <body className="bg-gray-50 text-gray-900 min-h-screen font-[Segoe_UI,Hiragino_Sans,Meiryo,sans-serif]">
+      <body className="bg-gray-50 text-gray-900 min-h-screen font-[Segoe_UI,Hiragino_Sans,Meiryo,sans-serif] overscroll-none">
         {children}
       </body>
     </html>

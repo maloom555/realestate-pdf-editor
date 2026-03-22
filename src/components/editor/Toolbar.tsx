@@ -3,7 +3,7 @@
 import { useEditorStore } from '@/hooks/useEditorStore'
 import type { ToolType, StampData } from '@/types/annotations'
 import { STAMP_PRESETS } from '@/components/stamps/stamps-data'
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 
 const tools: { id: ToolType; label: string; icon: string }[] = [
   { id: 'rect', label: '墨消し', icon: '■' },
@@ -56,7 +56,17 @@ export default function Toolbar() {
   } = store
 
   const [showStampPicker, setShowStampPicker] = useState(false)
+  const [showMobileMenu, setShowMobileMenu] = useState(false)
+  const [isMobile, setIsMobile] = useState(false)
   const loadProjectInputRef = useRef<HTMLInputElement>(null)
+
+  // Detect mobile viewport
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 640)
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
 
   const handleToolSelect = (tool: ToolType) => {
     if (tool === 'stamp') {
@@ -278,6 +288,355 @@ export default function Toolbar() {
     ? Math.round((selectedAnn.fillOpacity ?? 0.3) * 100)
     : Math.round(fillOpacity * 100)
 
+  // Sub-menu content (shared between desktop and mobile)
+  const subMenuContent = () => (
+    <>
+      {/* Color palette */}
+      {(showColorPicker || canChangeColor) && (
+        <div className="flex items-center gap-1.5">
+          <label className="text-xs text-gray-400 font-semibold shrink-0">色:</label>
+          <div className="flex items-center gap-0.5 flex-wrap">
+            {COLOR_PALETTE.map((c) => (
+              <button key={c} onClick={() => handleColorChange(c)}
+                className={`w-5 h-5 rounded-sm border-2 transition-all ${
+                  (canChangeColor ? selectedAnn.color : maskColor) === c
+                    ? 'border-indigo-500 scale-125' : 'border-gray-300 hover:border-indigo-400'
+                }`}
+                style={{ backgroundColor: c }} title={c} />
+            ))}
+          </div>
+          <input type="color" value={canChangeColor ? selectedAnn.color : maskColor}
+            onChange={(e) => handleColorChange(e.target.value)}
+            className="w-6 h-6 border border-gray-300 rounded cursor-pointer p-0 shrink-0" title="カスタムカラー" />
+        </div>
+      )}
+
+      {/* Pen size (1-20) */}
+      {(showPenSize || canAdjustSize) && (
+        <>
+          <div className="w-px h-5 bg-gray-300 hidden sm:block" />
+          <div className="flex items-center gap-1.5">
+            <label className="text-xs text-gray-400 font-semibold shrink-0">太さ:</label>
+            <input type="range" min={1} max={20}
+              value={canAdjustSize ? (selectedAnn.size || 2) : penSize}
+              onChange={(e) => {
+                const v = parseInt(e.target.value)
+                if (canAdjustSize) updateAnnotation(currentPage, selectedAnn.id, { size: v })
+                else setPenSize(v)
+              }}
+              className="w-20 accent-indigo-500" />
+            <span className="text-xs text-gray-400 min-w-[30px]">
+              {canAdjustSize ? (selectedAnn.size || 2) : penSize}px
+            </span>
+          </div>
+        </>
+      )}
+
+      {/* Font options */}
+      {(showFontOptions || isSelectedText || isSelectedCallout) && (
+        <>
+          <div className="w-px h-5 bg-gray-300 hidden sm:block" />
+          <div className="flex items-center gap-1.5">
+            <label className="text-xs text-gray-400 font-semibold shrink-0">文字:</label>
+            <input type="range" min={1} max={100} value={displayFontSize}
+              onChange={(e) => handleSelectedFontSizeChange(parseInt(e.target.value))}
+              className="w-20 accent-indigo-500" />
+            <span className="text-xs text-gray-400 min-w-[30px]">{displayFontSize}px</span>
+          </div>
+          {(currentTool === 'text' || isSelectedText) && (
+            <select value={displayFontFamily} onChange={(e) => handleFontFamilyChange(e.target.value)}
+              className="text-xs border border-gray-200 rounded px-1 py-0.5 bg-white text-gray-700">
+              {FONT_FAMILIES.map((f) => (
+                <option key={f.value} value={f.value}>{f.label}</option>
+              ))}
+            </select>
+          )}
+          <div className="flex items-center gap-1">
+            <button onClick={() => {
+              const newVal = !displayBold
+              setTextBold(newVal)
+              if ((isSelectedText || isSelectedCallout) && selectedAnn) {
+                updateAnnotation(currentPage, selectedAnn.id, {
+                  data: { ...selectedAnn.data, bold: newVal } as never,
+                })
+              }
+            }}
+              className={`px-2 py-1 text-xs font-bold border rounded-lg ${
+                displayBold ? 'border-indigo-500 bg-indigo-50 text-indigo-700' : 'border-gray-200 text-gray-500'
+              }`}>B</button>
+            <button onClick={() => {
+              const newVal = !displayUnderline
+              setTextUnderline(newVal)
+              if ((isSelectedText || isSelectedCallout) && selectedAnn) {
+                updateAnnotation(currentPage, selectedAnn.id, {
+                  data: { ...selectedAnn.data, underline: newVal } as never,
+                })
+              }
+            }}
+              className={`px-2 py-1 text-xs underline border rounded-lg ${
+                displayUnderline ? 'border-indigo-500 bg-indigo-50 text-indigo-700' : 'border-gray-200 text-gray-500'
+              }`}>U</button>
+            {(currentTool === 'text' || isSelectedText) && (
+              <button onClick={() => {
+                const newVal = !displayTextBox
+                setTextBox(newVal)
+                if (isSelectedText && selectedAnn) {
+                  updateAnnotation(currentPage, selectedAnn.id, {
+                    data: { ...selectedAnn.data, textBox: newVal } as never,
+                  })
+                }
+              }}
+                className={`px-2 py-1 text-xs border rounded-lg ${
+                  displayTextBox ? 'border-indigo-500 bg-indigo-50 text-indigo-700' : 'border-gray-200 text-gray-500'
+                }`} title="テキストボックス">枠</button>
+            )}
+          </div>
+        </>
+      )}
+
+      {/* Opacity */}
+      <div className="flex items-center gap-1.5">
+        <label className="text-xs text-gray-400 font-semibold shrink-0">透過:</label>
+        <input type="range" min={5} max={100} value={displayOpacity}
+          onChange={(e) => handleOpacityChange(parseInt(e.target.value))}
+          className="w-16 accent-indigo-500" />
+        <span className="text-xs text-gray-400 min-w-[30px]">{displayOpacity}%</span>
+      </div>
+
+      {/* Fill controls */}
+      {(showFillForTool || showFillForSelected) && (
+        <>
+          <button onClick={handleFillToggle}
+            className={`px-2 py-1 text-xs border rounded-lg ${
+              displayFillEnabled ? 'border-indigo-500 bg-indigo-50 text-indigo-700' : 'border-gray-200 text-gray-500'
+            }`}>塗り</button>
+          {displayFillEnabled && (
+            <div className="flex items-center gap-1">
+              <label className="text-xs text-gray-400">濃さ:</label>
+              <input type="range" min={5} max={100} value={displayFillOpacity}
+                onChange={(e) => handleFillOpacityChange(parseInt(e.target.value))}
+                className="w-14 accent-indigo-500" />
+              <span className="text-xs text-gray-400 min-w-[24px]">{displayFillOpacity}%</span>
+            </div>
+          )}
+        </>
+      )}
+
+      {/* Close path toggle */}
+      {showCloseForSelected && (
+        <button onClick={handleCloseToggle}
+          className={`px-2 py-1 text-xs border rounded-lg ${
+            selectedAnn.closed ? 'border-indigo-500 bg-indigo-50 text-indigo-700' : 'border-gray-200 text-gray-500'
+          }`}>閉じる</button>
+      )}
+
+      {/* Arrow toggles (polyline + pen) */}
+      {isPolyline && (
+        <>
+          <button onClick={() => {
+            if (selectedAnn.type === 'polyline') {
+              const d = selectedAnn.data as { arrowStart: boolean; arrowEnd: boolean }
+              updateAnnotation(currentPage, selectedAnn.id, {
+                data: { ...selectedAnn.data, arrowStart: !d.arrowStart } as unknown as typeof selectedAnn.data,
+              })
+            } else {
+              updateAnnotation(currentPage, selectedAnn.id, { arrowStart: !selectedAnn.arrowStart })
+            }
+          }}
+            className={`px-2 py-1 text-xs border rounded-lg ${
+              (selectedAnn.type === 'polyline'
+                ? (selectedAnn.data as { arrowStart: boolean }).arrowStart
+                : selectedAnn.arrowStart)
+                ? 'border-indigo-500 bg-indigo-50 text-indigo-700'
+                : 'border-gray-200 text-gray-500'
+            }`}>←始点</button>
+          <button onClick={() => {
+            if (selectedAnn.type === 'polyline') {
+              const d = selectedAnn.data as { arrowStart: boolean; arrowEnd: boolean }
+              updateAnnotation(currentPage, selectedAnn.id, {
+                data: { ...selectedAnn.data, arrowEnd: !d.arrowEnd } as unknown as typeof selectedAnn.data,
+              })
+            } else {
+              updateAnnotation(currentPage, selectedAnn.id, { arrowEnd: !selectedAnn.arrowEnd })
+            }
+          }}
+            className={`px-2 py-1 text-xs border rounded-lg ${
+              (selectedAnn.type === 'polyline'
+                ? (selectedAnn.data as { arrowEnd: boolean }).arrowEnd
+                : selectedAnn.arrowEnd)
+                ? 'border-indigo-500 bg-indigo-50 text-indigo-700'
+                : 'border-gray-200 text-gray-500'
+            }`}>終点→</button>
+        </>
+      )}
+
+      {/* Dash style dropdown */}
+      {(showDashForTool || showDashForSelected) && (
+        <div className="flex items-center gap-1">
+          <label className="text-xs text-gray-400 font-semibold shrink-0">線種:</label>
+          <select
+            value={selectedAnn?.dashStyle || 'solid'}
+            onChange={(e) => {
+              if (selectedAnn) {
+                updateAnnotation(currentPage, selectedAnn.id, { dashStyle: e.target.value as 'solid' | 'dash' | 'dot' | 'dashdot' })
+              }
+            }}
+            className="text-xs border border-gray-200 rounded px-1.5 py-0.5 bg-white text-gray-700"
+          >
+            <option value="solid">── 実線</option>
+            <option value="dash">╌╌ 破線</option>
+            <option value="dot">··· 点線</option>
+            <option value="dashdot">╌· 一点鎖線</option>
+          </select>
+        </div>
+      )}
+
+      {/* Border radius */}
+      {(showRadiusForTool || showRadiusForSelected) && (
+        <div className="flex items-center gap-1.5">
+          <label className="text-xs text-gray-400 font-semibold shrink-0">角丸:</label>
+          <input type="range" min={0} max={30} value={selectedAnn?.borderRadius || 0}
+            onChange={(e) => {
+              if (selectedAnn) {
+                updateAnnotation(currentPage, selectedAnn.id, { borderRadius: parseInt(e.target.value) })
+              }
+            }}
+            className="w-16 accent-indigo-500" />
+          <span className="text-xs text-gray-400 min-w-[24px]">{selectedAnn?.borderRadius || 0}</span>
+        </div>
+      )}
+
+      {/* Stamp leg toggle */}
+      {isSelectedStamp && (
+        <button onClick={() => {
+          const sd = selectedAnn.data as StampData
+          if (sd.legX != null) {
+            updateAnnotation(currentPage, selectedAnn.id, {
+              data: { ...selectedAnn.data, legX: undefined, legY: undefined } as unknown as typeof selectedAnn.data,
+            })
+          } else {
+            const fn = (window as unknown as Record<string, () => void>).__stampLegMode
+            if (fn) fn()
+          }
+        }}
+          className={`px-2 py-1 text-xs border rounded-lg ${
+            (selectedAnn.data as StampData).legX != null
+              ? 'border-indigo-500 bg-indigo-50 text-indigo-700'
+              : 'border-gray-200 text-gray-500'
+          }`}>
+          {(selectedAnn.data as StampData).legX != null ? '引出線✓' : '引出線'}
+        </button>
+      )}
+
+      {/* Select tool info & delete */}
+      {currentTool === 'select' && (
+        <>
+          {!isMobile && (
+            <span className="text-xs text-gray-400">
+              {selectedAnnotationId
+                ? selectedAnn?.type === 'callout'
+                  ? 'ダブルクリックで編集 / 黄◆で矢印移動'
+                  : 'ダブルクリックで再編集'
+                : 'クリックで選択'}
+            </span>
+          )}
+          {selectedAnnotationId && (
+            <button onClick={handleDelete}
+              className="px-3 py-1 text-xs border border-red-300 text-red-500 rounded-lg hover:bg-red-50">削除</button>
+          )}
+        </>
+      )}
+    </>
+  )
+
+  // ===== MOBILE LAYOUT =====
+  if (isMobile) {
+    return (
+      <>
+        {/* Mobile bottom toolbar */}
+        <div className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 shadow-[0_-2px_10px_rgba(0,0,0,0.1)] safe-bottom">
+          {/* Sub-menu (slides up above toolbar) */}
+          {(showSubMenu || showMobileMenu) && (
+            <div className="px-3 py-2 border-b border-gray-100 bg-gray-50 flex items-center gap-2 flex-wrap overflow-x-auto">
+              {subMenuContent()}
+            </div>
+          )}
+
+          {/* Stamp Picker (mobile) */}
+          {showStampPicker && (
+            <div className="px-3 py-2 border-b border-gray-100 bg-gray-50 max-h-40 overflow-y-auto">
+              {Object.entries(stampsByCategory).map(([category, stamps]) => (
+                <div key={category} className="mb-2">
+                  <div className="text-xs text-gray-400 font-semibold mb-1">{category}</div>
+                  <div className="flex flex-wrap gap-1">
+                    {stamps.map((stamp) => (
+                      <button key={stamp.id}
+                        onClick={() => handleStampSelect(stamp.id, stamp.label, stamp.color)}
+                        className="px-2 py-1 text-xs border-2 rounded hover:shadow transition-all font-bold"
+                        style={{ borderColor: stamp.color, color: stamp.color }}>
+                        {stamp.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Main tool row */}
+          <div className="flex items-center gap-1 px-2 py-1.5">
+            {/* Scrollable tool buttons */}
+            <div className="flex-1 overflow-x-auto flex items-center gap-1 min-w-0">
+              {tools.map((tool) => (
+                <button
+                  key={tool.id}
+                  onClick={() => handleToolSelect(tool.id)}
+                  className={`flex-shrink-0 flex items-center justify-center w-9 h-9 rounded-lg text-base transition-all
+                    ${currentTool === tool.id
+                      ? 'bg-indigo-100 text-indigo-700 font-semibold'
+                      : 'text-gray-500 active:bg-gray-100'
+                    }`}
+                  title={tool.label}
+                >
+                  {tool.icon}
+                </button>
+              ))}
+            </div>
+
+            {/* Action buttons */}
+            <div className="flex items-center gap-1 flex-shrink-0 border-l border-gray-200 pl-1">
+              <button onClick={undo} disabled={undoStack.length === 0}
+                className="w-8 h-8 flex items-center justify-center text-gray-500 disabled:opacity-30 rounded active:bg-gray-100"
+                title="戻す">↩</button>
+              <button onClick={redo} disabled={redoStack.length === 0}
+                className="w-8 h-8 flex items-center justify-center text-gray-500 disabled:opacity-30 rounded active:bg-gray-100"
+                title="やり直し">↪</button>
+              <button onClick={() => setShowMobileMenu(!showMobileMenu)}
+                className={`w-8 h-8 flex items-center justify-center rounded ${showMobileMenu ? 'bg-indigo-100 text-indigo-700' : 'text-gray-500 active:bg-gray-100'}`}
+                title="メニュー">⋯</button>
+            </div>
+          </div>
+
+          {/* More menu (mobile) */}
+          {showMobileMenu && (
+            <div className="px-3 py-2 border-t border-gray-100 bg-white flex items-center gap-2 flex-wrap">
+              <button onClick={handleSaveProject} disabled={!pdfBytes}
+                className="px-3 py-1.5 text-xs border border-green-300 text-green-700 rounded-lg disabled:opacity-30">💾 保存</button>
+              <button onClick={() => { loadProjectInputRef.current?.click(); setShowMobileMenu(false) }}
+                className="px-3 py-1.5 text-xs border border-blue-300 text-blue-700 rounded-lg">📂 読込</button>
+              <input ref={loadProjectInputRef} type="file" accept=".rpef,.json" className="hidden" onChange={handleLoadProject} />
+              <button onClick={() => clearPage(currentPage)}
+                className="px-3 py-1.5 text-xs border border-gray-200 text-gray-500 rounded-lg">クリア</button>
+              <button onClick={handleExport}
+                className="px-3 py-1.5 text-xs bg-indigo-600 text-white rounded-lg font-semibold">PDFダウンロード</button>
+            </div>
+          )}
+        </div>
+      </>
+    )
+  }
+
+  // ===== DESKTOP LAYOUT =====
   return (
     <div className="bg-white border-b border-gray-200 shadow-sm">
       {/* Main tool bar */}
@@ -336,292 +695,7 @@ export default function Toolbar() {
       {/* Sub-menu bar */}
       {showSubMenu && (
         <div className="px-3 py-2 border-t border-gray-100 bg-gray-50 flex items-center justify-center gap-3 flex-wrap">
-          {/* Color palette */}
-          {(showColorPicker || canChangeColor) && (
-            <div className="flex items-center gap-1.5">
-              <label className="text-xs text-gray-400 font-semibold">色:</label>
-              <div className="flex items-center gap-0.5">
-                {COLOR_PALETTE.map((c) => (
-                  <button key={c} onClick={() => handleColorChange(c)}
-                    className={`w-5 h-5 rounded-sm border-2 transition-all ${
-                      (canChangeColor ? selectedAnn.color : maskColor) === c
-                        ? 'border-indigo-500 scale-125' : 'border-gray-300 hover:border-indigo-400'
-                    }`}
-                    style={{ backgroundColor: c }} title={c} />
-                ))}
-              </div>
-              <input type="color" value={canChangeColor ? selectedAnn.color : maskColor}
-                onChange={(e) => handleColorChange(e.target.value)}
-                className="w-6 h-6 border border-gray-300 rounded cursor-pointer p-0" title="カスタムカラー" />
-            </div>
-          )}
-
-          {/* Pen size (1-20) */}
-          {(showPenSize || canAdjustSize) && (
-            <>
-              <div className="w-px h-5 bg-gray-300" />
-              <div className="flex items-center gap-1.5">
-                <label className="text-xs text-gray-400 font-semibold">太さ:</label>
-                <input type="range" min={1} max={20}
-                  value={canAdjustSize ? (selectedAnn.size || 2) : penSize}
-                  onChange={(e) => {
-                    const v = parseInt(e.target.value)
-                    if (canAdjustSize) updateAnnotation(currentPage, selectedAnn.id, { size: v })
-                    else setPenSize(v)
-                  }}
-                  className="w-20 accent-indigo-500" />
-                <span className="text-xs text-gray-400 min-w-[30px]">
-                  {canAdjustSize ? (selectedAnn.size || 2) : penSize}px
-                </span>
-              </div>
-            </>
-          )}
-
-          {/* Font options */}
-          {(showFontOptions || isSelectedText || isSelectedCallout) && (
-            <>
-              <div className="w-px h-5 bg-gray-300" />
-              <div className="flex items-center gap-1.5">
-                <label className="text-xs text-gray-400 font-semibold">文字サイズ:</label>
-                <input type="range" min={1} max={100} value={displayFontSize}
-                  onChange={(e) => handleSelectedFontSizeChange(parseInt(e.target.value))}
-                  className="w-20 accent-indigo-500" />
-                <span className="text-xs text-gray-400 min-w-[30px]">{displayFontSize}px</span>
-              </div>
-              {(currentTool === 'text' || isSelectedText) && (
-                <>
-                  <div className="w-px h-5 bg-gray-300" />
-                  <div className="flex items-center gap-1.5">
-                    <label className="text-xs text-gray-400 font-semibold">フォント:</label>
-                    <select value={displayFontFamily} onChange={(e) => handleFontFamilyChange(e.target.value)}
-                      className="text-xs border border-gray-200 rounded px-1 py-0.5 bg-white text-gray-700">
-                      {FONT_FAMILIES.map((f) => (
-                        <option key={f.value} value={f.value}>{f.label}</option>
-                      ))}
-                    </select>
-                  </div>
-                </>
-              )}
-              {/* Bold / Underline / TextBox */}
-              <div className="w-px h-5 bg-gray-300" />
-              <div className="flex items-center gap-1">
-                <button onClick={() => {
-                  const newVal = !displayBold
-                  setTextBold(newVal)
-                  if ((isSelectedText || isSelectedCallout) && selectedAnn) {
-                    updateAnnotation(currentPage, selectedAnn.id, {
-                      data: { ...selectedAnn.data, bold: newVal } as never,
-                    })
-                  }
-                }}
-                  className={`px-2 py-1 text-xs font-bold border rounded-lg ${
-                    displayBold ? 'border-indigo-500 bg-indigo-50 text-indigo-700' : 'border-gray-200 text-gray-500 hover:border-indigo-400'
-                  }`}>B</button>
-                <button onClick={() => {
-                  const newVal = !displayUnderline
-                  setTextUnderline(newVal)
-                  if ((isSelectedText || isSelectedCallout) && selectedAnn) {
-                    updateAnnotation(currentPage, selectedAnn.id, {
-                      data: { ...selectedAnn.data, underline: newVal } as never,
-                    })
-                  }
-                }}
-                  className={`px-2 py-1 text-xs underline border rounded-lg ${
-                    displayUnderline ? 'border-indigo-500 bg-indigo-50 text-indigo-700' : 'border-gray-200 text-gray-500 hover:border-indigo-400'
-                  }`}>U</button>
-                {(currentTool === 'text' || isSelectedText) && (
-                  <button onClick={() => {
-                    const newVal = !displayTextBox
-                    setTextBox(newVal)
-                    if (isSelectedText && selectedAnn) {
-                      updateAnnotation(currentPage, selectedAnn.id, {
-                        data: { ...selectedAnn.data, textBox: newVal } as never,
-                      })
-                    }
-                  }}
-                    className={`px-2 py-1 text-xs border rounded-lg ${
-                      displayTextBox ? 'border-indigo-500 bg-indigo-50 text-indigo-700' : 'border-gray-200 text-gray-500 hover:border-indigo-400'
-                    }`} title="テキストボックス">枠</button>
-                )}
-              </div>
-            </>
-          )}
-
-          {/* Opacity (all tools) */}
-          <>
-            <div className="w-px h-5 bg-gray-300" />
-            <div className="flex items-center gap-1.5">
-              <label className="text-xs text-gray-400 font-semibold">透過:</label>
-              <input type="range" min={5} max={100} value={displayOpacity}
-                onChange={(e) => handleOpacityChange(parseInt(e.target.value))}
-                className="w-16 accent-indigo-500" />
-              <span className="text-xs text-gray-400 min-w-[30px]">{displayOpacity}%</span>
-            </div>
-          </>
-
-          {/* Fill controls (circle, shape-rect, pen, polyline) */}
-          {(showFillForTool || showFillForSelected) && (
-            <>
-              <div className="w-px h-5 bg-gray-300" />
-              <button onClick={handleFillToggle}
-                className={`px-2 py-1 text-xs border rounded-lg ${
-                  displayFillEnabled
-                    ? 'border-indigo-500 bg-indigo-50 text-indigo-700'
-                    : 'border-gray-200 text-gray-500 hover:border-indigo-400'
-                }`}>
-                塗り
-              </button>
-              {displayFillEnabled && (
-                <div className="flex items-center gap-1">
-                  <label className="text-xs text-gray-400">濃さ:</label>
-                  <input type="range" min={5} max={100} value={displayFillOpacity}
-                    onChange={(e) => handleFillOpacityChange(parseInt(e.target.value))}
-                    className="w-14 accent-indigo-500" />
-                  <span className="text-xs text-gray-400 min-w-[24px]">{displayFillOpacity}%</span>
-                </div>
-              )}
-            </>
-          )}
-
-          {/* Close path toggle (pen/polyline when selected) */}
-          {showCloseForSelected && (
-            <button onClick={handleCloseToggle}
-              className={`px-2 py-1 text-xs border rounded-lg ${
-                selectedAnn.closed
-                  ? 'border-indigo-500 bg-indigo-50 text-indigo-700'
-                  : 'border-gray-200 text-gray-500 hover:border-indigo-400'
-              }`}>
-              閉じる
-            </button>
-          )}
-
-          {/* Arrow toggles (polyline + pen) */}
-          {isPolyline && (
-            <>
-              <div className="w-px h-5 bg-gray-300" />
-              <button onClick={() => {
-                if (selectedAnn.type === 'polyline') {
-                  const d = selectedAnn.data as { arrowStart: boolean; arrowEnd: boolean }
-                  updateAnnotation(currentPage, selectedAnn.id, {
-                    data: { ...selectedAnn.data, arrowStart: !d.arrowStart } as unknown as typeof selectedAnn.data,
-                  })
-                } else {
-                  updateAnnotation(currentPage, selectedAnn.id, { arrowStart: !selectedAnn.arrowStart })
-                }
-              }}
-                className={`px-2 py-1 text-xs border rounded-lg ${
-                  (selectedAnn.type === 'polyline'
-                    ? (selectedAnn.data as { arrowStart: boolean }).arrowStart
-                    : selectedAnn.arrowStart)
-                    ? 'border-indigo-500 bg-indigo-50 text-indigo-700'
-                    : 'border-gray-200 text-gray-500 hover:border-indigo-400'
-                }`}>←始点</button>
-              <button onClick={() => {
-                if (selectedAnn.type === 'polyline') {
-                  const d = selectedAnn.data as { arrowStart: boolean; arrowEnd: boolean }
-                  updateAnnotation(currentPage, selectedAnn.id, {
-                    data: { ...selectedAnn.data, arrowEnd: !d.arrowEnd } as unknown as typeof selectedAnn.data,
-                  })
-                } else {
-                  updateAnnotation(currentPage, selectedAnn.id, { arrowEnd: !selectedAnn.arrowEnd })
-                }
-              }}
-                className={`px-2 py-1 text-xs border rounded-lg ${
-                  (selectedAnn.type === 'polyline'
-                    ? (selectedAnn.data as { arrowEnd: boolean }).arrowEnd
-                    : selectedAnn.arrowEnd)
-                    ? 'border-indigo-500 bg-indigo-50 text-indigo-700'
-                    : 'border-gray-200 text-gray-500 hover:border-indigo-400'
-                }`}>終点→</button>
-            </>
-          )}
-
-          {/* Dash style dropdown */}
-          {(showDashForTool || showDashForSelected) && (
-            <>
-              <div className="w-px h-5 bg-gray-300" />
-              <div className="flex items-center gap-1">
-                <label className="text-xs text-gray-400 font-semibold">線種:</label>
-                <select
-                  value={selectedAnn?.dashStyle || 'solid'}
-                  onChange={(e) => {
-                    if (selectedAnn) {
-                      updateAnnotation(currentPage, selectedAnn.id, { dashStyle: e.target.value as 'solid' | 'dash' | 'dot' | 'dashdot' })
-                    }
-                  }}
-                  className="text-xs border border-gray-200 rounded px-1.5 py-0.5 bg-white text-gray-700"
-                >
-                  <option value="solid">── 実線</option>
-                  <option value="dash">╌╌ 破線</option>
-                  <option value="dot">··· 点線</option>
-                  <option value="dashdot">╌· 一点鎖線</option>
-                </select>
-              </div>
-            </>
-          )}
-
-          {/* Border radius */}
-          {(showRadiusForTool || showRadiusForSelected) && (
-            <>
-              <div className="w-px h-5 bg-gray-300" />
-              <div className="flex items-center gap-1.5">
-                <label className="text-xs text-gray-400 font-semibold">角丸:</label>
-                <input type="range" min={0} max={30} value={selectedAnn?.borderRadius || 0}
-                  onChange={(e) => {
-                    if (selectedAnn) {
-                      updateAnnotation(currentPage, selectedAnn.id, { borderRadius: parseInt(e.target.value) })
-                    }
-                  }}
-                  className="w-16 accent-indigo-500" />
-                <span className="text-xs text-gray-400 min-w-[24px]">{selectedAnn?.borderRadius || 0}</span>
-              </div>
-            </>
-          )}
-
-          {/* Stamp leg/arrow toggle */}
-          {isSelectedStamp && (
-            <>
-              <div className="w-px h-5 bg-gray-300" />
-              <button onClick={() => {
-                const sd = selectedAnn.data as StampData
-                if (sd.legX != null) {
-                  // Remove leg
-                  updateAnnotation(currentPage, selectedAnn.id, {
-                    data: { ...selectedAnn.data, legX: undefined, legY: undefined } as unknown as typeof selectedAnn.data,
-                  })
-                } else {
-                  // Enable leg placement mode
-                  const fn = (window as unknown as Record<string, () => void>).__stampLegMode
-                  if (fn) fn()
-                }
-              }}
-                className={`px-2 py-1 text-xs border rounded-lg ${
-                  (selectedAnn.data as StampData).legX != null
-                    ? 'border-indigo-500 bg-indigo-50 text-indigo-700'
-                    : 'border-gray-200 text-gray-500 hover:border-indigo-400'
-                }`}>
-                {(selectedAnn.data as StampData).legX != null ? '引出線✓' : '引出線'}
-              </button>
-            </>
-          )}
-
-          {/* Select tool info & delete */}
-          {currentTool === 'select' && (
-            <>
-              <div className="w-px h-5 bg-gray-300" />
-              <span className="text-xs text-gray-400">
-                {selectedAnnotationId
-                  ? selectedAnn?.type === 'callout'
-                    ? 'ダブルクリックで編集 / 黄◆で矢印移動'
-                    : 'ダブルクリックで再編集'
-                  : 'クリックで選択'}
-              </span>
-              {selectedAnnotationId && (
-                <button onClick={handleDelete}
-                  className="px-3 py-1 text-xs border border-red-300 text-red-500 rounded-lg hover:bg-red-50">削除</button>
-              )}
-            </>
-          )}
+          {subMenuContent()}
         </div>
       )}
 

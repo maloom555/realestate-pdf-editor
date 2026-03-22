@@ -44,6 +44,14 @@ export default function EditorCanvas({ pdfDoc }: EditorCanvasProps) {
     polylinePoints: [] as Point[],
   })
 
+  // Pinch-zoom state
+  const pinchRef = useRef<{
+    active: boolean
+    initialDist: number
+    initialScale: number
+    lastDist: number
+  }>({ active: false, initialDist: 0, initialScale: 1, lastDist: 0 })
+
   // Track Shift key state
   useEffect(() => {
     const down = (e: KeyboardEvent) => { if (e.key === 'Shift') shiftKeyRef.current = true }
@@ -1057,6 +1065,62 @@ export default function EditorCanvas({ pdfDoc }: EditorCanvasProps) {
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [redrawAnnotations, selectedAnnotationId, annotations, currentPage, store])
 
+  // Pinch-zoom handlers (2-finger touch on canvas)
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    if (e.touches.length === 2) {
+      e.preventDefault()
+      const dx = e.touches[0].clientX - e.touches[1].clientX
+      const dy = e.touches[0].clientY - e.touches[1].clientY
+      const dist = Math.sqrt(dx * dx + dy * dy)
+      pinchRef.current = { active: true, initialDist: dist, initialScale: scale, lastDist: dist }
+      return
+    }
+    handleMouseDown(e)
+  }, [scale, handleMouseDown])
+
+  const handleTouchMove = useCallback((e: React.TouchEvent) => {
+    if (e.touches.length === 2 && pinchRef.current.active) {
+      e.preventDefault()
+      const dx = e.touches[0].clientX - e.touches[1].clientX
+      const dy = e.touches[0].clientY - e.touches[1].clientY
+      const dist = Math.sqrt(dx * dx + dy * dy)
+      const ratio = dist / pinchRef.current.initialDist
+      const newScale = Math.min(Math.max(pinchRef.current.initialScale * ratio, 0.3), 5)
+      store.setScale(newScale)
+      pinchRef.current.lastDist = dist
+      return
+    }
+    if (!pinchRef.current.active) {
+      handleMouseMove(e)
+    }
+  }, [store, handleMouseMove])
+
+  const handleTouchEnd = useCallback((e: React.TouchEvent) => {
+    if (pinchRef.current.active) {
+      if (e.touches.length < 2) {
+        pinchRef.current.active = false
+      }
+      return
+    }
+    handleMouseUp(e)
+  }, [handleMouseUp])
+
+  // Wheel zoom (Ctrl+scroll or trackpad pinch)
+  useEffect(() => {
+    const container = containerRef.current
+    if (!container) return
+    const handleWheel = (e: WheelEvent) => {
+      if (e.ctrlKey || e.metaKey) {
+        e.preventDefault()
+        const delta = -e.deltaY * 0.002
+        const newScale = Math.min(Math.max(scale + delta, 0.3), 5)
+        store.setScale(newScale)
+      }
+    }
+    container.addEventListener('wheel', handleWheel, { passive: false })
+    return () => container.removeEventListener('wheel', handleWheel)
+  }, [scale, store])
+
   // Reset polylinePoints when switching tools
   useEffect(() => {
     drawStateRef.current.polylinePoints = []
@@ -1071,15 +1135,15 @@ export default function EditorCanvas({ pdfDoc }: EditorCanvasProps) {
         <canvas ref={pdfCanvasRef} className="block" />
         <canvas
           ref={maskCanvasRef}
-          className={`absolute top-0 left-0 ${cursorClass}`}
+          className={`absolute top-0 left-0 editor-canvas ${cursorClass}`}
           onMouseDown={handleMouseDown}
           onMouseMove={handleMouseMove}
           onMouseUp={handleMouseUp}
           onMouseLeave={handleMouseUp}
           onDoubleClick={handleDoubleClick}
-          onTouchStart={handleMouseDown}
-          onTouchMove={handleMouseMove}
-          onTouchEnd={handleMouseUp}
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
         />
         {/* Text input overlay */}
         {textInput.visible && (

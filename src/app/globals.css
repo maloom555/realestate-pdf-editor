@@ -1,1 +1,47 @@
 @import "tailwindcss";
+
+/* Prevent pull-to-refresh and overscroll on mobile */
+html, body {
+  overscroll-behavior: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Editor canvas: prevent all browser gestures */
+.editor-canvas {
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+/* Safe area padding for notched devices */
+.safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.safe-top {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
+/* Mobile toolbar animations */
+.slide-up-enter {
+  transform: translateY(100%);
+  opacity: 0;
+}
+.slide-up-active {
+  transform: translateY(0);
+  opacity: 1;
+  transition: transform 0.2s ease-out, opacity 0.15s ease-out;
+}
+
+/* Prevent text selection during drawing on mobile */
+canvas {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Mobile-friendly range input */
+@media (max-width: 640px) {
+  input[type="range"] {
+    height: 32px;
+  }
+}

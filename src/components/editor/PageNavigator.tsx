@@ -49,44 +49,45 @@ export default function PageNavigator({ pdfDoc }: PageNavigatorProps) {
   }
 
   return (
-    <div className="bg-white border-b border-gray-200 px-4 py-2 flex items-center justify-center gap-3 text-sm">
+    <div className="bg-white border-b border-gray-200 px-2 sm:px-4 py-1.5 sm:py-2 flex items-center justify-center gap-2 sm:gap-3 text-sm">
       <button
         onClick={handlePrev}
         disabled={currentPage <= 1}
-        className="px-3 py-1 border border-gray-200 rounded-md hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed"
+        className="px-2 sm:px-3 py-1 border border-gray-200 rounded-md hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed"
       >
         ◀
       </button>
-      <span>
-        <span className="font-semibold">{currentPage}</span> / {totalPages} ページ
+      <span className="text-xs sm:text-sm">
+        <span className="font-semibold">{currentPage}</span> / {totalPages}
+        <span className="hidden sm:inline"> ページ</span>
       </span>
       <button
         onClick={handleNext}
         disabled={currentPage >= totalPages}
-        className="px-3 py-1 border border-gray-200 rounded-md hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed"
+        className="px-2 sm:px-3 py-1 border border-gray-200 rounded-md hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed"
       >
         ▶
       </button>
 
-      <div className="flex items-center gap-1.5 ml-5">
+      <div className="flex items-center gap-1 sm:gap-1.5 ml-2 sm:ml-5">
         <button
           onClick={handleZoomOut}
-          className="px-2 py-1 border border-gray-200 rounded-md hover:bg-gray-50"
+          className="px-1.5 sm:px-2 py-1 border border-gray-200 rounded-md hover:bg-gray-50"
         >
           −
         </button>
-        <span className="min-w-[45px] text-center text-xs text-gray-400">
+        <span className="min-w-[36px] sm:min-w-[45px] text-center text-xs text-gray-400">
           {Math.round(scale * 100)}%
         </span>
         <button
           onClick={handleZoomIn}
-          className="px-2 py-1 border border-gray-200 rounded-md hover:bg-gray-50"
+          className="px-1.5 sm:px-2 py-1 border border-gray-200 rounded-md hover:bg-gray-50"
         >
           +
         </button>
         <button
           onClick={handleCycleFit}
-          className="px-2 py-1 border border-gray-200 rounded-md hover:bg-gray-50 text-xs"
+          className="px-1.5 sm:px-2 py-1 border border-gray-200 rounded-md hover:bg-gray-50 text-xs"
         >
           {NEXT_FIT_LABELS[fitMode]}
         </button>
