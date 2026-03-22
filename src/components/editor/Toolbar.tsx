@@ -622,22 +622,9 @@ export default function Toolbar() {
       )}
 
       {/* Select tool info & delete */}
-      {currentTool === 'select' && (
-        <>
-          {!isMobile && (
-            <span className="text-xs text-gray-400">
-              {selectedAnnotationId
-                ? selectedAnn?.type === 'callout'
-                  ? 'ダブルクリックで編集 / 黄◆で矢印移動'
-                  : 'ダブルクリックで再編集'
-                : 'クリックで選択'}
-            </span>
-          )}
-          {selectedAnnotationId && (
-            <button onClick={handleDelete}
-              className="px-3 py-1.5 text-sm sm:text-xs border border-red-300 text-red-500 rounded-lg hover:bg-red-50">削除</button>
-          )}
-        </>
+      {currentTool === 'select' && selectedAnnotationId && (
+        <button onClick={handleDelete}
+          className="px-3 py-1.5 text-sm sm:text-xs border border-red-300 text-red-500 rounded-lg hover:bg-red-50">削除</button>
       )}
     </>
   )

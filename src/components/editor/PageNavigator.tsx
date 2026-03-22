@@ -12,7 +12,25 @@ export default function PageNavigator({ pdfDoc }: PageNavigatorProps) {
   const {
     currentPage, totalPages, scale, fitMode,
     setCurrentPage, setScale, setFitMode,
+    currentTool, selectedAnnotationId, annotations,
   } = useEditorStore()
+
+  // Hint text based on current state
+  const hintText = (() => {
+    if (currentTool === 'select') {
+      if (selectedAnnotationId) {
+        const pageAnns = annotations[currentPage] || []
+        const ann = pageAnns.find((a) => a.id === selectedAnnotationId)
+        if (ann?.type === 'callout') return 'ダブルクリックで編集 / 黄◆で矢印移動'
+        return 'ダブルクリックで再編集'
+      }
+      return 'クリックで選択'
+    }
+    if (currentTool === 'polyline') return 'クリックで頂点追加 / ダブルクリックで確定 / DELで戻る'
+    if (currentTool === 'text') return 'クリックでテキスト入力'
+    if (currentTool === 'callout') return 'ドラッグでテキスト配置 → 矢印方向に引く'
+    return null
+  })()
 
   const handlePrev = () => {
     if (currentPage > 1) setCurrentPage(currentPage - 1)
@@ -49,7 +67,7 @@ export default function PageNavigator({ pdfDoc }: PageNavigatorProps) {
   }
 
   return (
-    <div className="bg-white border-b border-gray-200 px-2 sm:px-4 py-1.5 sm:py-2 flex items-center justify-center gap-2 sm:gap-3 text-sm">
+    <div className="bg-white border-b border-gray-200 px-2 sm:px-4 py-1.5 sm:py-2 flex items-center justify-center gap-2 sm:gap-3 text-sm relative">
       <button
         onClick={handlePrev}
         disabled={currentPage <= 1}
@@ -92,6 +110,13 @@ export default function PageNavigator({ pdfDoc }: PageNavigatorProps) {
           {NEXT_FIT_LABELS[fitMode]}
         </button>
       </div>
+
+      {/* Hint text - right side */}
+      {hintText && (
+        <span className="hidden sm:block absolute right-4 text-[11px] text-gray-400">
+          {hintText}
+        </span>
+      )}
     </div>
   )
 }
