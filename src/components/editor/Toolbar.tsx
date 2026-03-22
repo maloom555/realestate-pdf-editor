@@ -54,7 +54,7 @@ export default function Toolbar() {
     setElementOpacity, setFillEnabled, setFillOpacity,
     setTextBold, setTextUnderline, setTextBox,
     removeAnnotation, updateAnnotation, undo, redo, clearPage, undoStack, redoStack,
-    copyAnnotation, pasteAnnotation, clipboardAnnotation,
+    copyAnnotation, pasteAnnotation, clipboardAnnotation, duplicateAnnotation,
   } = store
 
   const [showStampPicker, setShowStampPicker] = useState(false)
@@ -655,12 +655,9 @@ export default function Toolbar() {
 
           {/* Action buttons */}
           <div className="flex items-center gap-1 flex-shrink-0 border-l border-gray-200 pl-1.5">
-            <button onClick={copyAnnotation} disabled={!selectedAnnotationId}
+            <button onClick={duplicateAnnotation} disabled={!selectedAnnotationId}
               className="w-9 h-9 flex items-center justify-center text-sm text-gray-500 disabled:opacity-30 rounded active:bg-gray-100"
-              title="コピー (Ctrl+C)">📋</button>
-            <button onClick={pasteAnnotation} disabled={!clipboardAnnotation}
-              className="w-9 h-9 flex items-center justify-center text-sm text-gray-500 disabled:opacity-30 rounded active:bg-gray-100"
-              title="貼付け (Ctrl+V)">📄</button>
+              title="複製 (Ctrl+C)">📋</button>
             <button onClick={undo} disabled={undoStack.length === 0}
               className="w-9 h-9 flex items-center justify-center text-lg text-gray-500 disabled:opacity-30 rounded active:bg-gray-100"
               title="戻す">↩</button>
@@ -795,12 +792,9 @@ export default function Toolbar() {
         <div className="w-px h-6 bg-gray-200" />
 
         <div className="flex items-center gap-1">
-          <button onClick={copyAnnotation} disabled={!selectedAnnotationId}
+          <button onClick={duplicateAnnotation} disabled={!selectedAnnotationId}
             className="px-3 py-1.5 text-xs border border-gray-200 rounded-lg text-gray-500 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed"
-            title="コピー (Ctrl+C)">📋 コピー</button>
-          <button onClick={pasteAnnotation} disabled={!clipboardAnnotation}
-            className="px-3 py-1.5 text-xs border border-gray-200 rounded-lg text-gray-500 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed"
-            title="貼付け (Ctrl+V)">📄 貼付け</button>
+            title="複製 (Ctrl+C)">📋 コピー</button>
           <button onClick={undo} disabled={undoStack.length === 0}
             className="px-3 py-1.5 text-xs border border-gray-200 rounded-lg text-gray-500 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed"
             title="元に戻す (Ctrl+Z)">↩ 戻す</button>

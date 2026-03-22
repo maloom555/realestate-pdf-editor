@@ -88,6 +88,7 @@ interface EditorState {
   setLoading: (loading: boolean, text?: string) => void
   copyAnnotation: () => void
   pasteAnnotation: () => void
+  duplicateAnnotation: () => void
   resetEditor: () => void
 }
 
@@ -355,6 +356,46 @@ export const useEditorStore = create<EditorState>((set, get) => ({
       }))
     }
     // Push to undo stack
+    const pageAnns = state.annotations[state.currentPage] || []
+    const newAnnotations = { ...state.annotations, [state.currentPage]: [...pageAnns, newAnn] }
+    set({
+      annotations: newAnnotations,
+      selectedAnnotationId: newAnn.id,
+      undoStack: [...state.undoStack, { pageNum: state.currentPage, annotations: state.annotations[state.currentPage] || [] }],
+      redoStack: [],
+    })
+  },
+
+  duplicateAnnotation: () => {
+    const state = get()
+    if (!state.selectedAnnotationId) return
+    const anns = state.annotations[state.currentPage] || []
+    const selected = anns.find((a) => a.id === state.selectedAnnotationId)
+    if (!selected) return
+    // Copy then paste in one action
+    set({ clipboardAnnotation: structuredClone(selected) })
+    // Now paste
+    const offset = 15
+    const newAnn: Annotation = structuredClone(selected)
+    newAnn.id = generateId()
+    const data = newAnn.data as unknown as Record<string, unknown>
+    if ('x' in data && 'y' in data) {
+      data.x = (data.x as number) + offset
+      data.y = (data.y as number) + offset
+    }
+    if ('startX' in data && 'startY' in data) {
+      data.startX = (data.startX as number) + offset
+      data.startY = (data.startY as number) + offset
+    }
+    if ('endX' in data && 'endY' in data) {
+      data.endX = (data.endX as number) + offset
+      data.endY = (data.endY as number) + offset
+    }
+    if ('points' in data && Array.isArray(data.points)) {
+      data.points = (data.points as Array<{ x: number; y: number }>).map((p) => ({
+        x: p.x + offset, y: p.y + offset,
+      }))
+    }
     const pageAnns = state.annotations[state.currentPage] || []
     const newAnnotations = { ...state.annotations, [state.currentPage]: [...pageAnns, newAnn] }
     set({

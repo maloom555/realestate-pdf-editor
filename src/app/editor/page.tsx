@@ -119,15 +119,10 @@ export default function EditorPage() {
       if (e.key === 'Delete' && store.selectedAnnotationId) {
         store.removeAnnotation(store.currentPage, store.selectedAnnotationId)
       }
-      // Copy (Ctrl+C)
+      // Duplicate (Ctrl+C = copy + paste immediately)
       if (e.ctrlKey && e.key === 'c' && store.selectedAnnotationId) {
         e.preventDefault()
-        store.copyAnnotation()
-      }
-      // Paste (Ctrl+V)
-      if (e.ctrlKey && e.key === 'v' && store.clipboardAnnotation) {
-        e.preventDefault()
-        store.pasteAnnotation()
+        store.duplicateAnnotation()
       }
     }
     window.addEventListener('keydown', handleKeyDown)
