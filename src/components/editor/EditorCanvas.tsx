@@ -241,7 +241,8 @@ export default function EditorCanvas({ pdfDoc }: EditorCanvasProps) {
     }
 
     // While using a drawing tool, clicking on an existing annotation switches to select mode
-    if (currentTool !== 'select') {
+    // (except text/callout/stamp which have their own click handling)
+    if (currentTool !== 'text' && currentTool !== 'callout' && currentTool !== 'stamp' && currentTool !== 'polyline') {
       for (let i = pageAnns.length - 1; i >= 0; i--) {
         if (hitTestAnnotation(pos.x, pos.y, pageAnns[i])) {
           store.setCurrentTool('select')
@@ -250,6 +251,7 @@ export default function EditorCanvas({ pdfDoc }: EditorCanvasProps) {
           ds.dragStart = pos
           ds.origData = JSON.parse(JSON.stringify(pageAnns[i].data))
           setIsDrawing(true)
+          redrawAnnotations()
           return
         }
       }
@@ -356,7 +358,7 @@ export default function EditorCanvas({ pdfDoc }: EditorCanvasProps) {
     if (currentTool === 'pen') {
       ds.currentPath = [{ x: pos.x, y: pos.y }]
     }
-  }, [currentTool, getPos, annotations, currentPage, selectedAnnotationId, setSelectedAnnotationId])
+  }, [currentTool, getPos, annotations, currentPage, selectedAnnotationId, setSelectedAnnotationId, store, redrawAnnotations, addAndSelect, updateAnnotation, scale])
 
   // Double-click to re-edit text/callout or commit polyline
   const handleDoubleClick = useCallback((e: React.MouseEvent) => {
