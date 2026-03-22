@@ -382,10 +382,11 @@ export function drawAnnotation(ctx: CanvasRenderingContext2D, ann: Annotation, s
         const lines = d.multiLineText ? d.multiLineText.split('\n') : []
         const hasText = lines.length > 0 && d.multiLineText?.trim()
         const imgPos = d.imagePosition || 'top'
-        const imageOnly = d.imageData && !hasText
+        const showBorder = d.showBorder ?? true
+        const imgScale = (d.imageScale || 100) / 100
 
-        // White background + border (skip for image-only stamps)
-        if (!imageOnly) {
+        // White background + border
+        if (showBorder) {
           ctx.fillStyle = 'rgba(255,255,255,0.95)'
           ctx.beginPath()
           ctx.roundRect(d.x, d.y, d.w, d.h, radius)
@@ -415,8 +416,8 @@ export function drawAnnotation(ctx: CanvasRenderingContext2D, ann: Annotation, s
             const imgMaxW = imgPos === 'top' ? d.w - padding * 2 : (d.w - padding * 2) * 0.4
             const imgMaxH = imgPos === 'top' ? (hasText ? d.h * 0.4 : d.h - padding * 2) : d.h - padding * 2
             const imgRatio = Math.min(imgMaxW / cachedImg.width, imgMaxH / cachedImg.height, 1)
-            const drawW = cachedImg.width * imgRatio
-            const drawH = cachedImg.height * imgRatio
+            const drawW = cachedImg.width * imgRatio * imgScale
+            const drawH = cachedImg.height * imgRatio * imgScale
 
             if (imgPos === 'top') {
               const imgX = d.x + (d.w - drawW) / 2

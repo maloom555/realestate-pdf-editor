@@ -301,6 +301,8 @@ export default function EditorCanvas({ pdfDoc }: EditorCanvasProps) {
             origH: sh,
             imageData: sig.imageData,
             imagePosition: sig.imagePosition,
+            imageScale: sig.imageScale,
+            showBorder: sig.showBorder,
           },
         })
         pendingSignatureRef.current = null
@@ -1060,10 +1062,10 @@ export default function EditorCanvas({ pdfDoc }: EditorCanvasProps) {
   }, [])
 
   // Signature stamp placement
-  const pendingSignatureRef = useRef<{ text: string; color: string; fontSize: number; fontFamily: string; imageData?: string; imagePosition?: 'top' | 'left' | 'right' } | null>(null)
+  const pendingSignatureRef = useRef<{ text: string; color: string; fontSize: number; fontFamily: string; imageData?: string; imagePosition?: 'top' | 'left' | 'right'; imageScale?: number; showBorder?: boolean } | null>(null)
 
-  const setSignaturePending = useCallback((text: string, color: string, fontSize: number, fontFamily: string, imageData?: string, imagePosition?: 'top' | 'left' | 'right') => {
-    pendingSignatureRef.current = { text, color, fontSize, fontFamily, imageData, imagePosition }
+  const setSignaturePending = useCallback((text: string, color: string, fontSize: number, fontFamily: string, imageData?: string, imagePosition?: 'top' | 'left' | 'right', imageScale?: number, showBorder?: boolean) => {
+    pendingSignatureRef.current = { text, color, fontSize, fontFamily, imageData, imagePosition, imageScale, showBorder }
     setCurrentTool('stamp')
   }, [setCurrentTool])
 

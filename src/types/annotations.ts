@@ -43,6 +43,8 @@ export interface StampData {
   origH?: number  // Original height at creation
   imageData?: string  // Base64 data URL for embedded image
   imagePosition?: 'top' | 'left' | 'right'
+  imageScale?: number
+  showBorder?: boolean
 }
 
 // Signature template definition (stored in IndexedDB)
@@ -57,6 +59,8 @@ export interface SignatureTemplate {
   borderStyle: 'solid' | 'double' | 'dashed' | 'ornament'
   imageData?: string  // Base64 data URL for logo/business card image
   imagePosition?: 'top' | 'left' | 'right' // Where image appears relative to text
+  imageScale?: number  // Image size scale (10-200%, default 100)
+  showBorder?: boolean // Whether to show border (default true)
 }
 
 export interface ArrowData {

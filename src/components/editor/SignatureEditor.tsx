@@ -44,7 +44,7 @@ function resizeImage(file: File, maxW = 400, maxH = 400, quality = 0.8): Promise
 }
 
 interface Props {
-  onPlace: (text: string, color: string, fontSize: number, fontFamily: string, imageData?: string, imagePosition?: 'top' | 'left' | 'right') => void
+  onPlace: (text: string, color: string, fontSize: number, fontFamily: string, imageData?: string, imagePosition?: 'top' | 'left' | 'right', imageScale?: number, showBorder?: boolean) => void
   onClose: () => void
 }
 
@@ -101,7 +101,7 @@ export default function SignatureEditor({ onPlace, onClose }: Props) {
 
   const handlePlace = useCallback((tmpl: SignatureTemplate) => {
     const text = applyVariables(tmpl.template, tmpl.variables)
-    onPlace(text, tmpl.color, tmpl.fontSize, tmpl.fontFamily, tmpl.imageData, tmpl.imagePosition)
+    onPlace(text, tmpl.color, tmpl.fontSize, tmpl.fontFamily, tmpl.imageData, tmpl.imagePosition, tmpl.imageScale, tmpl.showBorder)
   }, [onPlace])
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -173,10 +173,17 @@ export default function SignatureEditor({ onPlace, onClose }: Props) {
                     </button>
                   ))}
                 </div>
+                <div className="flex items-center gap-1.5">
+                  <label className="text-[10px] text-gray-400">サイズ:</label>
+                  <input type="range" min={10} max={200} value={editingTemplate.imageScale || 100}
+                    onChange={(e) => setEditingTemplate({ ...editingTemplate, imageScale: parseInt(e.target.value) })}
+                    className="w-20 accent-indigo-500" />
+                  <span className="text-[10px] text-gray-400 min-w-[30px]">{editingTemplate.imageScale || 100}%</span>
+                </div>
                 <div className="flex gap-1.5">
                   <button onClick={() => imageInputRef.current?.click()}
                     className="px-2 py-0.5 text-[10px] border border-gray-200 text-gray-400 rounded hover:bg-gray-50">変更</button>
-                  <button onClick={() => setEditingTemplate({ ...editingTemplate, imageData: undefined, imagePosition: undefined })}
+                  <button onClick={() => setEditingTemplate({ ...editingTemplate, imageData: undefined, imagePosition: undefined, imageScale: undefined })}
                     className="px-2 py-0.5 text-[10px] border border-red-200 text-red-400 rounded hover:bg-red-50">削除</button>
                 </div>
               </div>
@@ -208,7 +215,7 @@ export default function SignatureEditor({ onPlace, onClose }: Props) {
         )}
 
         {/* Style settings */}
-        <div className="flex items-center gap-4 mb-3">
+        <div className="flex items-center gap-4 mb-3 flex-wrap">
           <div className="flex items-center gap-1.5">
             <label className="text-xs text-gray-500">文字:</label>
             <input type="number" min={8} max={20} value={editingTemplate.fontSize}
@@ -222,12 +229,21 @@ export default function SignatureEditor({ onPlace, onClose }: Props) {
               onChange={(e) => setEditingTemplate({ ...editingTemplate, color: e.target.value })}
               className="w-6 h-6 border border-gray-200 rounded cursor-pointer" />
           </div>
+          <button onClick={() => setEditingTemplate({ ...editingTemplate, showBorder: !(editingTemplate.showBorder ?? true) })}
+            className={`px-2.5 py-1 text-xs border rounded-lg ${
+              (editingTemplate.showBorder ?? true)
+                ? 'border-indigo-500 bg-indigo-50 text-indigo-700'
+                : 'border-gray-200 text-gray-400'
+            }`}>
+            枠線{(editingTemplate.showBorder ?? true) ? 'あり' : 'なし'}
+          </button>
         </div>
 
         {/* Preview */}
         <div className="mb-3">
           <label className="text-xs text-gray-500 mb-1 block">プレビュー</label>
-          <div className="bg-white border-2 rounded-lg p-3 inline-block" style={{ borderColor: editingTemplate.color }}>
+          <div className={`bg-white rounded-lg p-3 inline-block ${(editingTemplate.showBorder ?? true) ? 'border-2' : ''}`}
+            style={{ borderColor: (editingTemplate.showBorder ?? true) ? editingTemplate.color : undefined }}>
             <div className={`flex gap-2 ${
               editingTemplate.imagePosition === 'left' ? 'flex-row' :
               editingTemplate.imagePosition === 'right' ? 'flex-row-reverse' : 'flex-col'
