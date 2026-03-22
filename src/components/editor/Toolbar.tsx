@@ -208,7 +208,7 @@ export default function Toolbar() {
   // Border-radius applicable types
   const radiusTypes = ['shape-rect']
   const showRadiusForTool = radiusTypes.includes(currentTool)
-  const showRadiusForSelected = selectedAnn && (radiusTypes.includes(selectedAnn.type) || selectedAnn.type === 'callout' || (selectedAnn.type === 'text' && (selectedAnn.data as { textBox?: boolean }).textBox))
+  const showRadiusForSelected = selectedAnn && (radiusTypes.includes(selectedAnn.type) || (selectedAnn.type === 'text' && (selectedAnn.data as { textBox?: boolean }).textBox))
 
   // Handle color change
   const handleColorChange = (color: string) => {
@@ -221,7 +221,7 @@ export default function Toolbar() {
   // Handle font family change
   const handleFontFamilyChange = (family: string) => {
     setFontFamily(family)
-    if (isSelectedText && selectedAnn) {
+    if ((isSelectedText || isSelectedCallout) && selectedAnn) {
       updateAnnotation(currentPage, selectedAnn.id, {
         data: { ...selectedAnn.data, fontFamily: family } as never,
       })
@@ -293,7 +293,7 @@ export default function Toolbar() {
   const displayFontSize = (isSelectedText || isSelectedCallout) && selectedAnn
     ? ((selectedAnn.data as { fontSize?: number }).fontSize || fontSize)
     : fontSize
-  const displayFontFamily = isSelectedText && selectedAnn
+  const displayFontFamily = (isSelectedText || isSelectedCallout) && selectedAnn
     ? ((selectedAnn.data as { fontFamily?: string }).fontFamily || fontFamily)
     : fontFamily
   const displayBold = (isSelectedText || isSelectedCallout) && selectedAnn
@@ -374,7 +374,7 @@ export default function Toolbar() {
               className="w-20 accent-indigo-500" />
             <span className="text-sm sm:text-xs text-gray-400 min-w-[30px]">{displayFontSize}px</span>
           </div>
-          {(currentTool === 'text' || isSelectedText) && (
+          {(currentTool === 'text' || currentTool === 'callout' || isSelectedText || isSelectedCallout) && (
             <select value={displayFontFamily} onChange={(e) => handleFontFamilyChange(e.target.value)}
               className="text-sm sm:text-xs border border-gray-200 rounded px-2 py-1 sm:px-1 sm:py-0.5 bg-white text-gray-700">
               {FONT_FAMILIES.map((f) => (
@@ -423,6 +423,33 @@ export default function Toolbar() {
             )}
           </div>
         </>
+      )}
+
+      {/* Callout arrow size */}
+      {(currentTool === 'callout' || isSelectedCallout) && (
+        <div className="flex items-center gap-1.5">
+          <label className="text-sm sm:text-xs text-gray-400 font-semibold shrink-0">矢印:</label>
+          <input type="range" min={1} max={10} value={
+            isSelectedCallout && selectedAnn
+              ? ((selectedAnn.data as { arrowSize?: number }).arrowSize || 2)
+              : penSize
+          }
+            onChange={(e) => {
+              const v = parseInt(e.target.value)
+              setPenSize(v)
+              if (isSelectedCallout && selectedAnn) {
+                updateAnnotation(currentPage, selectedAnn.id, {
+                  data: { ...selectedAnn.data, arrowSize: v } as never,
+                })
+              }
+            }}
+            className="w-16 accent-indigo-500" />
+          <span className="text-sm sm:text-xs text-gray-400 min-w-[24px]">{
+            isSelectedCallout && selectedAnn
+              ? ((selectedAnn.data as { arrowSize?: number }).arrowSize || 2)
+              : penSize
+          }px</span>
+        </div>
       )}
 
       {/* Opacity */}

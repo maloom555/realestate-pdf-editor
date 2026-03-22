@@ -110,7 +110,7 @@ export function drawAnnotation(ctx: CanvasRenderingContext2D, ann: Annotation) {
 
     case 'callout': {
       const d = ann.data as CalloutData
-      const lineW = ann.size || 2
+      const lineW = d.arrowSize || ann.size || 2
       // Arrowhead at start (pointing to the target) - draw first to get base
       const arrowBase = drawArrowhead(ctx, d.startX, d.startY, d.endX, d.endY, lineW, ann.color)
       // Arrow line from base of arrowhead to end
@@ -128,7 +128,8 @@ export function drawAnnotation(ctx: CanvasRenderingContext2D, ann: Annotation) {
         const lines = d.text.split('\n')
         const fs = d.fontSize || 16
         const fontWeight = d.bold ? 'bold ' : ''
-        ctx.font = `${fontWeight}${fs}px "Noto Sans JP", "Hiragino Sans", sans-serif`
+        const ff = d.fontFamily || '"Noto Sans JP", "Hiragino Sans", sans-serif'
+        ctx.font = `${fontWeight}${fs}px ${ff}`
         const lineHeight = fs * 1.3
         const padding = 8
         let maxWidth = 0

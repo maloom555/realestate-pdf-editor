@@ -929,7 +929,7 @@ export default function EditorCanvas({ pdfDoc }: EditorCanvasProps) {
           })
         } else if (ann.type === 'callout') {
           updateAnnotation(currentPage, ann.id, {
-            data: { ...ann.data, text: textValue, fontSize } as unknown as typeof ann.data,
+            data: { ...ann.data, text: textValue, fontSize, fontFamily } as unknown as typeof ann.data,
           })
         }
       }
@@ -942,7 +942,7 @@ export default function EditorCanvas({ pdfDoc }: EditorCanvasProps) {
         type: 'callout',
         color: maskColor,
         size: penSize,
-        borderRadius: 5,
+        borderRadius: 10,
         data: {
           startX: cp.startX,
           startY: cp.startY,
@@ -952,6 +952,8 @@ export default function EditorCanvas({ pdfDoc }: EditorCanvasProps) {
           fontSize,
           bold: textBold,
           underline: textUnderline,
+          fontFamily: fontFamily,
+          arrowSize: penSize,
         },
         opacity: elementOpacity,
       })

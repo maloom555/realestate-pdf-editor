@@ -7,7 +7,7 @@ export default function TermsPage() {
         <section>
           <h2 className="text-xl font-bold mt-6 mb-3">1. サービスの提供</h2>
           <p className="text-gray-600">
-            本サービス「不動産工房」は、PDFファイルの編集機能を無料で提供するWebアプリケーションです。
+            本サービス「不動産PDF工房」は、PDFファイルの編集機能を無料で提供するWebアプリケーションです。
             本サービスは現状有姿で提供され、その正確性・完全性・信頼性について保証するものではありません。
           </p>
         </section>

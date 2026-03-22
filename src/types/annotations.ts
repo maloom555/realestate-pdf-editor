@@ -52,6 +52,8 @@ export interface CalloutData {
   fontSize: number
   bold?: boolean
   underline?: boolean
+  fontFamily?: string
+  arrowSize?: number
 }
 
 export interface PolylineData {

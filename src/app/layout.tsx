@@ -10,7 +10,7 @@ export const viewport: Viewport = {
 }
 
 export const metadata: Metadata = {
-  title: '不動産工房 - 不動産業務を効率化する無料ツール集',
+  title: '不動産PDF工房 - 不動産業務を効率化する無料PDFツール',
   description:
     '不動産事業者のための無料業務ツール集。PDF墨消し・注釈・スタンプ、写真編集など、物件資料の作成・管理に必要な機能をブラウザだけで提供。サーバー送信なしで安全。',
   keywords: [
@@ -20,7 +20,7 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
-    title: '不動産工房',
+    title: '不動産PDF工房',
   },
 }
 

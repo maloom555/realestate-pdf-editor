@@ -188,7 +188,7 @@ export default function EditorPage() {
         onClick={handleReset}
         title="トップに戻る"
       >
-        <h1 className="text-base sm:text-xl font-bold">不動産工房 <span className="text-xs sm:text-sm font-normal opacity-80">PDF編集</span></h1>
+        <h1 className="text-base sm:text-xl font-bold">不動産PDF工房</h1>
       </header>
 
       {pdfDoc ? (

@@ -25,7 +25,7 @@ export interface ExportOptions {
 }
 
 const DEFAULT_WATERMARK: WatermarkOptions = {
-  text: '不動産工房',
+  text: '不動産PDF工房',
   enabled: true,
 }
 
