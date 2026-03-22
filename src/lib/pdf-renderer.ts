@@ -147,33 +147,9 @@ export function drawAnnotation(ctx: CanvasRenderingContext2D, ann: Annotation) {
         }
         const boxW = maxWidth + padding * 2
         const boxH = lines.length * lineHeight + padding * 2
-        // Determine box position based on direction from arrow tip to end point
-        const dx = d.endX - d.startX
-        const dy = d.endY - d.startY
-        let boxX: number, boxY: number
-        if (Math.abs(dx) >= Math.abs(dy)) {
-          // Horizontal: box extends away from arrow
-          if (dx >= 0) {
-            // Arrow points left, box on right
-            boxX = d.endX
-            boxY = d.endY - boxH / 2
-          } else {
-            // Arrow points right, box on left
-            boxX = d.endX - boxW
-            boxY = d.endY - boxH / 2
-          }
-        } else {
-          // Vertical: box extends away from arrow
-          if (dy >= 0) {
-            // Arrow points up, box below
-            boxX = d.endX - boxW / 2
-            boxY = d.endY
-          } else {
-            // Arrow points down, box above
-            boxX = d.endX - boxW / 2
-            boxY = d.endY - boxH
-          }
-        }
+        // Box is fixed at endX (left edge), endY centered vertically
+        const boxX = d.endX - boxW / 2
+        const boxY = d.endY - boxH / 2
         const br = ann.borderRadius || 0
         ctx.fillStyle = 'rgba(255,255,255,0.95)'
         ctx.beginPath()
@@ -584,17 +560,9 @@ function getAnnotationBoundsRaw(ann: Annotation): RectData | null {
         boxW = fs * maxWidth + padding * 2
         boxH = lines.length * lineHeight + padding * 2
       }
-      // Dynamic box position based on arrow direction
-      const ddx = d.endX - d.startX
-      const ddy = d.endY - d.startY
-      let boxX: number, boxY: number
-      if (Math.abs(ddx) >= Math.abs(ddy)) {
-        if (ddx >= 0) { boxX = d.endX; boxY = d.endY - boxH / 2 }
-        else { boxX = d.endX - boxW; boxY = d.endY - boxH / 2 }
-      } else {
-        if (ddy >= 0) { boxX = d.endX - boxW / 2; boxY = d.endY }
-        else { boxX = d.endX - boxW / 2; boxY = d.endY - boxH }
-      }
+      // Box is fixed at endX/endY center
+      const boxX = d.endX - boxW / 2
+      const boxY = d.endY - boxH / 2
       const minX = Math.min(d.startX, d.endX, boxX)
       const minY = Math.min(d.startY, d.endY, boxY)
       const maxX = Math.max(d.startX, d.endX, boxX + boxW)

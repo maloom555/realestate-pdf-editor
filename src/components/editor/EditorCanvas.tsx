@@ -541,10 +541,9 @@ export default function EditorCanvas({ pdfDoc }: EditorCanvasProps) {
             data: { startX: o.startX + dx, startY: o.startY + dy, endX: o.endX + dx, endY: o.endY + dy },
           })
         } else if (ann.type === 'callout') {
-          // Move only the box (endX/endY), keep arrow tip (startX/startY) fixed
           const o = orig as unknown as CalloutData
           updateAnnotation(currentPage, ann.id, {
-            data: { ...ann.data, endX: o.endX + dx, endY: o.endY + dy } as unknown as typeof ann.data,
+            data: { ...ann.data, startX: o.startX + dx, startY: o.startY + dy, endX: o.endX + dx, endY: o.endY + dy } as unknown as typeof ann.data,
           })
         } else if (ann.type === 'pen') {
           const origPts = orig as unknown as Point[]
