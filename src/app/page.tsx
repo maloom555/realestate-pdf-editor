@@ -28,7 +28,7 @@ const tools = [
   {
     id: 'ai-masking',
     icon: icons.aiMask,
-    title: '不動産AIマスキング工房',
+    title: '不動産マスキング工房',
     desc: 'ChatGPTやClaudeにPDFを送る前に、個人情報や機密情報を素早くマスキング。AIへの安全な資料送信の下準備を簡単に。',
     href: '#',
     status: 'coming' as const,
