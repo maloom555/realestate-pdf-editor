@@ -1,6 +1,6 @@
 import { PDFDocument } from 'pdf-lib'
 import type { Annotation } from '@/types/annotations'
-import { drawAnnotation } from './pdf-renderer'
+import { drawAnnotation, preloadImageCache } from './pdf-renderer'
 
 function dataURLtoBytes(dataURL: string): Uint8Array {
   const base64 = dataURL.split(',')[1]
@@ -56,6 +56,20 @@ export async function exportFlattenedPdf(
     // Draw annotations (coordinates are in PDF space, scale to export resolution)
     const pageAnnotations = annotations[pageNum] || []
     if (pageAnnotations.length > 0) {
+      // Pre-load images for image annotations
+      for (const ann of pageAnnotations) {
+        if (ann.type === 'image' && ann.data.imageData) {
+          await new Promise<void>((resolve) => {
+            const img = new Image()
+            img.onload = () => {
+                preloadImageCache(ann.data.imageData, img)
+              resolve()
+            }
+            img.onerror = () => resolve()
+            img.src = ann.data.imageData
+          })
+        }
+      }
       pageCtx.save()
       pageCtx.scale(exportScale, exportScale)
       for (const ann of pageAnnotations) {

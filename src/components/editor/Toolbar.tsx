@@ -5,6 +5,7 @@ import type { ToolType, StampData } from '@/types/annotations'
 import { STAMP_PRESETS } from '@/components/stamps/stamps-data'
 import { useState, useRef, useEffect } from 'react'
 import SignatureEditor from './SignatureEditor'
+import { TEXT_TEMPLATES } from '@/lib/text-templates'
 
 const tools: { id: ToolType; label: string; icon: string }[] = [
   { id: 'rect', label: '墨消し', icon: '■' },
@@ -59,6 +60,7 @@ export default function Toolbar() {
 
   const [showStampPicker, setShowStampPicker] = useState(false)
   const [showSignatureEditor, setShowSignatureEditor] = useState(false)
+  const [showTextTemplates, setShowTextTemplates] = useState(false)
   const [showMobileMenu, setShowMobileMenu] = useState(false)
   const [showExportMenu, setShowExportMenu] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
@@ -111,6 +113,15 @@ export default function Toolbar() {
       const text = applyVariables(tmpl.template, tmpl.variables)
       handleSignaturePlace(text, tmpl.color, tmpl.fontSize, tmpl.fontFamily, tmpl.imageData, tmpl.imagePosition, tmpl.imageScale, tmpl.showBorder)
     })
+  }
+
+  const handleInsertTemplate = (text: string) => {
+    // Set text tool and trigger text placement via canvas
+    setCurrentTool('text')
+    setShowTextTemplates(false)
+    // Use window event to pass template text to EditorCanvas
+    const fn = (window as unknown as Record<string, (...args: unknown[]) => void>).__insertTemplateText
+    if (fn) fn(text)
   }
 
   const handleDelete = () => {
@@ -457,6 +468,31 @@ export default function Toolbar() {
                 }`} title="テキストボックス">枠</button>
             )}
           </div>
+          {/* Text template button */}
+          {(currentTool === 'text' || currentTool === 'callout') && !isSelectedText && !isSelectedCallout && (
+            <div className="relative">
+              <button onClick={() => setShowTextTemplates(!showTextTemplates)}
+                className={`px-2.5 py-1.5 text-sm sm:px-2 sm:py-1 sm:text-xs border rounded-lg ${
+                  showTextTemplates ? 'border-indigo-500 bg-indigo-50 text-indigo-700' : 'border-gray-200 text-gray-500 hover:bg-gray-50'
+                }`}>定型文</button>
+              {showTextTemplates && (
+                <div className="absolute top-full left-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-xl z-50 w-72 max-h-80 overflow-auto">
+                  {Array.from(new Set(TEXT_TEMPLATES.map(t => t.category))).map((cat) => (
+                    <div key={cat}>
+                      <div className="px-3 py-1.5 text-[10px] font-bold text-gray-400 bg-gray-50 sticky top-0">{cat}</div>
+                      {TEXT_TEMPLATES.filter(t => t.category === cat).map((tmpl) => (
+                        <button key={tmpl.id} onClick={() => handleInsertTemplate(tmpl.text)}
+                          className="w-full text-left px-3 py-2 text-xs hover:bg-indigo-50 border-b border-gray-50 transition-colors">
+                          <span className="font-medium text-gray-700">{tmpl.label}</span>
+                          <span className="block text-[10px] text-gray-400 mt-0.5 truncate">{tmpl.text}</span>
+                        </button>
+                      ))}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </>
       )}
 

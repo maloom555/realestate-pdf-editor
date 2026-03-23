@@ -1,4 +1,4 @@
-import type { Annotation, Point, RectData, ArrowData, CalloutData, PolylineData, StampData } from '@/types/annotations'
+import type { Annotation, Point, RectData, ArrowData, CalloutData, PolylineData, StampData, ImageData as ImageAnnotData } from '@/types/annotations'
 
 const HANDLE_SIZE = 8
 
@@ -37,8 +37,14 @@ function drawArrowhead(
   return { baseX: (p1x + p2x) / 2, baseY: (p1y + p2y) / 2 }
 }
 
-// Global image cache for signature stamp images
+// Global image cache for signature stamp images and pasted images
 export const signatureImageCache = new Map<string, HTMLImageElement>()
+const imageCache = new Map<string, HTMLImageElement>()
+
+export function preloadImageCache(dataUrl: string, img: HTMLImageElement) {
+  const key = dataUrl.substring(0, 100)
+  imageCache.set(key, img)
+}
 
 export function drawAnnotation(ctx: CanvasRenderingContext2D, ann: Annotation, signatureImages?: Map<string, HTMLImageElement>) {
   if (!signatureImages) signatureImages = signatureImageCache
@@ -557,6 +563,30 @@ export function drawAnnotation(ctx: CanvasRenderingContext2D, ann: Annotation, s
       ctx.stroke()
       break
     }
+
+    case 'image': {
+      const d = ann.data as ImageAnnotData
+      if (d.imageData) {
+        const key = d.imageData.substring(0, 100)
+        if (!imageCache.has(key)) {
+          const img = new Image()
+          img.src = d.imageData
+          imageCache.set(key, img)
+          img.onload = () => { /* will render on next redraw */ }
+        }
+        const cachedImg = imageCache.get(key)
+        if (cachedImg && cachedImg.complete && cachedImg.naturalWidth > 0) {
+          ctx.drawImage(cachedImg, d.x, d.y, d.w, d.h)
+        }
+        // Border when selected (thin dotted line)
+        ctx.strokeStyle = '#999'
+        ctx.lineWidth = 1
+        ctx.setLineDash([4, 4])
+        ctx.strokeRect(d.x, d.y, d.w, d.h)
+        ctx.setLineDash([])
+      }
+      break
+    }
   }
 
   ctx.restore()
@@ -583,6 +613,9 @@ function getAnnotationBoundsRaw(ann: Annotation): RectData | null {
       return ann.data as RectData
 
     case 'stamp':
+      return { x: ann.data.x, y: ann.data.y, w: ann.data.w, h: ann.data.h }
+
+    case 'image':
       return { x: ann.data.x, y: ann.data.y, w: ann.data.w, h: ann.data.h }
 
     case 'text': {

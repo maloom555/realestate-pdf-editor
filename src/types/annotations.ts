@@ -157,6 +157,21 @@ export interface PolylineAnnotation extends BaseAnnotation {
   data: PolylineData
 }
 
+export interface ImageData {
+  x: number
+  y: number
+  w: number
+  h: number
+  imageData: string  // Base64 data URL
+  origW: number      // Original width for aspect ratio
+  origH: number
+}
+
+export interface ImageAnnotation extends BaseAnnotation {
+  type: 'image'
+  data: ImageData
+}
+
 export type Annotation =
   | RectAnnotation
   | PenAnnotation
@@ -168,6 +183,7 @@ export type Annotation =
   | StampAnnotation
   | CalloutAnnotation
   | PolylineAnnotation
+  | ImageAnnotation
 
 export interface HistoryEntry {
   pageNum: number

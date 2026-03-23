@@ -554,7 +554,7 @@ export default function EditorCanvas({ pdfDoc }: EditorCanvasProps) {
           updateAnnotation(currentPage, ann.id, {
             data: updatedData as unknown as typeof ann.data,
           })
-        } else if (ann.type === 'rect' || ann.type === 'highlight' || ann.type === 'circle' || ann.type === 'shape-rect') {
+        } else if (ann.type === 'rect' || ann.type === 'highlight' || ann.type === 'circle' || ann.type === 'shape-rect' || ann.type === 'image') {
           const o = orig as unknown as RectData
           updateAnnotation(currentPage, ann.id, {
             data: { ...ann.data, x: o.x + dx, y: o.y + dy } as unknown as typeof ann.data,
@@ -596,7 +596,7 @@ export default function EditorCanvas({ pdfDoc }: EditorCanvasProps) {
           })
         }
       } else if (ds.dragMode.startsWith('resize-')) {
-        if (ann.type === 'rect' || ann.type === 'highlight' || ann.type === 'circle' || ann.type === 'stamp' || ann.type === 'shape-rect') {
+        if (ann.type === 'rect' || ann.type === 'highlight' || ann.type === 'circle' || ann.type === 'stamp' || ann.type === 'shape-rect' || ann.type === 'image') {
           const o = orig as unknown as RectData
           let nx = o.x, ny = o.y, nw = o.w, nh = o.h
           const mode = ds.dragMode
@@ -1088,12 +1088,43 @@ export default function EditorCanvas({ pdfDoc }: EditorCanvasProps) {
     setCurrentTool('stamp')
   }, [setCurrentTool])
 
-  // Expose setStampPending, stampLegMode, and signature placement
+  // Insert template text as annotation at center of visible area
+  const insertTemplateText = useCallback((text: string) => {
+    const container = containerRef.current
+    const canvas = pdfCanvasRef.current
+    let cx = 150 / scale, cy = 150 / scale
+    if (container && canvas) {
+      const cRect = canvas.getBoundingClientRect()
+      const conRect = container.getBoundingClientRect()
+      cx = (conRect.width / 2 - cRect.left + conRect.left) / scale
+      cy = (conRect.height / 2 - cRect.top + conRect.top) / scale
+    }
+    const newId = generateId()
+    addAndSelect(currentPage, {
+      id: newId,
+      type: 'text',
+      color: maskColor,
+      data: {
+        x: cx,
+        y: cy,
+        text,
+        fontSize,
+        fontFamily,
+        bold: false,
+        underline: false,
+        textBox: false,
+      },
+    })
+    setCurrentTool('select')
+  }, [currentPage, scale, maskColor, fontSize, fontFamily, addAndSelect, setCurrentTool])
+
+  // Expose setStampPending, stampLegMode, signature placement, and template text insertion
   useEffect(() => {
     (window as unknown as Record<string, unknown>).__placeStamp = setStampPending;
     (window as unknown as Record<string, unknown>).__stampLegMode = enableStampLegMode;
-    (window as unknown as Record<string, unknown>).__placeSignatureStamp = setSignaturePending
-  }, [setStampPending, enableStampLegMode, setSignaturePending])
+    (window as unknown as Record<string, unknown>).__placeSignatureStamp = setSignaturePending;
+    (window as unknown as Record<string, unknown>).__insertTemplateText = insertTemplateText
+  }, [setStampPending, enableStampLegMode, setSignaturePending, insertTemplateText])
 
   // Clipboard ref for copy/paste
   const clipboardRef = useRef<Annotation | null>(null)
@@ -1130,36 +1161,98 @@ export default function EditorCanvas({ pdfDoc }: EditorCanvasProps) {
         }
       }
 
-      // Ctrl+V: Paste copied annotation with offset
-      if (isCtrl && e.key === 'v' && clipboardRef.current) {
-        e.preventDefault()
-        const source = clipboardRef.current
-        const newId = generateId()
-        const offset = 20 // pixel offset so it doesn't overlap exactly
-
-        // Deep clone and offset position
-        const cloned: Annotation = JSON.parse(JSON.stringify(source))
-        cloned.id = newId
-
-        // Offset based on annotation type
-        const d = cloned.data as unknown as Record<string, unknown>
-        if (typeof d.x === 'number') d.x = (d.x as number) + offset
-        if (typeof d.y === 'number') d.y = (d.y as number) + offset
-        if (typeof d.startX === 'number') {
-          d.startX = (d.startX as number) + offset
-          d.endX = (d.endX as number) + offset
-          d.startY = (d.startY as number) + offset
-          d.endY = (d.endY as number) + offset
-        }
-        if (Array.isArray(d.points)) {
-          d.points = (d.points as Point[]).map(p => ({ x: p.x + offset, y: p.y + offset }))
-        }
-
-        store.addAnnotation(currentPage, cloned)
-        store.setSelectedAnnotationId(newId)
-        redrawAnnotations()
+      // Ctrl+V: Check clipboard for image first, then paste annotation
+      if (isCtrl && e.key === 'v') {
+        // Try to read image from clipboard
+        navigator.clipboard.read().then(async (items) => {
+          for (const item of items) {
+            const imageType = item.types.find(t => t.startsWith('image/'))
+            if (imageType) {
+              e.preventDefault()
+              const blob = await item.getType(imageType)
+              const reader = new FileReader()
+              reader.onload = () => {
+                const dataUrl = reader.result as string
+                const img = new Image()
+                img.onload = () => {
+                  // Scale image to fit reasonably on canvas
+                  const maxW = 400 / scale
+                  const maxH = 300 / scale
+                  const ratio = Math.min(maxW / img.width, maxH / img.height, 1)
+                  const w = img.width * ratio
+                  const h = img.height * ratio
+                  // Place at center of visible area
+                  const container = containerRef.current
+                  const canvas = pdfCanvasRef.current
+                  let cx = 100 / scale, cy = 100 / scale
+                  if (container && canvas) {
+                    const cRect = canvas.getBoundingClientRect()
+                    const conRect = container.getBoundingClientRect()
+                    cx = (conRect.width / 2 - cRect.left + conRect.left) / scale
+                    cy = (conRect.height / 2 - cRect.top + conRect.top) / scale
+                  }
+                  const newId = generateId()
+                  store.addAnnotation(currentPage, {
+                    id: newId,
+                    type: 'image' as const,
+                    color: '#000000',
+                    data: {
+                      x: cx - w / 2,
+                      y: cy - h / 2,
+                      w, h,
+                      imageData: dataUrl,
+                      origW: img.width,
+                      origH: img.height,
+                    },
+                  })
+                  store.setSelectedAnnotationId(newId)
+                  setCurrentTool('select')
+                  redrawAnnotations()
+                }
+                img.src = dataUrl
+              }
+              reader.readAsDataURL(blob)
+              return
+            }
+          }
+          // No image in clipboard - paste copied annotation
+          if (clipboardRef.current) {
+            pasteAnnotation()
+          }
+        }).catch(() => {
+          // Clipboard API failed (permissions etc) - fallback to annotation paste
+          if (clipboardRef.current) {
+            pasteAnnotation()
+          }
+        })
+        return
       }
     }
+
+    const pasteAnnotation = () => {
+      if (!clipboardRef.current) return
+      const source = clipboardRef.current
+      const newId = generateId()
+      const offset = 20
+      const cloned: Annotation = JSON.parse(JSON.stringify(source))
+      cloned.id = newId
+      const d = cloned.data as unknown as Record<string, unknown>
+      if (typeof d.x === 'number') d.x = (d.x as number) + offset
+      if (typeof d.y === 'number') d.y = (d.y as number) + offset
+      if (typeof d.startX === 'number') {
+        d.startX = (d.startX as number) + offset
+        d.endX = (d.endX as number) + offset
+        d.startY = (d.startY as number) + offset
+        d.endY = (d.endY as number) + offset
+      }
+      if (Array.isArray(d.points)) {
+        d.points = (d.points as Point[]).map(p => ({ x: p.x + offset, y: p.y + offset }))
+      }
+      store.addAnnotation(currentPage, cloned)
+      store.setSelectedAnnotationId(newId)
+      redrawAnnotations()
+    }
+
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [redrawAnnotations, selectedAnnotationId, annotations, currentPage, store])
