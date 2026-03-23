@@ -313,8 +313,9 @@ export default function EditorCanvas({ pdfDoc }: EditorCanvasProps) {
       // Regular stamp
       const ps = pendingStampRef.current
       if (ps) {
-        const sw = 160 / scale
-        const sh = 64 / scale
+        const isCompass = ps.stampId === 'compass'
+        const sw = isCompass ? 100 / scale : 160 / scale
+        const sh = isCompass ? 100 / scale : 64 / scale
         addAndSelect(currentPage, {
           id: generateId(),
           type: 'stamp',

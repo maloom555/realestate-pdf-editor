@@ -487,6 +487,77 @@ export function drawAnnotation(ctx: CanvasRenderingContext2D, ann: Annotation, s
         break
       }
 
+      // Compass stamp (方位マーク)
+      if (d.stampId === 'compass') {
+        const size = Math.min(d.w, d.h)
+        const r = size * 0.45
+        const nr = size * 0.38 // North arrow length
+        const arrowW = size * 0.12
+
+        // Outer circle
+        ctx.strokeStyle = stampColor
+        ctx.lineWidth = Math.max(2, size * 0.03)
+        ctx.beginPath()
+        ctx.arc(cx, cy, r, 0, Math.PI * 2)
+        ctx.stroke()
+
+        // Inner circle (small)
+        ctx.beginPath()
+        ctx.arc(cx, cy, size * 0.05, 0, Math.PI * 2)
+        ctx.fillStyle = stampColor
+        ctx.fill()
+
+        // North arrow (filled triangle - dark)
+        ctx.beginPath()
+        ctx.moveTo(cx, cy - nr)
+        ctx.lineTo(cx - arrowW, cy)
+        ctx.lineTo(cx, cy - size * 0.05)
+        ctx.closePath()
+        ctx.fillStyle = stampColor
+        ctx.fill()
+
+        // North arrow (right half - lighter)
+        ctx.beginPath()
+        ctx.moveTo(cx, cy - nr)
+        ctx.lineTo(cx + arrowW, cy)
+        ctx.lineTo(cx, cy - size * 0.05)
+        ctx.closePath()
+        ctx.fillStyle = stampColor
+        ctx.globalAlpha = (ann.opacity ?? 1) * 0.4
+        ctx.fill()
+        ctx.globalAlpha = savedStampAlpha * 0.65
+
+        // South arrow (outline only)
+        ctx.beginPath()
+        ctx.moveTo(cx, cy + nr)
+        ctx.lineTo(cx - arrowW, cy)
+        ctx.lineTo(cx, cy + size * 0.05)
+        ctx.closePath()
+        ctx.strokeStyle = stampColor
+        ctx.lineWidth = Math.max(1, size * 0.02)
+        ctx.stroke()
+
+        ctx.beginPath()
+        ctx.moveTo(cx, cy + nr)
+        ctx.lineTo(cx + arrowW, cy)
+        ctx.lineTo(cx, cy + size * 0.05)
+        ctx.closePath()
+        ctx.stroke()
+
+        // "N" label
+        const nFontSize = Math.max(10, size * 0.2)
+        ctx.fillStyle = stampColor
+        ctx.font = `bold ${nFontSize}px "Arial", sans-serif`
+        ctx.textAlign = 'center'
+        ctx.textBaseline = 'bottom'
+        ctx.fillText('N', cx, cy - nr - size * 0.03)
+        ctx.textAlign = 'start'
+        ctx.textBaseline = 'alphabetic'
+
+        ctx.globalAlpha = savedStampAlpha
+        break
+      }
+
       // Regular stamp (single-line)
       ctx.strokeStyle = stampColor
       ctx.lineWidth = 3

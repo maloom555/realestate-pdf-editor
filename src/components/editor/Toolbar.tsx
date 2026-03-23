@@ -759,6 +759,16 @@ export default function Toolbar() {
                 </div>
               </div>
             ))}
+            {/* Compass stamp */}
+            <div className="mb-2">
+              <div className="text-sm text-gray-400 font-semibold mb-1">方位</div>
+              <div className="flex flex-wrap gap-1.5">
+                <button onClick={() => handleStampSelect('compass', '', '#333333')}
+                  className="px-3 py-1.5 text-sm border-2 rounded hover:shadow transition-all font-bold border-gray-700 text-gray-700">
+                  ◎ 方位マーク
+                </button>
+              </div>
+            </div>
             {/* Signature stamps - quick place */}
             <div className="mt-2 pt-2 border-t border-gray-200">
               <div className="text-sm text-gray-400 font-semibold mb-1">署名スタンプ</div>
@@ -925,6 +935,16 @@ export default function Toolbar() {
               </div>
             </div>
           ))}
+          {/* Compass stamp */}
+          <div className="mb-2">
+            <div className="text-xs text-gray-400 font-semibold mb-1">方位</div>
+            <div className="flex flex-wrap gap-1.5">
+              <button onClick={() => handleStampSelect('compass', '', '#333333')}
+                className="px-3 py-1.5 text-sm border-2 rounded hover:shadow transition-all font-bold border-gray-700 text-gray-700">
+                ◎ 方位マーク
+              </button>
+            </div>
+          </div>
           {/* Signature stamps - quick place */}
           <div className="mt-2 pt-2 border-t border-gray-200">
             <div className="text-xs text-gray-400 font-semibold mb-1">署名スタンプ</div>
