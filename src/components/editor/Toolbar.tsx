@@ -657,6 +657,19 @@ export default function Toolbar() {
         </button>
       )}
 
+      {/* Signature stamp edit button */}
+      {isSelectedStamp && (selectedAnn.data as StampData).isSignature && (
+        <button onClick={() => {
+          const sd = selectedAnn.data as StampData
+          // Open inline text edit for signature multiLineText
+          const fn = (window as unknown as Record<string, (id: string, text: string) => void>).__editSignatureText
+          if (fn) fn(selectedAnn.id, sd.multiLineText || '')
+        }}
+          className="px-2.5 py-1.5 text-sm sm:px-2 sm:py-1 sm:text-xs border border-indigo-300 text-indigo-600 rounded-lg hover:bg-indigo-50">
+          ✏️ テキスト編集
+        </button>
+      )}
+
       {/* Select tool info & delete */}
       {currentTool === 'select' && selectedAnnotationId && (
         <button onClick={handleDelete}
@@ -694,6 +707,12 @@ export default function Toolbar() {
             <button onClick={duplicateAnnotation} disabled={!selectedAnnotationId}
               className="w-9 h-9 flex items-center justify-center text-sm text-gray-500 disabled:opacity-30 rounded active:bg-gray-100"
               title="複製 (Ctrl+C)">📋</button>
+            <button onClick={() => {
+                const fn = (window as unknown as Record<string, () => void>).__pasteClipboardImage
+                if (fn) fn()
+              }}
+              className="w-9 h-9 flex items-center justify-center text-sm text-gray-500 rounded active:bg-gray-100"
+              title="貼付け">📎</button>
             <button onClick={undo} disabled={undoStack.length === 0}
               className="w-9 h-9 flex items-center justify-center text-lg text-gray-500 disabled:opacity-30 rounded active:bg-gray-100"
               title="戻す">↩</button>
@@ -841,6 +860,12 @@ export default function Toolbar() {
           <button onClick={duplicateAnnotation} disabled={!selectedAnnotationId}
             className="px-3 py-1.5 text-xs border border-gray-200 rounded-lg text-gray-500 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed"
             title="複製 (Ctrl+C)">📋 コピー</button>
+          <button onClick={() => {
+              const fn = (window as unknown as Record<string, () => void>).__pasteClipboardImage
+              if (fn) fn()
+            }}
+            className="px-3 py-1.5 text-xs border border-gray-200 rounded-lg text-gray-500 hover:bg-gray-50"
+            title="クリップボード画像を貼付け (Ctrl+V)">📎 貼付け</button>
           <button onClick={undo} disabled={undoStack.length === 0}
             className="px-3 py-1.5 text-xs border border-gray-200 rounded-lg text-gray-500 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed"
             title="元に戻す (Ctrl+Z)">↩ 戻す</button>

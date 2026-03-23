@@ -154,6 +154,13 @@ export default function EditorCanvas({ pdfDoc }: EditorCanvasProps) {
     }
   }, [scale])
 
+  // Redraw when a pasted image finishes loading
+  useEffect(() => {
+    const handler = () => redrawAnnotations()
+    window.addEventListener('annotation-image-loaded', handler)
+    return () => window.removeEventListener('annotation-image-loaded', handler)
+  }, [redrawAnnotations])
+
   // Add annotation and auto-switch to select mode with the new annotation selected
   const addAndSelect = useCallback((pageNum: number, ann: Annotation) => {
     addAnnotation(pageNum, ann)
@@ -591,9 +598,15 @@ export default function EditorCanvas({ pdfDoc }: EditorCanvasProps) {
         if (bounds) {
           const cx = bounds.x + bounds.w / 2
           const cy = bounds.y + bounds.h / 2
-          const angle = Math.atan2(pos.y - cy, pos.x - cx) - Math.atan2(ds.dragStart.y - cy, ds.dragStart.x - cx)
+          let angle = Math.atan2(pos.y - cy, pos.x - cx) - Math.atan2(ds.dragStart.y - cy, ds.dragStart.x - cx)
+          let newRotation = ((orig as number) + angle) % (Math.PI * 2)
+          // Shift: snap to 45-degree increments
+          if (e.shiftKey) {
+            const snap = Math.PI / 4 // 45 degrees
+            newRotation = Math.round(newRotation / snap) * snap
+          }
           updateAnnotation(currentPage, ann.id, {
-            rotation: ((orig as number) + angle) % (Math.PI * 2),
+            rotation: newRotation,
           })
         }
       } else if (ds.dragMode.startsWith('resize-')) {
@@ -1119,13 +1132,33 @@ export default function EditorCanvas({ pdfDoc }: EditorCanvasProps) {
     setCurrentTool('select')
   }, [currentPage, scale, maskColor, fontSize, fontFamily, addAndSelect, setCurrentTool])
 
+  // Signature text edit dialog
+  const [sigEditState, setSigEditState] = useState<{ id: string; text: string } | null>(null)
+
+  const editSignatureText = useCallback((id: string, text: string) => {
+    setSigEditState({ id, text })
+  }, [])
+
+  const commitSignatureEdit = useCallback(() => {
+    if (!sigEditState) return
+    const ann = (annotations[currentPage] || []).find(a => a.id === sigEditState.id)
+    if (ann && ann.type === 'stamp') {
+      const newData = { ...(ann.data as StampData), multiLineText: sigEditState.text }
+      updateAnnotation(currentPage, ann.id, {
+        data: newData as unknown as typeof ann.data,
+      })
+    }
+    setSigEditState(null)
+  }, [sigEditState, annotations, currentPage, updateAnnotation])
+
   // Expose setStampPending, stampLegMode, signature placement, and template text insertion
   useEffect(() => {
     (window as unknown as Record<string, unknown>).__placeStamp = setStampPending;
     (window as unknown as Record<string, unknown>).__stampLegMode = enableStampLegMode;
     (window as unknown as Record<string, unknown>).__placeSignatureStamp = setSignaturePending;
-    (window as unknown as Record<string, unknown>).__insertTemplateText = insertTemplateText
-  }, [setStampPending, enableStampLegMode, setSignaturePending, insertTemplateText])
+    (window as unknown as Record<string, unknown>).__insertTemplateText = insertTemplateText;
+    (window as unknown as Record<string, unknown>).__editSignatureText = editSignatureText
+  }, [setStampPending, enableStampLegMode, setSignaturePending, insertTemplateText, editSignatureText])
 
   // Clipboard ref for copy/paste
   const clipboardRef = useRef<Annotation | null>(null)
@@ -1164,60 +1197,8 @@ export default function EditorCanvas({ pdfDoc }: EditorCanvasProps) {
 
       // Ctrl+V: Check clipboard for image first, then paste annotation
       if (isCtrl && e.key === 'v') {
-        // Try to read image from clipboard
-        navigator.clipboard.read().then(async (items) => {
-          for (const item of items) {
-            const imageType = item.types.find(t => t.startsWith('image/'))
-            if (imageType) {
-              e.preventDefault()
-              const blob = await item.getType(imageType)
-              const reader = new FileReader()
-              reader.onload = () => {
-                const dataUrl = reader.result as string
-                const img = new Image()
-                img.onload = () => {
-                  // Scale image to fit reasonably on canvas
-                  const maxW = 400 / scale
-                  const maxH = 300 / scale
-                  const ratio = Math.min(maxW / img.width, maxH / img.height, 1)
-                  const w = img.width * ratio
-                  const h = img.height * ratio
-                  // Place at center of visible area
-                  const container = containerRef.current
-                  const canvas = pdfCanvasRef.current
-                  let cx = 100 / scale, cy = 100 / scale
-                  if (container && canvas) {
-                    const cRect = canvas.getBoundingClientRect()
-                    const conRect = container.getBoundingClientRect()
-                    cx = (conRect.width / 2 - cRect.left + conRect.left) / scale
-                    cy = (conRect.height / 2 - cRect.top + conRect.top) / scale
-                  }
-                  const newId = generateId()
-                  store.addAnnotation(currentPage, {
-                    id: newId,
-                    type: 'image' as const,
-                    color: '#000000',
-                    data: {
-                      x: cx - w / 2,
-                      y: cy - h / 2,
-                      w, h,
-                      imageData: dataUrl,
-                      origW: img.width,
-                      origH: img.height,
-                    },
-                  })
-                  store.setSelectedAnnotationId(newId)
-                  setCurrentTool('select')
-                  redrawAnnotations()
-                }
-                img.src = dataUrl
-              }
-              reader.readAsDataURL(blob)
-              return
-            }
-          }
-          // No image in clipboard - paste copied annotation
-          if (clipboardRef.current) {
+        pasteClipboardImage().then((pasted) => {
+          if (!pasted && clipboardRef.current) {
             pasteAnnotation()
           }
         }).catch(() => {
@@ -1253,6 +1234,68 @@ export default function EditorCanvas({ pdfDoc }: EditorCanvasProps) {
       store.setSelectedAnnotationId(newId)
       redrawAnnotations()
     }
+
+    // Paste clipboard image (shared between Ctrl+V and button)
+    const pasteClipboardImage = async (): Promise<boolean> => {
+      try {
+        const items = await navigator.clipboard.read()
+        for (const item of items) {
+          const imageType = item.types.find(t => t.startsWith('image/'))
+          if (imageType) {
+            const blob = await item.getType(imageType)
+            return new Promise<boolean>((resolve) => {
+              const reader = new FileReader()
+              reader.onload = () => {
+                const dataUrl = reader.result as string
+                const img = new Image()
+                img.onload = () => {
+                  const maxW = 400 / scale
+                  const maxH = 300 / scale
+                  const ratio = Math.min(maxW / img.width, maxH / img.height, 1)
+                  const w = img.width * ratio
+                  const h = img.height * ratio
+                  const container = containerRef.current
+                  const canvas = pdfCanvasRef.current
+                  let cx = 100 / scale, cy = 100 / scale
+                  if (container && canvas) {
+                    const cRect = canvas.getBoundingClientRect()
+                    const conRect = container.getBoundingClientRect()
+                    cx = (conRect.width / 2 - cRect.left + conRect.left) / scale
+                    cy = (conRect.height / 2 - cRect.top + conRect.top) / scale
+                  }
+                  const newId = generateId()
+                  store.addAnnotation(currentPage, {
+                    id: newId,
+                    type: 'image' as const,
+                    color: '#000000',
+                    data: {
+                      x: cx - w / 2,
+                      y: cy - h / 2,
+                      w, h,
+                      imageData: dataUrl,
+                      origW: img.width,
+                      origH: img.height,
+                    },
+                  })
+                  store.setSelectedAnnotationId(newId)
+                  setCurrentTool('select')
+                  redrawAnnotations()
+                  resolve(true)
+                }
+                img.src = dataUrl
+              }
+              reader.readAsDataURL(blob)
+            })
+          }
+        }
+        return false
+      } catch {
+        return false
+      }
+    }
+
+    // Register for toolbar button
+    ;(window as unknown as Record<string, unknown>).__pasteClipboardImage = pasteClipboardImage
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
@@ -1374,6 +1417,33 @@ export default function EditorCanvas({ pdfDoc }: EditorCanvasProps) {
             }}
             placeholder="テキストを入力..."
           />
+        )}
+
+        {/* Signature text edit dialog */}
+        {sigEditState && (
+          <div className="absolute inset-0 flex items-center justify-center z-20">
+            <div className="absolute inset-0 bg-black/20" onClick={() => setSigEditState(null)} />
+            <div className="relative bg-white rounded-xl shadow-xl p-4 w-80 max-w-[90%]" onClick={(e) => e.stopPropagation()}>
+              <h3 className="text-sm font-bold text-gray-700 mb-2">署名テキスト編集</h3>
+              <textarea
+                value={sigEditState.text}
+                onChange={(e) => setSigEditState({ ...sigEditState, text: e.target.value })}
+                rows={8}
+                className="w-full px-2 py-1.5 text-xs border border-gray-200 rounded-lg font-mono leading-relaxed resize-y mb-3"
+                autoFocus
+              />
+              <div className="flex justify-end gap-2">
+                <button onClick={() => setSigEditState(null)}
+                  className="px-3 py-1.5 text-xs border border-gray-200 rounded-lg text-gray-500 hover:bg-gray-50">
+                  キャンセル
+                </button>
+                <button onClick={commitSignatureEdit}
+                  className="px-3 py-1.5 text-xs bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
+                  適用
+                </button>
+              </div>
+            </div>
+          </div>
         )}
       </div>
     </div>

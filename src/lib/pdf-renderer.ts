@@ -643,6 +643,10 @@ export function drawAnnotation(ctx: CanvasRenderingContext2D, ann: Annotation, s
         let cachedImg = imageCache.get(key)
         if (!cachedImg || cachedImg.src !== d.imageData) {
           const img = new Image()
+          img.onload = () => {
+            // Trigger redraw when image loads
+            window.dispatchEvent(new CustomEvent('annotation-image-loaded'))
+          }
           img.src = d.imageData
           imageCache.set(key, img)
           cachedImg = img
