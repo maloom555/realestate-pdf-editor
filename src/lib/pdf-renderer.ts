@@ -638,18 +638,19 @@ export function drawAnnotation(ctx: CanvasRenderingContext2D, ann: Annotation, s
     case 'image': {
       const d = ann.data as ImageAnnotData
       if (d.imageData) {
-        const key = d.imageData.substring(0, 100)
-        if (!imageCache.has(key)) {
+        // Use annotation ID as cache key to avoid collisions
+        const key = `img_${ann.id}`
+        let cachedImg = imageCache.get(key)
+        if (!cachedImg || cachedImg.src !== d.imageData) {
           const img = new Image()
           img.src = d.imageData
           imageCache.set(key, img)
-          img.onload = () => { /* will render on next redraw */ }
+          cachedImg = img
         }
-        const cachedImg = imageCache.get(key)
-        if (cachedImg && cachedImg.complete && cachedImg.naturalWidth > 0) {
+        if (cachedImg.complete && cachedImg.naturalWidth > 0) {
           ctx.drawImage(cachedImg, d.x, d.y, d.w, d.h)
         }
-        // Border when selected (thin dotted line)
+        // Border (thin dotted line)
         ctx.strokeStyle = '#999'
         ctx.lineWidth = 1
         ctx.setLineDash([4, 4])

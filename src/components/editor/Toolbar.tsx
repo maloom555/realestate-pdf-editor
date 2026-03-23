@@ -469,7 +469,7 @@ export default function Toolbar() {
             )}
           </div>
           {/* Text template button */}
-          {(currentTool === 'text' || currentTool === 'callout') && !isSelectedText && !isSelectedCallout && (
+          {currentTool === 'text' && !isSelectedText && (
             <div className="relative">
               <button onClick={() => setShowTextTemplates(!showTextTemplates)}
                 className={`px-2.5 py-1.5 text-sm sm:px-2 sm:py-1 sm:text-xs border rounded-lg ${
