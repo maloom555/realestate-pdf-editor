@@ -424,6 +424,20 @@ export default function EditorCanvas({ pdfDoc }: EditorCanvasProps) {
         setTimeout(() => textInputRef.current?.focus(), 50)
         return
       }
+
+      // Signature stamp double-click: edit multiline text
+      if (ann.type === 'stamp' && (ann.data as StampData).isSignature) {
+        const d = ann.data as StampData
+        const canvas = maskCanvasRef.current!
+        const rect = canvas.getBoundingClientRect()
+        const dispX = d.x * scale * (rect.width / canvas.width)
+        const dispY = d.y * scale * (rect.height / canvas.height)
+        setEditingAnnotationId(ann.id)
+        setTextInput({ x: dispX, y: dispY, visible: true })
+        setTextValue(d.multiLineText || '')
+        setTimeout(() => textInputRef.current?.focus(), 50)
+        return
+      }
     }
   }, [currentTool, getPos, annotations, currentPage])
 
@@ -992,6 +1006,10 @@ export default function EditorCanvas({ pdfDoc }: EditorCanvasProps) {
         } else if (ann.type === 'callout') {
           updateAnnotation(currentPage, ann.id, {
             data: { ...ann.data, text: textValue, fontSize, fontFamily } as unknown as typeof ann.data,
+          })
+        } else if (ann.type === 'stamp' && (ann.data as StampData).isSignature) {
+          updateAnnotation(currentPage, ann.id, {
+            data: { ...ann.data, multiLineText: textValue } as unknown as typeof ann.data,
           })
         }
       }
