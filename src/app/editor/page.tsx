@@ -197,7 +197,7 @@ export default function EditorPage() {
       >
         <div className="w-8" />
         <h1 className="text-base sm:text-xl font-bold cursor-pointer hover:opacity-80 transition-opacity" onClick={handleReset} title="トップに戻る">不動産PDF工房</h1>
-        <a href="/manual.html" target="_blank" rel="noopener noreferrer"
+        <a href="/manual" target="_blank" rel="noopener noreferrer"
           className="w-8 h-8 flex items-center justify-center rounded-full bg-white/20 hover:bg-white/30 transition-colors text-sm font-bold"
           title="使い方マニュアル">?</a>
       </header>
