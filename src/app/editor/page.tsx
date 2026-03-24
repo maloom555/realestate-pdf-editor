@@ -193,11 +193,13 @@ export default function EditorPage() {
 
       {/* Header - compact on mobile */}
       <header
-        className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-4 sm:px-6 py-2 sm:py-3 text-center cursor-pointer hover:opacity-90 transition-opacity"
-        onClick={handleReset}
-        title="トップに戻る"
+        className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-4 sm:px-6 py-2 sm:py-3 flex items-center justify-between"
       >
-        <h1 className="text-base sm:text-xl font-bold">不動産PDF工房</h1>
+        <div className="w-8" />
+        <h1 className="text-base sm:text-xl font-bold cursor-pointer hover:opacity-80 transition-opacity" onClick={handleReset} title="トップに戻る">不動産PDF工房</h1>
+        <a href="/manual.html" target="_blank" rel="noopener noreferrer"
+          className="w-8 h-8 flex items-center justify-center rounded-full bg-white/20 hover:bg-white/30 transition-colors text-sm font-bold"
+          title="使い方マニュアル">?</a>
       </header>
 
       {pdfDoc ? (
