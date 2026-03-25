@@ -152,7 +152,15 @@ export default function PageEditor({ pdfDoc, onReloadPdf }: PageEditorProps) {
     if (!file) return
     e.target.value = ''
     const arrayBuffer = await file.arrayBuffer()
-    const extBytes = new Uint8Array(arrayBuffer)
+    let extBytes: Uint8Array = new Uint8Array(arrayBuffer)
+
+    // If image file, convert to PDF first
+    const imageTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
+    if (imageTypes.includes(file.type)) {
+      const { imageToPdf } = await import('@/lib/image-to-pdf')
+      extBytes = new Uint8Array(await imageToPdf(extBytes, file.type))
+    }
+
     const afterPage = selectedPages.size === 1
       ? Array.from(selectedPages)[0]
       : totalPages
@@ -307,9 +315,9 @@ export default function PageEditor({ pdfDoc, onReloadPdf }: PageEditorProps) {
         </button>
         <button onClick={() => importInputRef.current?.click()}
           className="px-3 py-1.5 text-sm sm:text-xs border border-blue-300 text-blue-600 rounded-lg hover:bg-blue-50">
-          PDF追加
+          ファイル追加
         </button>
-        <input ref={importInputRef} type="file" accept=".pdf" className="hidden" onChange={handleImport} />
+        <input ref={importInputRef} type="file" accept=".pdf,.jpg,.jpeg,.png,.webp,.gif" className="hidden" onChange={handleImport} />
 
         <button onClick={handleExtract} disabled={selectedPages.size === 0}
           className="px-3 py-1.5 text-sm sm:text-xs border border-green-300 text-green-600 rounded-lg hover:bg-green-50 disabled:opacity-30 disabled:cursor-not-allowed">
