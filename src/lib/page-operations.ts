@@ -240,3 +240,82 @@ export async function rotatePages(
     annotations: { ...annotations }, // Annotations stay as-is, rotation is page-level
   }
 }
+
+// Standard paper sizes in points (1pt = 1/72 inch)
+export const PAGE_SIZES = {
+  'A3': { width: 841.89, height: 1190.55, label: 'A3 (297×420mm)' },
+  'A3横': { width: 1190.55, height: 841.89, label: 'A3 横' },
+  'A4': { width: 595.28, height: 841.89, label: 'A4 (210×297mm)' },
+  'A4横': { width: 841.89, height: 595.28, label: 'A4 横' },
+  'B4': { width: 728.5, height: 1031.81, label: 'B4 (257×364mm)' },
+  'B5': { width: 515.91, height: 728.5, label: 'B5 (182×257mm)' },
+} as const
+
+export type PageSizeKey = keyof typeof PAGE_SIZES
+
+/** Resize selected pages to a standard paper size, scaling content to fit */
+export async function resizePages(
+  pdfBytes: Uint8Array,
+  annotations: Record<number, Annotation[]>,
+  pageNumbers: number[],
+  targetSize: PageSizeKey,
+): Promise<PageOperationResult> {
+  const doc = await PDFDocument.load(pdfBytes)
+  const target = PAGE_SIZES[targetSize]
+
+  for (const pageNum of pageNumbers) {
+    const pageIndex = pageNum - 1
+    if (pageIndex < 0 || pageIndex >= doc.getPageCount()) continue
+    const page = doc.getPage(pageIndex)
+
+    const { width: origW, height: origH } = page.getSize()
+    const scaleX = target.width / origW
+    const scaleY = target.height / origH
+    const scale = Math.min(scaleX, scaleY) // fit within target, maintain aspect ratio
+
+    // Scale existing content
+    const scaledW = origW * scale
+    const scaledH = origH * scale
+    const offsetX = (target.width - scaledW) / 2
+    const offsetY = (target.height - scaledH) / 2
+
+    // Set new page size
+    page.setSize(target.width, target.height)
+
+    // Move and scale existing content using the page's content stream
+    // We wrap existing content with a transform matrix
+    page.scaleContent(scale, scale)
+    page.translateContent(offsetX / scale, offsetY / scale)
+
+    // Scale annotations for this page
+    if (annotations[pageNum]) {
+      annotations[pageNum] = annotations[pageNum].map(ann => {
+        const newAnn = JSON.parse(JSON.stringify(ann)) as Annotation
+        const d = newAnn.data as unknown as Record<string, unknown>
+        // Scale position and size fields
+        if (typeof d.x === 'number') d.x = (d.x as number) * scale + offsetX
+        if (typeof d.y === 'number') d.y = (d.y as number) * scale + offsetY
+        if (typeof d.w === 'number') d.w = (d.w as number) * scale
+        if (typeof d.h === 'number') d.h = (d.h as number) * scale
+        if (typeof d.startX === 'number') { d.startX = (d.startX as number) * scale + offsetX; d.startY = (d.startY as number) * scale + offsetY }
+        if (typeof d.endX === 'number') { d.endX = (d.endX as number) * scale + offsetX; d.endY = (d.endY as number) * scale + offsetY }
+        if (typeof d.legX === 'number') { d.legX = (d.legX as number) * scale + offsetX; d.legY = (d.legY as number) * scale + offsetY }
+        // Scale points array (polyline, pen)
+        if (Array.isArray(d.points)) {
+          d.points = (d.points as Array<{x: number; y: number}>).map((p: {x: number; y: number}) => ({
+            x: p.x * scale + offsetX,
+            y: p.y * scale + offsetY,
+          }))
+        }
+        return newAnn
+      })
+    }
+  }
+
+  const newPdfBytes = await doc.save()
+  return {
+    pdfBytes: new Uint8Array(newPdfBytes),
+    totalPages: doc.getPageCount(),
+    annotations,
+  }
+}

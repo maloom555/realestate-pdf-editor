@@ -244,6 +244,18 @@ export default function PageEditor({ pdfDoc, onReloadPdf }: PageEditorProps) {
 
   const [showRotateMenu, setShowRotateMenu] = useState(false)
   const [showCompressMenu, setShowCompressMenu] = useState(false)
+  const [showResizeMenu, setShowResizeMenu] = useState(false)
+
+  const handleResize = async (sizeKey: string) => {
+    setShowResizeMenu(false)
+    if (selectedPages.size === 0) return
+    const { resizePages } = await import('@/lib/page-operations')
+    const pages = Array.from(selectedPages).sort((a, b) => a - b)
+    executeOp(
+      () => resizePages(pdfBytes!, { ...annotations }, pages, sizeKey as import('@/lib/page-operations').PageSizeKey),
+      'ページサイズを変更中...'
+    )
+  }
 
   const handleExportPdf = async () => {
     if (!pdfBytes) return
@@ -338,6 +350,32 @@ export default function PageEditor({ pdfDoc, onReloadPdf }: PageEditorProps) {
                 className="block w-full px-4 py-2 text-sm text-left hover:bg-gray-50">180°</button>
               <button onClick={() => { handleRotate(270); setShowRotateMenu(false) }}
                 className="block w-full px-4 py-2 text-sm text-left hover:bg-gray-50">90° 左</button>
+            </div>
+          )}
+        </div>
+
+        {/* Resize dropdown */}
+        <div className="relative">
+          <button onClick={() => setShowResizeMenu(!showResizeMenu)} disabled={selectedPages.size === 0}
+            className="px-3 py-1.5 text-sm sm:text-xs border border-gray-200 text-gray-600 rounded-lg hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed">
+            サイズ ▾
+          </button>
+          {showResizeMenu && (
+            <div className="absolute top-full left-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-10 min-w-[160px]">
+              {Object.entries(
+                // dynamic import workaround: inline the sizes
+                {
+                  'A4': 'A4 (210×297mm)',
+                  'A4横': 'A4 横',
+                  'A3': 'A3 (297×420mm)',
+                  'A3横': 'A3 横',
+                  'B4': 'B4 (257×364mm)',
+                  'B5': 'B5 (182×257mm)',
+                }
+              ).map(([key, label]) => (
+                <button key={key} onClick={() => handleResize(key)}
+                  className="block w-full px-4 py-2 text-sm text-left hover:bg-gray-50">{label}</button>
+              ))}
             </div>
           )}
         </div>
