@@ -134,6 +134,40 @@ export default function EditorPage() {
         e.preventDefault()
         store.duplicateAnnotation()
       }
+      // Arrow keys: nudge selected annotations
+      const arrowKeys = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight']
+      if (arrowKeys.includes(e.key) && (store.selectedAnnotationId || store.selectedAnnotationIds.size > 0)) {
+        e.preventDefault()
+        const step = e.shiftKey ? 10 : 1
+        const dx = e.key === 'ArrowLeft' ? -step : e.key === 'ArrowRight' ? step : 0
+        const dy = e.key === 'ArrowUp' ? -step : e.key === 'ArrowDown' ? step : 0
+        const ids = store.selectedAnnotationIds.size > 0 ? store.selectedAnnotationIds : new Set([store.selectedAnnotationId!])
+        const pageAnns = store.annotations[store.currentPage] || []
+        for (const id of ids) {
+          const ann = pageAnns.find(a => a.id === id)
+          if (!ann) continue
+          const d = ann.data as unknown as Record<string, unknown>
+          if (ann.type === 'arrow' || ann.type === 'callout') {
+            store.updateAnnotation(store.currentPage, id, {
+              data: { ...ann.data, startX: (d.startX as number) + dx, startY: (d.startY as number) + dy, endX: (d.endX as number) + dx, endY: (d.endY as number) + dy } as any,
+            })
+          } else if (ann.type === 'pen') {
+            const pts = d as unknown as Array<{x: number; y: number}>
+            store.updateAnnotation(store.currentPage, id, {
+              data: pts.map(p => ({ x: p.x + dx, y: p.y + dy })) as any,
+            })
+          } else if (ann.type === 'polyline') {
+            const pd = d as { points: Array<{x: number; y: number}> }
+            store.updateAnnotation(store.currentPage, id, {
+              data: { ...ann.data, points: pd.points.map(p => ({ x: p.x + dx, y: p.y + dy })) } as any,
+            })
+          } else if (typeof d.x === 'number') {
+            const updated: Record<string, unknown> = { ...d, x: (d.x as number) + dx, y: (d.y as number) + dy }
+            if (typeof d.legX === 'number') { updated.legX = (d.legX as number) + dx; updated.legY = (d.legY as number) + dy }
+            store.updateAnnotation(store.currentPage, id, { data: updated as any })
+          }
+        }
+      }
     }
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
