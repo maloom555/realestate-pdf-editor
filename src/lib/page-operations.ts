@@ -263,7 +263,10 @@ export async function resizePages(
   const doc = await PDFDocument.load(pdfBytes)
   const target = PAGE_SIZES[targetSize]
 
-  for (const pageNum of pageNumbers) {
+  // Process pages in reverse order so indices don't shift when replacing
+  const sortedPages = [...pageNumbers].sort((a, b) => b - a)
+
+  for (const pageNum of sortedPages) {
     const pageIndex = pageNum - 1
     if (pageIndex < 0 || pageIndex >= doc.getPageCount()) continue
     const page = doc.getPage(pageIndex)
@@ -271,21 +274,29 @@ export async function resizePages(
     const { width: origW, height: origH } = page.getSize()
     const scaleX = target.width / origW
     const scaleY = target.height / origH
-    const scale = Math.min(scaleX, scaleY) // fit within target, maintain aspect ratio
+    const scale = Math.min(scaleX, scaleY)
 
-    // Scale existing content
     const scaledW = origW * scale
     const scaledH = origH * scale
+    // offsetX/offsetY in PDF coordinates (bottom-left origin)
     const offsetX = (target.width - scaledW) / 2
-    const offsetY = (target.height - scaledH) / 2
+    const offsetYPdf = (target.height - scaledH) / 2
+    // offsetY for screen/annotation coordinates (top-left origin)
+    const offsetY = offsetYPdf
 
-    // Set new page size
-    page.setSize(target.width, target.height)
-
-    // Move and scale existing content using the page's content stream
-    // We wrap existing content with a transform matrix
-    page.scaleContent(scale, scale)
-    page.translateContent(offsetX / scale, offsetY / scale)
+    // Use embedPage to reliably scale and position content
+    const [embeddedPage] = await doc.embedPages([page])
+    // Create new blank page at target size, insert at same position
+    const newPage = doc.insertPage(pageIndex, [target.width, target.height])
+    // Draw embedded page scaled and centered (PDF y-axis: bottom-left)
+    newPage.drawPage(embeddedPage, {
+      x: offsetX,
+      y: offsetYPdf,
+      width: scaledW,
+      height: scaledH,
+    })
+    // Remove the original page (now at pageIndex+1 because we inserted before it)
+    doc.removePage(pageIndex + 1)
 
     // Scale annotations for this page
     if (annotations[pageNum]) {
