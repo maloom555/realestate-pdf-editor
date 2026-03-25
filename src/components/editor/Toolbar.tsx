@@ -476,7 +476,7 @@ export default function Toolbar() {
                   showTextTemplates ? 'border-indigo-500 bg-indigo-50 text-indigo-700' : 'border-gray-200 text-gray-500 hover:bg-gray-50'
                 }`}>定型文</button>
               {showTextTemplates && (
-                <div className="absolute top-full left-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-xl z-50 w-72 max-h-80 overflow-auto">
+                <div className={`absolute ${isMobile ? 'bottom-full mb-1' : 'top-full mt-1'} left-0 bg-white border border-gray-200 rounded-xl shadow-xl z-50 w-72 max-h-80 overflow-auto`}>
                   {Array.from(new Set(TEXT_TEMPLATES.map(t => t.category))).map((cat) => (
                     <div key={cat}>
                       <div className="px-3 py-1.5 text-[10px] font-bold text-gray-400 bg-gray-50 sticky top-0">{cat}</div>
@@ -753,9 +753,9 @@ export default function Toolbar() {
           </div>
         )}
 
-        {/* Sub-menu */}
+        {/* Sub-menu - fixed at bottom on mobile */}
         {showSubMenu && (
-          <div className="px-3 py-2 border-t border-gray-100 bg-gray-50 flex items-center gap-2.5 flex-wrap overflow-x-auto">
+          <div className="fixed bottom-0 left-0 right-0 z-40 px-3 py-2 bg-white border-t border-gray-200 shadow-[0_-2px_10px_rgba(0,0,0,0.1)] flex items-center gap-2.5 flex-wrap overflow-x-auto safe-bottom">
             {subMenuContent()}
           </div>
         )}

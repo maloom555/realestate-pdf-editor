@@ -1381,8 +1381,12 @@ export default function EditorCanvas({ pdfDoc }: EditorCanvasProps) {
       pinchRef.current = { active: true, initialDist: dist, initialScale: scale, lastDist: dist }
       return
     }
+    // Prevent scroll/zoom when drawing (especially for polyline)
+    if (currentTool !== 'select') {
+      e.preventDefault()
+    }
     handleMouseDown(e)
-  }, [scale, handleMouseDown])
+  }, [scale, handleMouseDown, currentTool])
 
   const handleTouchMove = useCallback((e: React.TouchEvent) => {
     if (e.touches.length === 2 && pinchRef.current.active) {
