@@ -225,7 +225,7 @@ export default function HomePage() {
                 className="text-gray-500 hover:text-white transition-colors" title="X (Twitter)">
                 {icons.x}
               </a>
-              <a href="/manual" className="hover:text-white transition-colors">使い方マニュアル</a>
+              <Link href="/editor" className="hover:text-white transition-colors">使い方ガイド</Link>
               <Link href="/privacy" className="hover:text-white transition-colors">プライバシー</Link>
               <Link href="/terms" className="hover:text-white transition-colors">利用規約</Link>
             </div>
