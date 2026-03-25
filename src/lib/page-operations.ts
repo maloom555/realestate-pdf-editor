@@ -300,6 +300,15 @@ export async function resizePages(
         if (typeof d.startX === 'number') { d.startX = (d.startX as number) * scale + offsetX; d.startY = (d.startY as number) * scale + offsetY }
         if (typeof d.endX === 'number') { d.endX = (d.endX as number) * scale + offsetX; d.endY = (d.endY as number) * scale + offsetY }
         if (typeof d.legX === 'number') { d.legX = (d.legX as number) * scale + offsetX; d.legY = (d.legY as number) * scale + offsetY }
+        // Scale font size
+        if (typeof d.fontSize === 'number') d.fontSize = Math.round((d.fontSize as number) * scale)
+        // Scale origW/origH (signature stamps)
+        if (typeof d.origW === 'number') d.origW = (d.origW as number) * scale
+        if (typeof d.origH === 'number') d.origH = (d.origH as number) * scale
+        // Scale arrowSize
+        if (typeof d.arrowSize === 'number') d.arrowSize = (d.arrowSize as number) * scale
+        // Scale line size
+        if (newAnn.size) newAnn.size = Math.max(1, Math.round(newAnn.size * scale))
         // Scale points array (polyline, pen)
         if (Array.isArray(d.points)) {
           d.points = (d.points as Array<{x: number; y: number}>).map((p: {x: number; y: number}) => ({
