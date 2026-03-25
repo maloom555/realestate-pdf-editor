@@ -33,13 +33,14 @@ export default function EditorCanvas({ pdfDoc }: EditorCanvasProps) {
     dragMode: string | null
     dragStart: { x: number; y: number } | null
     origData: unknown
+    origGroupData: Record<string, unknown> | null
     calloutPending: { startX: number; startY: number; endX: number; endY: number } | null
     isActive: boolean
     composing: boolean
     polylinePoints: Point[]
   }>({
     startX: 0, startY: 0, currentPath: [],
-    dragMode: null, dragStart: null, origData: null,
+    dragMode: null, dragStart: null, origData: null, origGroupData: null,
     calloutPending: null, isActive: false, composing: false,
     polylinePoints: [] as Point[],
   })
@@ -121,7 +122,22 @@ export default function EditorCanvas({ pdfDoc }: EditorCanvasProps) {
     }
     ctx.restore()
 
-    // Draw selection UI in canvas space (constant handle size)
+    // Draw selection UI for multi-selected annotations
+    for (const ann of pageAnnotations) {
+      if (store.selectedAnnotationIds.has(ann.id) && ann.id !== selectedAnnotationId) {
+        const bounds = getAnnotationBounds(ann)
+        if (bounds) {
+          ctx.save()
+          ctx.strokeStyle = '#6366f1'
+          ctx.lineWidth = 2
+          ctx.setLineDash([6, 4])
+          ctx.strokeRect(bounds.x * scale, bounds.y * scale, bounds.w * scale, bounds.h * scale)
+          ctx.restore()
+        }
+      }
+    }
+
+    // Draw primary selection UI
     if (selectedAnnotationId) {
       const selected = pageAnnotations.find((a) => a.id === selectedAnnotationId)
       if (selected) {
@@ -137,7 +153,7 @@ export default function EditorCanvas({ pdfDoc }: EditorCanvasProps) {
         }
       }
     }
-  }, [annotations, currentPage, selectedAnnotationId, scale])
+  }, [annotations, currentPage, selectedAnnotationId, store.selectedAnnotationIds, scale])
 
   // Get position relative to canvas
   const getPos = useCallback((e: React.MouseEvent | React.TouchEvent): Point => {
@@ -235,6 +251,24 @@ export default function EditorCanvas({ pdfDoc }: EditorCanvasProps) {
       // Try to select a new annotation (topmost first)
       for (let i = pageAnns.length - 1; i >= 0; i--) {
         if (hitTestAnnotation(pos.x, pos.y, pageAnns[i])) {
+          if (e.shiftKey) {
+            // Shift+click: toggle multi-selection
+            store.toggleSelectedAnnotation(pageAnns[i].id)
+            return
+          }
+          // Check if clicking on an already multi-selected item → start group move
+          if (store.selectedAnnotationIds.size > 1 && store.selectedAnnotationIds.has(pageAnns[i].id)) {
+            ds.dragMode = 'group-move'
+            ds.dragStart = pos
+            // Store original data for all selected annotations
+            ds.origGroupData = {} as Record<string, unknown>
+            for (const id of store.selectedAnnotationIds) {
+              const a = pageAnns.find(ann => ann.id === id)
+              if (a) (ds.origGroupData as Record<string, unknown>)[id] = JSON.parse(JSON.stringify(a.data))
+            }
+            setIsDrawing(true)
+            return
+          }
           setSelectedAnnotationId(pageAnns[i].id)
           ds.dragMode = 'move'
           ds.dragStart = pos
@@ -592,6 +626,42 @@ export default function EditorCanvas({ pdfDoc }: EditorCanvasProps) {
           updateAnnotation(currentPage, ann.id, {
             data: { ...o, points: o.points.map((p) => ({ x: p.x + dx, y: p.y + dy })) },
           })
+        }
+      } else if (ds.dragMode === 'group-move') {
+        // Move all selected annotations together
+        const groupData = ds.origGroupData as Record<string, unknown>
+        if (groupData) {
+          for (const id of store.selectedAnnotationIds) {
+            const a = pageAnns.find(ann => ann.id === id)
+            if (!a) continue
+            const o = groupData[id] as Record<string, unknown>
+            if (!o) continue
+            if (a.type === 'arrow' || a.type === 'callout') {
+              updateAnnotation(currentPage, id, {
+                data: { ...a.data, startX: (o.startX as number) + dx, startY: (o.startY as number) + dy, endX: (o.endX as number) + dx, endY: (o.endY as number) + dy } as unknown as typeof a.data,
+              })
+            } else if (a.type === 'pen') {
+              const origPts = o as unknown as Point[]
+              updateAnnotation(currentPage, id, {
+                data: origPts.map((p) => ({ x: p.x + dx, y: p.y + dy })) as unknown as typeof a.data,
+              })
+            } else if (a.type === 'polyline') {
+              const op = o as unknown as PolylineData
+              updateAnnotation(currentPage, id, {
+                data: { ...op, points: op.points.map(p => ({ x: p.x + dx, y: p.y + dy })) } as unknown as typeof a.data,
+              })
+            } else if (a.type === 'stamp') {
+              const os = o as unknown as StampData
+              const updatedData: Record<string, unknown> = { ...a.data, x: os.x + dx, y: os.y + dy }
+              if (os.legX != null) { updatedData.legX = os.legX + dx; updatedData.legY = (os.legY ?? 0) + dy }
+              updateAnnotation(currentPage, id, { data: updatedData as unknown as typeof a.data })
+            } else {
+              // rect, circle, highlight, text, image, shape-rect
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              const movedData = { ...(a.data as any), x: (o.x as number) + dx, y: (o.y as number) + dy }
+              updateAnnotation(currentPage, id, { data: movedData } as any)
+            }
+          }
         }
       } else if (ds.dragMode === 'rotate') {
         const bounds = getAnnotationBounds(ann)

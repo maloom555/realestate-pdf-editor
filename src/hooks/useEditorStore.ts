@@ -33,6 +33,7 @@ interface EditorState {
 
   // Selection
   selectedAnnotationId: string | null
+  selectedAnnotationIds: Set<string>
 
   // History
   undoStack: HistoryEntry[]
@@ -80,6 +81,8 @@ interface EditorState {
   removeAnnotation: (pageNum: number, id: string) => void
   updateAnnotation: (pageNum: number, id: string, data: Partial<Annotation>) => void
   setSelectedAnnotationId: (id: string | null) => void
+  toggleSelectedAnnotation: (id: string) => void
+  clearMultiSelection: () => void
   clearPage: (pageNum: number) => void
   undo: () => void
   redo: () => void
@@ -114,6 +117,7 @@ const initialState = {
   textBox: false,
   annotations: {} as Record<number, Annotation[]>,
   selectedAnnotationId: null,
+  selectedAnnotationIds: new Set<string>(),
   undoStack: [] as HistoryEntry[],
   redoStack: [] as HistoryEntry[],
   editorMode: 'drawing' as EditorMode,
@@ -203,7 +207,22 @@ export const useEditorStore = create<EditorState>((set, get) => ({
     })
   },
 
-  setSelectedAnnotationId: (id) => set({ selectedAnnotationId: id }),
+  setSelectedAnnotationId: (id) => set({ selectedAnnotationId: id, selectedAnnotationIds: id ? new Set([id]) : new Set() }),
+
+  toggleSelectedAnnotation: (id) => {
+    const state = get()
+    const newSet = new Set(state.selectedAnnotationIds)
+    if (newSet.has(id)) {
+      newSet.delete(id)
+    } else {
+      newSet.add(id)
+    }
+    // Primary selection = last toggled (or first in set)
+    const primary = newSet.size > 0 ? (newSet.has(id) ? id : Array.from(newSet)[0]) : null
+    set({ selectedAnnotationIds: newSet, selectedAnnotationId: primary })
+  },
+
+  clearMultiSelection: () => set({ selectedAnnotationIds: new Set(), selectedAnnotationId: null }),
 
   clearPage: (pageNum) => {
     const state = get()

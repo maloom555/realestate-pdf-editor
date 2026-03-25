@@ -118,8 +118,16 @@ export default function EditorPage() {
         e.preventDefault()
         store.redo()
       }
-      if (e.key === 'Delete' && store.selectedAnnotationId) {
-        store.removeAnnotation(store.currentPage, store.selectedAnnotationId)
+      if (e.key === 'Delete') {
+        if (store.selectedAnnotationIds.size > 1) {
+          // Delete all multi-selected annotations
+          for (const id of store.selectedAnnotationIds) {
+            store.removeAnnotation(store.currentPage, id)
+          }
+          store.clearMultiSelection()
+        } else if (store.selectedAnnotationId) {
+          store.removeAnnotation(store.currentPage, store.selectedAnnotationId)
+        }
       }
       // Duplicate (Ctrl+C = copy + paste immediately)
       if (e.ctrlKey && e.key === 'c' && store.selectedAnnotationId) {
