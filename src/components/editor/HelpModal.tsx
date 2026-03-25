@@ -254,7 +254,7 @@ export default function HelpModal({ isOpen, onClose }: Props) {
         <hr className="border-gray-100" />
 
         {/* Section tabs */}
-        <div className="flex gap-1 px-4 py-2 bg-gray-50/50 overflow-x-auto scrollbar-hide" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+        <div className="flex flex-wrap gap-1 px-4 py-2 bg-gray-50/50">
           {sections.map((s, i) => (
             <button
               key={i}
