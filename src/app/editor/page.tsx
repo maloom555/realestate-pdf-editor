@@ -8,12 +8,14 @@ import PageNavigator from '@/components/editor/PageNavigator'
 import EditorCanvas from '@/components/editor/EditorCanvas'
 import PageEditor from '@/components/editor/PageEditor'
 import LoadingOverlay from '@/components/editor/LoadingOverlay'
+import HelpModal from '@/components/editor/HelpModal'
 import Script from 'next/script'
 
 export default function EditorPage() {
   const store = useEditorStore()
   const [pdfDoc, setPdfDoc] = useState<pdfjsLib.PDFDocumentProxy | null>(null)
   const [pdfJsLoaded, setPdfJsLoaded] = useState(false)
+  const [showHelp, setShowHelp] = useState(false)
 
   const handlePdfJsLoad = useCallback(() => {
     window.pdfjsLib.GlobalWorkerOptions.workerSrc =
@@ -253,6 +255,21 @@ export default function EditorPage() {
       )}
 
       <LoadingOverlay />
+
+      {/* Help button (floating) */}
+      <button
+        onClick={() => setShowHelp(true)}
+        className="fixed bottom-6 right-6 w-12 h-12 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full shadow-lg hover:shadow-xl transition-all flex items-center justify-center z-30 group"
+        title="使い方ガイド"
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-6 h-6">
+          <circle cx="12" cy="12" r="10"/>
+          <path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/>
+          <line x1="12" y1="17" x2="12.01" y2="17"/>
+        </svg>
+      </button>
+
+      <HelpModal isOpen={showHelp} onClose={() => setShowHelp(false)} />
     </div>
   )
 }
