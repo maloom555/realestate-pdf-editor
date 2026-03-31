@@ -72,7 +72,18 @@ export default function EditorCanvas({ pdfDoc }: EditorCanvasProps) {
   // Editing existing annotation (double-click to re-edit)
   const [editingAnnotationId, setEditingAnnotationId] = useState<string | null>(null)
 
-  // Render PDF page
+  // PDF page render cache: key = `${pageNum}-${scale}`, value = ImageBitmap
+  const pageCacheRef = useRef<Map<string, ImageBitmap>>(new Map())
+  const renderingKeyRef = useRef<string | null>(null)
+
+  // Clear cache when PDF changes
+  useEffect(() => {
+    pageCacheRef.current.forEach((bmp) => bmp.close())
+    pageCacheRef.current.clear()
+    renderingKeyRef.current = null
+  }, [pdfDoc])
+
+  // Render PDF page (with cache)
   useEffect(() => {
     const renderPage = async () => {
       const pdfCanvas = pdfCanvasRef.current
@@ -90,9 +101,41 @@ export default function EditorCanvas({ pdfDoc }: EditorCanvasProps) {
         maskCanvas.height = viewport.height
       }
 
+      const cacheKey = `${currentPage}-${scale.toFixed(3)}`
       const ctx = pdfCanvas.getContext('2d')!
+
+      // Check cache first
+      const cached = pageCacheRef.current.get(cacheKey)
+      if (cached) {
+        ctx.drawImage(cached, 0, 0)
+        redrawAnnotations()
+        return
+      }
+
+      // Prevent duplicate renders of same key
+      if (renderingKeyRef.current === cacheKey) return
+      renderingKeyRef.current = cacheKey
+
+      // Render from pdf.js
       await page.render({ canvasContext: ctx, viewport }).promise
 
+      // Cache the rendered result as ImageBitmap (very fast to draw back)
+      try {
+        const bitmap = await createImageBitmap(pdfCanvas)
+        // Evict old entries if cache is too large (keep last 10 pages)
+        if (pageCacheRef.current.size >= 10) {
+          const firstKey = pageCacheRef.current.keys().next().value
+          if (firstKey) {
+            pageCacheRef.current.get(firstKey)?.close()
+            pageCacheRef.current.delete(firstKey)
+          }
+        }
+        pageCacheRef.current.set(cacheKey, bitmap)
+      } catch {
+        // ImageBitmap not supported in some environments, continue without cache
+      }
+
+      renderingKeyRef.current = null
       redrawAnnotations()
     }
 
