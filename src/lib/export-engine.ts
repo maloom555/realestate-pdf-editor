@@ -153,7 +153,8 @@ export type CompressionLevel = 'high' | 'standard' | 'light'
 export async function compressPdf(
   pdfDoc: pdfjsLib.PDFDocumentProxy,
   level: CompressionLevel,
-  onProgress?: (current: number, total: number) => void
+  onProgress?: (current: number, total: number) => void,
+  originalBytes?: Uint8Array
 ): Promise<Uint8Array> {
   const settings = {
     high:     { scale: 1.2, quality: 0.55 },
@@ -161,6 +162,22 @@ export async function compressPdf(
     light:    { scale: 1.8, quality: 0.85 },
   }
   const { scale, quality } = settings[level]
+
+  // Step 1: Try lossless re-save first (removes metadata, optimizes structure)
+  if (originalBytes) {
+    try {
+      const existingPdf = await PDFDocument.load(originalBytes, { ignoreEncryption: true })
+      const losslessBytes = await existingPdf.save()
+      // If lossless re-save is already smaller, and level is 'light', use it
+      if (level === 'light' && losslessBytes.length < originalBytes.length) {
+        return losslessBytes
+      }
+    } catch {
+      // Fall through to JPEG compression
+    }
+  }
+
+  // Step 2: JPEG compression (lossy)
   const newPdf = await PDFDocument.create()
   const totalPages = pdfDoc.numPages
 
@@ -184,7 +201,14 @@ export async function compressPdf(
     page.drawImage(img, { x: 0, y: 0, width: origViewport.width, height: origViewport.height })
   }
 
-  return newPdf.save()
+  const compressedBytes = await newPdf.save()
+
+  // Step 3: If compressed is larger than original, return original
+  if (originalBytes && compressedBytes.length >= originalBytes.length) {
+    return originalBytes
+  }
+
+  return compressedBytes
 }
 
 export function downloadBlob(bytes: Uint8Array, filename: string, mime: string) {

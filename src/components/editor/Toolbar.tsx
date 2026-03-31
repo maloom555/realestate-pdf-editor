@@ -169,7 +169,7 @@ export default function Toolbar() {
       const originalSize = pdfBytes.length
       const result = await compressPdf(pdfDoc, level, (current, total) => {
         store.setLoading(true, `圧縮中... ${current} / ${total} ページ`)
-      })
+      }, pdfBytes)
       const sizeStr = (sz: number) => sz > 1048576 ? (sz / 1048576).toFixed(1) + ' MB' : Math.round(sz / 1024) + ' KB'
       store.setLoading(false)
 
