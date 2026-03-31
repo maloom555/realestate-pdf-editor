@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from 'next'
+import { Analytics } from '@vercel/analytics/react'
 import './globals.css'
 
 export const viewport: Viewport = {
@@ -33,6 +34,7 @@ export default function RootLayout({
     <html lang="ja">
       <body className="bg-gray-50 text-gray-900 min-h-screen font-[Segoe_UI,Hiragino_Sans,Meiryo,sans-serif] overscroll-none">
         {children}
+        <Analytics />
       </body>
     </html>
   )
