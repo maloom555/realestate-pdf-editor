@@ -255,6 +255,7 @@ export default function EditorCanvas({ pdfDoc }: EditorCanvasProps) {
           if (bounds) {
             const handle = hitTestHandle(pos.x, pos.y, bounds, selected.rotation, selected, scale)
             if (handle) {
+              store.saveUndoSnapshot(currentPage)
               ds.dragMode = handle
               ds.dragStart = pos
               if (handle.startsWith('polyline-point-')) {
@@ -282,6 +283,7 @@ export default function EditorCanvas({ pdfDoc }: EditorCanvasProps) {
             }
           }
           if (hitTestAnnotation(pos.x, pos.y, selected)) {
+            store.saveUndoSnapshot(currentPage)
             ds.dragMode = 'move'
             ds.dragStart = pos
             ds.origData = JSON.parse(JSON.stringify(selected.data))
@@ -301,6 +303,7 @@ export default function EditorCanvas({ pdfDoc }: EditorCanvasProps) {
           }
           // Check if clicking on an already multi-selected item → start group move
           if (store.selectedAnnotationIds.size > 1 && store.selectedAnnotationIds.has(pageAnns[i].id)) {
+            store.saveUndoSnapshot(currentPage)
             ds.dragMode = 'group-move'
             ds.dragStart = pos
             // Store original data for all selected annotations
@@ -312,6 +315,7 @@ export default function EditorCanvas({ pdfDoc }: EditorCanvasProps) {
             setIsDrawing(true)
             return
           }
+          store.saveUndoSnapshot(currentPage)
           setSelectedAnnotationId(pageAnns[i].id)
           ds.dragMode = 'move'
           ds.dragStart = pos

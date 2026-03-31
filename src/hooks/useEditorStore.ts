@@ -2,6 +2,13 @@ import { create } from 'zustand'
 import type { Annotation, ToolType, HistoryEntry, EditorMode } from '@/types/annotations'
 import { generateId } from '@/lib/id'
 
+const MAX_UNDO_STACK = 50 // Limit undo stack to prevent memory bloat
+
+function pushUndo(stack: HistoryEntry[], entry: HistoryEntry): HistoryEntry[] {
+  const newStack = [...stack, entry]
+  return newStack.length > MAX_UNDO_STACK ? newStack.slice(-MAX_UNDO_STACK) : newStack
+}
+
 interface EditorState {
   // Project
   projectId: string | null
@@ -80,6 +87,7 @@ interface EditorState {
   addAnnotation: (pageNum: number, annotation: Annotation) => void
   removeAnnotation: (pageNum: number, id: string) => void
   updateAnnotation: (pageNum: number, id: string, data: Partial<Annotation>) => void
+  saveUndoSnapshot: (pageNum: number) => void
   setSelectedAnnotationId: (id: string | null) => void
   toggleSelectedAnnotation: (id: string) => void
   clearMultiSelection: () => void
@@ -174,7 +182,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
     const undoEntry: HistoryEntry = { pageNum, annotations: [...current] }
     set({
       annotations: { ...state.annotations, [pageNum]: [...current, annotation] },
-      undoStack: [...state.undoStack, undoEntry],
+      undoStack: pushUndo(state.undoStack, undoEntry),
       redoStack: [],
     })
   },
@@ -188,7 +196,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
         ...state.annotations,
         [pageNum]: current.filter((a) => a.id !== id),
       },
-      undoStack: [...state.undoStack, undoEntry],
+      undoStack: pushUndo(state.undoStack, undoEntry),
       redoStack: [],
       selectedAnnotationId: state.selectedAnnotationId === id ? null : state.selectedAnnotationId,
     })
@@ -204,6 +212,17 @@ export const useEditorStore = create<EditorState>((set, get) => ({
           a.id === id ? { ...a, ...updates } as Annotation : a
         ),
       },
+    })
+  },
+
+  // Save current state to undo stack before a drag/edit operation begins
+  saveUndoSnapshot: (pageNum) => {
+    const state = get()
+    const current = state.annotations[pageNum] || []
+    const undoEntry: HistoryEntry = { pageNum, annotations: [...current] }
+    set({
+      undoStack: pushUndo(state.undoStack, undoEntry),
+      redoStack: [],
     })
   },
 
@@ -231,7 +250,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
     const undoEntry: HistoryEntry = { pageNum, annotations: [...current] }
     set({
       annotations: { ...state.annotations, [pageNum]: [] },
-      undoStack: [...state.undoStack, undoEntry],
+      undoStack: pushUndo(state.undoStack, undoEntry),
       redoStack: [],
       selectedAnnotationId: null,
     })
@@ -261,7 +280,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
     set({
       annotations: { ...state.annotations, [entry.pageNum]: entry.annotations },
       redoStack: state.redoStack.slice(0, -1),
-      undoStack: [...state.undoStack, undoEntry],
+      undoStack: pushUndo(state.undoStack, undoEntry),
       selectedAnnotationId: null,
       currentPage: entry.pageNum,
     })
