@@ -638,21 +638,43 @@ export function drawAnnotation(ctx: CanvasRenderingContext2D, ann: Annotation, s
     case 'image': {
       const d = ann.data as ImageAnnotData
       if (d.imageData) {
-        // Use annotation ID as cache key to avoid collisions
+        // Use annotation ID as primary cache key
         const key = `img_${ann.id}`
         let cachedImg = imageCache.get(key)
-        if (!cachedImg || cachedImg.src !== d.imageData) {
-          const img = new Image()
-          img.onload = () => {
-            // Trigger redraw when image loads
-            window.dispatchEvent(new CustomEvent('annotation-image-loaded'))
+        if (!cachedImg || (cachedImg.src !== d.imageData && !cachedImg.complete)) {
+          // Check if already cached by data URL prefix
+          const dataKey = d.imageData.substring(0, 100)
+          const preloaded = imageCache.get(dataKey)
+          if (preloaded && preloaded.complete && preloaded.naturalWidth > 0) {
+            cachedImg = preloaded
+            imageCache.set(key, cachedImg)
+          } else {
+            const img = new Image()
+            img.onload = () => {
+              imageCache.set(key, img)
+              window.dispatchEvent(new CustomEvent('annotation-image-loaded'))
+            }
+            img.src = d.imageData
+            imageCache.set(key, img)
+            cachedImg = img
           }
-          img.src = d.imageData
-          imageCache.set(key, img)
-          cachedImg = img
         }
         if (cachedImg.complete && cachedImg.naturalWidth > 0) {
           ctx.drawImage(cachedImg, d.x, d.y, d.w, d.h)
+        } else {
+          // Image still loading - draw placeholder
+          ctx.fillStyle = '#f0f0f0'
+          ctx.fillRect(d.x, d.y, d.w, d.h)
+          ctx.strokeStyle = '#ccc'
+          ctx.lineWidth = 1
+          ctx.strokeRect(d.x, d.y, d.w, d.h)
+          ctx.fillStyle = '#999'
+          ctx.font = '12px sans-serif'
+          ctx.textAlign = 'center'
+          ctx.textBaseline = 'middle'
+          ctx.fillText('読込中...', d.x + d.w / 2, d.y + d.h / 2)
+          ctx.textAlign = 'start'
+          ctx.textBaseline = 'alphabetic'
         }
         // Border (thin dotted line)
         ctx.strokeStyle = '#999'
