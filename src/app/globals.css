@@ -34,6 +34,12 @@ html, body {
   transition: transform 0.2s ease-out, opacity 0.15s ease-out;
 }
 
+/* Toast slide-in animation */
+@keyframes slideIn {
+  from { transform: translateX(100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
 /* Prevent text selection during drawing on mobile */
 canvas {
   -webkit-tap-highlight-color: transparent;

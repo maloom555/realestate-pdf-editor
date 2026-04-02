@@ -10,6 +10,7 @@ import PageEditor from '@/components/editor/PageEditor'
 import LoadingOverlay from '@/components/editor/LoadingOverlay'
 import HelpModal from '@/components/editor/HelpModal'
 import Script from 'next/script'
+import { showToast } from '@/components/ui/Toast'
 
 export default function EditorPage() {
   const store = useEditorStore()
@@ -47,7 +48,7 @@ export default function EditorPage() {
       store.setFitMode(2) // fitMode=2 is 100%, so next click shows '縦フィット'
       setPdfDoc(doc)
     } catch (err) {
-      alert('PDFの読み込みに失敗しました: ' + (err as Error).message)
+      showToast('PDFの読み込みに失敗しました: ' + (err as Error).message, 'error')
     } finally {
       store.setLoading(false)
     }
@@ -72,7 +73,7 @@ export default function EditorPage() {
       store.setFitMode(2)
       setPdfDoc(doc)
     } catch (err) {
-      alert('ファイルの結合に失敗しました: ' + (err as Error).message)
+      showToast('ファイルの結合に失敗しました: ' + (err as Error).message, 'error')
     } finally {
       store.setLoading(false)
     }
@@ -89,7 +90,7 @@ export default function EditorPage() {
   useEffect(() => {
     const { on } = require('@/lib/event-bus')
     const unsub = on('load-project', async (json: string) => {
-      if (!pdfJsLoaded) { alert('PDF.jsがまだ読み込まれていません。しばらく待ってから再試行してください。'); return }
+      if (!pdfJsLoaded) { showToast('PDF.jsがまだ読み込まれていません。しばらく待ってから再試行してください。', 'error'); return }
       store.setLoading(true, 'プロジェクトを読み込み中...')
       try {
         const data = JSON.parse(json)
@@ -103,7 +104,7 @@ export default function EditorPage() {
         store.loadProject(bytes, doc.numPages, data.annotations || {}, data.currentPage || 1)
         setPdfDoc(doc)
       } catch (err) {
-        alert('プロジェクト読み込みに失敗しました: ' + (err as Error).message)
+        showToast('プロジェクト読み込みに失敗しました: ' + (err as Error).message, 'error')
       } finally {
         store.setLoading(false)
       }
@@ -220,7 +221,7 @@ export default function EditorPage() {
     try {
       const { loadProject } = await import('@/lib/project-db')
       const project = await loadProject(projectId)
-      if (!project) { alert('プロジェクトが見つかりません'); return }
+      if (!project) { showToast('プロジェクトが見つかりません', 'error'); return }
       const doc = await window.pdfjsLib.getDocument({ data: project.pdfBytes.slice() }).promise
       store.loadProject(project.pdfBytes, doc.numPages, project.annotations, project.currentPage)
       store.setProjectId(projectId)
@@ -229,7 +230,7 @@ export default function EditorPage() {
       store.setFitMode(2)
       setPdfDoc(doc)
     } catch (err) {
-      alert('プロジェクト読み込みに失敗: ' + (err as Error).message)
+      showToast('プロジェクト読み込みに失敗: ' + (err as Error).message, 'error')
     } finally {
       store.setLoading(false)
     }

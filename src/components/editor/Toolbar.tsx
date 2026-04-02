@@ -7,6 +7,7 @@ import { useState, useRef, useEffect } from 'react'
 import SignatureEditor from './SignatureEditor'
 import { TEXT_TEMPLATES } from '@/lib/text-templates'
 import { emit } from '@/lib/event-bus'
+import { showToast } from '@/components/ui/Toast'
 
 const tools: { id: ToolType; label: string; icon: string }[] = [
   { id: 'rect', label: '墨消し', icon: '■' },
@@ -146,7 +147,7 @@ export default function Toolbar() {
       const fileName = store.projectName ? `${store.projectName}_edited.pdf` : 'edited_output.pdf'
       downloadBlob(result, fileName, 'application/pdf')
     } catch (err) {
-      alert('PDF出力に失敗しました: ' + (err as Error).message)
+      showToast('PDF出力に失敗しました: ' + (err as Error).message, 'error')
     } finally {
       store.setLoading(false)
     }
@@ -171,16 +172,16 @@ export default function Toolbar() {
 
       // If compressed is larger than original, use original
       if (result.length >= originalSize) {
-        alert(`このPDFは既に十分小さいため、これ以上の圧縮はできません。\n現在のサイズ: ${sizeStr(originalSize)}`)
+        showToast(`このPDFは既に十分小さいため圧縮できません（${sizeStr(originalSize)}）`, 'info')
         return
       }
 
       const ratio = Math.round((1 - result.length / originalSize) * 100)
-      alert(`圧縮完了！\n${sizeStr(originalSize)} → ${sizeStr(result.length)}（${ratio}%削減）`)
+      showToast(`圧縮完了！ ${sizeStr(originalSize)} → ${sizeStr(result.length)}（${ratio}%削減）`, 'success')
       const fileName = store.projectName ? `${store.projectName}_compressed.pdf` : 'compressed.pdf'
       downloadBlob(result, fileName, 'application/pdf')
     } catch (err) {
-      alert('圧縮に失敗しました: ' + (err as Error).message)
+      showToast('圧縮に失敗しました: ' + (err as Error).message, 'error')
     } finally {
       store.setLoading(false)
     }
@@ -213,7 +214,7 @@ export default function Toolbar() {
       const text = await file.text()
       emit('load-project', text)
     } catch (err) {
-      alert('プロジェクト読み込みに失敗しました: ' + (err as Error).message)
+      showToast('プロジェクト読み込みに失敗しました: ' + (err as Error).message, 'error')
     }
   }
 

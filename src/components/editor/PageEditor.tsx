@@ -1,6 +1,7 @@
 'use client'
 
 import { useRef, useEffect, useState, useCallback } from 'react'
+import { showToast } from '@/components/ui/Toast'
 import { useEditorStore } from '@/hooks/useEditorStore'
 import {
   reorderPages, deletePages, duplicatePage, addBlankPage,
@@ -108,7 +109,7 @@ export default function PageEditor({ pdfDoc, onReloadPdf }: PageEditorProps) {
       store.applyPageOperation(result.pdfBytes, result.totalPages, result.annotations)
       await onReloadPdf(result.pdfBytes)
     } catch (err) {
-      alert('操作に失敗しました: ' + (err as Error).message)
+      showToast('操作に失敗しました: ' + (err as Error).message, 'error')
     } finally {
       store.setLoading(false)
     }
@@ -118,7 +119,7 @@ export default function PageEditor({ pdfDoc, onReloadPdf }: PageEditorProps) {
   const handleDelete = () => {
     if (selectedPages.size === 0) return
     if (selectedPages.size >= totalPages) {
-      alert('すべてのページを削除することはできません')
+      showToast('すべてのページを削除することはできません', 'error')
       return
     }
     if (!confirm(`${selectedPages.size}ページを削除しますか？`)) return
@@ -178,7 +179,7 @@ export default function PageEditor({ pdfDoc, onReloadPdf }: PageEditorProps) {
       const projectName = store.projectName || 'extracted'
       downloadBlob(result, `${projectName}_pages.pdf`, 'application/pdf')
     } catch (err) {
-      alert('抽出に失敗しました: ' + (err as Error).message)
+      showToast('抽出に失敗しました: ' + (err as Error).message, 'error')
     } finally {
       store.setLoading(false)
     }
@@ -269,7 +270,7 @@ export default function PageEditor({ pdfDoc, onReloadPdf }: PageEditorProps) {
       const fileName = store.projectName ? `${store.projectName}_edited.pdf` : 'edited_output.pdf'
       dlBlob(result, fileName, 'application/pdf')
     } catch (err) {
-      alert('PDF出力に失敗しました: ' + (err as Error).message)
+      showToast('PDF出力に失敗しました: ' + (err as Error).message, 'error')
     } finally {
       store.setLoading(false)
     }
@@ -289,11 +290,11 @@ export default function PageEditor({ pdfDoc, onReloadPdf }: PageEditorProps) {
       const ratio = Math.round((1 - result.length / originalSize) * 100)
       const sizeStr = (sz: number) => sz > 1048576 ? (sz / 1048576).toFixed(1) + ' MB' : Math.round(sz / 1024) + ' KB'
       store.setLoading(false)
-      alert(`圧縮完了！\n${sizeStr(originalSize)} → ${sizeStr(result.length)}（${ratio}%削減）`)
+      showToast(`圧縮完了！ ${sizeStr(originalSize)} → ${sizeStr(result.length)}（${ratio}%削減）`, 'success')
       const fileName = store.projectName ? `${store.projectName}_compressed.pdf` : 'compressed.pdf'
       dlBlob(result, fileName, 'application/pdf')
     } catch (err) {
-      alert('圧縮に失敗しました: ' + (err as Error).message)
+      showToast('圧縮に失敗しました: ' + (err as Error).message, 'error')
     } finally {
       store.setLoading(false)
     }
