@@ -46,6 +46,12 @@ export function preloadImageCache(dataUrl: string, img: HTMLImageElement) {
   imageCache.set(key, img)
 }
 
+// Clear all image caches to prevent memory leaks when switching projects
+export function clearImageCaches() {
+  imageCache.clear()
+  signatureImageCache.clear()
+}
+
 export function drawAnnotation(ctx: CanvasRenderingContext2D, ann: Annotation, signatureImages?: Map<string, HTMLImageElement>) {
   if (!signatureImages) signatureImages = signatureImageCache
   ctx.save()

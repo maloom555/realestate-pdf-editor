@@ -27,6 +27,9 @@ export default function EditorPage() {
     if (!pdfJsLoaded) return
     store.setLoading(true, 'PDFを読み込み中...')
     try {
+      // Clear image caches from previous project
+      const { clearImageCaches } = await import('@/lib/pdf-renderer')
+      clearImageCaches()
       const arrayBuffer = await file.arrayBuffer()
       let bytes: Uint8Array = new Uint8Array(arrayBuffer)
       const imageTypes = ['image/jpeg', 'image/png', 'image/webp']
@@ -82,13 +85,17 @@ export default function EditorPage() {
     setPdfDoc(null)
   }, [pdfDoc, store])
 
-  // Register __loadProject callback for Toolbar
+  // Listen for load-project events from Toolbar
   useEffect(() => {
-    (window as unknown as Record<string, unknown>).__loadProject = async (json: string) => {
+    const { on } = require('@/lib/event-bus')
+    const unsub = on('load-project', async (json: string) => {
       if (!pdfJsLoaded) { alert('PDF.jsがまだ読み込まれていません。しばらく待ってから再試行してください。'); return }
       store.setLoading(true, 'プロジェクトを読み込み中...')
       try {
         const data = JSON.parse(json)
+        if (!data.pdfBase64 || typeof data.pdfBase64 !== 'string') {
+          throw new Error('無効なプロジェクトファイルです')
+        }
         const binary = atob(data.pdfBase64)
         const bytes = new Uint8Array(binary.length)
         for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i)
@@ -100,7 +107,8 @@ export default function EditorPage() {
       } finally {
         store.setLoading(false)
       }
-    }
+    })
+    return unsub
   }, [store, pdfJsLoaded])
 
   // Keyboard shortcuts

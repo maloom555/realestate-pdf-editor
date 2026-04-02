@@ -6,6 +6,7 @@ import { STAMP_PRESETS } from '@/components/stamps/stamps-data'
 import { useState, useRef, useEffect } from 'react'
 import SignatureEditor from './SignatureEditor'
 import { TEXT_TEMPLATES } from '@/lib/text-templates'
+import { emit } from '@/lib/event-bus'
 
 const tools: { id: ToolType; label: string; icon: string }[] = [
   { id: 'rect', label: '墨消し', icon: '■' },
@@ -95,15 +96,13 @@ export default function Toolbar() {
   }
 
   const handleStampSelect = (stampId: string, label: string, color: string) => {
-    const fn = (window as unknown as Record<string, (...args: unknown[]) => void>).__placeStamp
-    if (fn) fn(stampId, label, color)
+    emit('place-stamp', { stampId, label, color })
     setShowStampPicker(false)
     setShowSignatureEditor(false)
   }
 
   const handleSignaturePlace = (text: string, color: string, fontSize: number, fontFamily: string, imageData?: string, imagePosition?: 'top' | 'left' | 'right', imageScale?: number, showBorder?: boolean) => {
-    const fn = (window as unknown as Record<string, (...args: unknown[]) => void>).__placeSignatureStamp
-    if (fn) fn(text, color, fontSize, fontFamily, imageData, imagePosition, imageScale, showBorder)
+    emit('place-signature', { text, color, fontSize, fontFamily, imageData, imagePosition, imageScale, showBorder })
     setShowSignatureEditor(false)
     setShowStampPicker(false)
   }
@@ -116,12 +115,9 @@ export default function Toolbar() {
   }
 
   const handleInsertTemplate = (text: string) => {
-    // Set text tool and trigger text placement via canvas
     setCurrentTool('text')
     setShowTextTemplates(false)
-    // Use window event to pass template text to EditorCanvas
-    const fn = (window as unknown as Record<string, (...args: unknown[]) => void>).__insertTemplateText
-    if (fn) fn(text)
+    emit('insert-template-text', text)
   }
 
   const handleDelete = () => {
@@ -215,8 +211,7 @@ export default function Toolbar() {
     e.target.value = ''
     try {
       const text = await file.text()
-      const fn = (window as unknown as Record<string, (json: string) => void>).__loadProject
-      if (fn) fn(text)
+      emit('load-project', text)
     } catch (err) {
       alert('プロジェクト読み込みに失敗しました: ' + (err as Error).message)
     }
@@ -644,8 +639,7 @@ export default function Toolbar() {
               data: { ...selectedAnn.data, legX: undefined, legY: undefined } as unknown as typeof selectedAnn.data,
             })
           } else {
-            const fn = (window as unknown as Record<string, () => void>).__stampLegMode
-            if (fn) fn()
+            emit('stamp-leg-mode')
           }
         }}
           className={`px-2.5 py-1.5 text-sm sm:px-2 sm:py-1 sm:text-xs border rounded-lg ${
@@ -662,8 +656,7 @@ export default function Toolbar() {
         <button onClick={() => {
           const sd = selectedAnn.data as StampData
           // Open inline text edit for signature multiLineText
-          const fn = (window as unknown as Record<string, (id: string, text: string) => void>).__editSignatureText
-          if (fn) fn(selectedAnn.id, sd.multiLineText || '')
+          emit('edit-signature-text', { id: selectedAnn.id, text: sd.multiLineText || '' })
         }}
           className="px-2.5 py-1.5 text-sm sm:px-2 sm:py-1 sm:text-xs border border-indigo-300 text-indigo-600 rounded-lg hover:bg-indigo-50">
           ✏️ テキスト編集
@@ -708,8 +701,7 @@ export default function Toolbar() {
               className="w-9 h-9 flex items-center justify-center text-sm text-gray-500 disabled:opacity-30 rounded active:bg-gray-100"
               title="複製 (Ctrl+C)">📋</button>
             <button onClick={() => {
-                const fn = (window as unknown as Record<string, () => void>).__pasteClipboardImage
-                if (fn) fn()
+                emit('paste-clipboard-image')
               }}
               className="w-9 h-9 flex items-center justify-center text-sm text-gray-500 rounded active:bg-gray-100"
               title="貼付け">📎</button>

@@ -1268,13 +1268,17 @@ export default function EditorCanvas({ pdfDoc }: EditorCanvasProps) {
     setSigEditState(null)
   }, [sigEditState, annotations, currentPage, updateAnnotation])
 
-  // Expose setStampPending, stampLegMode, signature placement, and template text insertion
+  // Listen to event bus for inter-component communication
   useEffect(() => {
-    (window as unknown as Record<string, unknown>).__placeStamp = setStampPending;
-    (window as unknown as Record<string, unknown>).__stampLegMode = enableStampLegMode;
-    (window as unknown as Record<string, unknown>).__placeSignatureStamp = setSignaturePending;
-    (window as unknown as Record<string, unknown>).__insertTemplateText = insertTemplateText;
-    (window as unknown as Record<string, unknown>).__editSignatureText = editSignatureText
+    const { on } = require('@/lib/event-bus')
+    const unsubs = [
+      on('place-stamp', (d: { stampId: string; label: string; color: string }) => setStampPending(d.stampId, d.label, d.color)),
+      on('stamp-leg-mode', () => enableStampLegMode()),
+      on('place-signature', (d: { text: string; color: string; fontSize: number; fontFamily: string; imageData?: string; imagePosition?: 'top' | 'left' | 'right'; imageScale?: number; showBorder?: boolean }) => setSignaturePending(d.text, d.color, d.fontSize, d.fontFamily, d.imageData, d.imagePosition, d.imageScale, d.showBorder)),
+      on('insert-template-text', (text: string) => insertTemplateText(text)),
+      on('edit-signature-text', (d: { id: string; text: string }) => editSignatureText(d.id, d.text)),
+    ]
+    return () => unsubs.forEach((u: () => void) => u())
   }, [setStampPending, enableStampLegMode, setSignaturePending, insertTemplateText, editSignatureText])
 
   // Clipboard ref for copy/paste
@@ -1411,11 +1415,15 @@ export default function EditorCanvas({ pdfDoc }: EditorCanvasProps) {
       }
     }
 
-    // Register for toolbar button
-    ;(window as unknown as Record<string, unknown>).__pasteClipboardImage = pasteClipboardImage
+    // Register for event bus
+    const { on } = require('@/lib/event-bus')
+    const unsubPaste = on('paste-clipboard-image', () => pasteClipboardImage())
 
     window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown)
+      unsubPaste()
+    }
   }, [redrawAnnotations, selectedAnnotationId, annotations, currentPage, store])
 
   // Pinch-zoom handlers (2-finger touch on canvas)
