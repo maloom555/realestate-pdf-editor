@@ -206,17 +206,26 @@ export default function PageEditor({ pdfDoc, onReloadPdf }: PageEditorProps) {
   const handleDrop = (e: React.DragEvent, targetIdx: number) => {
     e.preventDefault()
     setDragOverIndex(null)
-    if (dragPageNum === null || dragPageNum === targetIdx + 1) {
+    if (dragPageNum === null) {
+      setDragPageNum(null)
+      return
+    }
+
+    // fromIdx: dragging page's current index (0-based)
+    const fromIdx = dragPageNum - 1
+
+    // No-op if dropping at same position or immediately after itself
+    if (targetIdx === fromIdx || targetIdx === fromIdx + 1) {
       setDragPageNum(null)
       return
     }
 
     // Build new order
     const order = Array.from({ length: totalPages }, (_, i) => i + 1)
-    const fromIdx = order.indexOf(dragPageNum)
     order.splice(fromIdx, 1)
+    // After removal, if target was after the removed item, shift index by 1
     const insertAt = targetIdx > fromIdx ? targetIdx - 1 : targetIdx
-    order.splice(insertAt >= 0 ? insertAt : 0, 0, dragPageNum)
+    order.splice(Math.max(0, Math.min(insertAt, order.length)), 0, dragPageNum)
 
     setDragPageNum(null)
     executeOp(

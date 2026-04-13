@@ -62,9 +62,9 @@ export default function EditorCanvas({ pdfDoc }: EditorCanvasProps) {
     return () => { window.removeEventListener('keydown', down); window.removeEventListener('keyup', up) }
   }, [])
 
-  // Text input state
-  const [textInput, setTextInput] = useState<{ x: number; y: number; visible: boolean }>({
-    x: 0, y: 0, visible: false,
+  // Text input state - fontSizePx is the display size frozen at input start
+  const [textInput, setTextInput] = useState<{ x: number; y: number; visible: boolean; fontSizePx: number }>({
+    x: 0, y: 0, visible: false, fontSizePx: 16,
   })
   const [textValue, setTextValue] = useState('')
   const textInputRef = useRef<HTMLTextAreaElement>(null)
@@ -335,7 +335,9 @@ export default function EditorCanvas({ pdfDoc }: EditorCanvasProps) {
       const rect = canvas.getBoundingClientRect()
       const dispX = pos.x * scale * (rect.width / canvas.width)
       const dispY = pos.y * scale * (rect.height / canvas.height)
-      setTextInput({ x: dispX, y: dispY, visible: true })
+      // Freeze font size based on current scale - won't change if user zooms
+      const frozenFontSize = Math.max(12, fontSize * scale * (rect.width / canvas.width))
+      setTextInput({ x: dispX, y: dispY, visible: true, fontSizePx: frozenFontSize })
       setTextValue('')
       setEditingAnnotationId(null)
       setTimeout(() => textInputRef.current?.focus(), 50)
@@ -394,7 +396,7 @@ export default function EditorCanvas({ pdfDoc }: EditorCanvasProps) {
             showBorder: sig.showBorder,
           },
         })
-        pendingSignatureRef.current = null
+        // Keep pendingSignatureRef alive for continuous placement
         return
       }
 
@@ -417,7 +419,8 @@ export default function EditorCanvas({ pdfDoc }: EditorCanvasProps) {
             label: ps.label,
           },
         })
-        pendingStampRef.current = null
+        // Keep pendingStampRef alive for continuous placement
+        // User can switch tools to stop placing
       }
       return
     }
@@ -493,8 +496,9 @@ export default function EditorCanvas({ pdfDoc }: EditorCanvasProps) {
         const rect = canvas.getBoundingClientRect()
         const dispX = ann.data.x * scale * (rect.width / canvas.width)
         const dispY = ann.data.y * scale * (rect.height / canvas.height)
+        const frozenFs = Math.max(12, (ann.data.fontSize || fontSize) * scale * (rect.width / canvas.width))
         setEditingAnnotationId(ann.id)
-        setTextInput({ x: dispX, y: dispY, visible: true })
+        setTextInput({ x: dispX, y: dispY, visible: true, fontSizePx: frozenFs })
         setTextValue(ann.data.text)
         setTimeout(() => textInputRef.current?.focus(), 50)
         return
@@ -506,9 +510,10 @@ export default function EditorCanvas({ pdfDoc }: EditorCanvasProps) {
         const rect = canvas.getBoundingClientRect()
         const dispX = d.endX * scale * (rect.width / canvas.width)
         const dispY = d.endY * scale * (rect.height / canvas.height) - 20
+        const frozenFs = Math.max(12, (d.fontSize || fontSize) * scale * (rect.width / canvas.width))
         setEditingAnnotationId(ann.id)
         drawStateRef.current.calloutPending = null
-        setTextInput({ x: dispX, y: dispY, visible: true })
+        setTextInput({ x: dispX, y: dispY, visible: true, fontSizePx: frozenFs })
         setTextValue(d.text)
         setTimeout(() => textInputRef.current?.focus(), 50)
         return
@@ -521,8 +526,9 @@ export default function EditorCanvas({ pdfDoc }: EditorCanvasProps) {
         const rect = canvas.getBoundingClientRect()
         const dispX = d.x * scale * (rect.width / canvas.width)
         const dispY = d.y * scale * (rect.height / canvas.height)
+        const frozenFs = Math.max(12, (d.fontSize || 11) * scale * (rect.width / canvas.width))
         setEditingAnnotationId(ann.id)
-        setTextInput({ x: dispX, y: dispY, visible: true })
+        setTextInput({ x: dispX, y: dispY, visible: true, fontSizePx: frozenFs })
         setTextValue(d.multiLineText || '')
         setTimeout(() => textInputRef.current?.focus(), 50)
         return
@@ -1065,7 +1071,8 @@ export default function EditorCanvas({ pdfDoc }: EditorCanvasProps) {
       const rect = canvas.getBoundingClientRect()
       const dispX = calloutCoords.endX * scale * (rect.width / canvas.width)
       const dispY = calloutCoords.endY * scale * (rect.height / canvas.height) - 20
-      setTextInput({ x: dispX, y: dispY, visible: true })
+      const frozenFs = Math.max(12, fontSize * scale * (rect.width / canvas.width))
+      setTextInput({ x: dispX, y: dispY, visible: true, fontSizePx: frozenFs })
       setTextValue('')
       setEditingAnnotationId(null)
       setTimeout(() => textInputRef.current?.focus(), 50)
@@ -1287,8 +1294,16 @@ export default function EditorCanvas({ pdfDoc }: EditorCanvasProps) {
   // Keyboard shortcuts: Esc, Copy (Ctrl+C), Paste (Ctrl+V)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Skip if typing in an input/textarea/contenteditable
+      const target = e.target as HTMLElement | null
+      const tag = target?.tagName
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || target?.isContentEditable) return
+
       // Delete/Backspace to undo last polyline point
-      if ((e.key === 'Delete' || e.key === 'Backspace') && drawStateRef.current.polylinePoints.length > 0) {
+      // Only when polyline tool is actively drawing (has pending points)
+      if ((e.key === 'Delete' || e.key === 'Backspace') &&
+          currentTool === 'polyline' &&
+          drawStateRef.current.polylinePoints.length > 0) {
         e.preventDefault()
         drawStateRef.current.polylinePoints.pop()
         redrawAnnotations()
@@ -1424,7 +1439,7 @@ export default function EditorCanvas({ pdfDoc }: EditorCanvasProps) {
       window.removeEventListener('keydown', handleKeyDown)
       unsubPaste()
     }
-  }, [redrawAnnotations, selectedAnnotationId, annotations, currentPage, store])
+  }, [redrawAnnotations, selectedAnnotationId, annotations, currentPage, store, currentTool])
 
   // Pinch-zoom handlers (2-finger touch on canvas)
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
@@ -1538,7 +1553,7 @@ export default function EditorCanvas({ pdfDoc }: EditorCanvasProps) {
             style={{
               left: textInput.x,
               top: textInput.y,
-              fontSize: `${Math.max(12, fontSize * scale * (maskCanvasRef.current ? maskCanvasRef.current.getBoundingClientRect().width / maskCanvasRef.current.width : 1))}px`,
+              fontSize: `${textInput.fontSizePx}px`,
               lineHeight: 1.4,
               color: maskColor,
               minWidth: '120px',

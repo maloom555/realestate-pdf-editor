@@ -51,7 +51,7 @@ interface EditorState {
   selectedPages: Set<number>
 
   // Page operation history
-  pageUndoStack: { pdfBytes: Uint8Array; totalPages: number; annotations: Record<number, Annotation[]> }[]
+  pageUndoStack: { pdfBytes: Uint8Array; totalPages: number; annotations: Record<number, Annotation[]>; undoStack?: HistoryEntry[]; redoStack?: HistoryEntry[] }[]
 
   // Clipboard
   clipboardAnnotation: Annotation | null
@@ -130,7 +130,7 @@ const initialState = {
   redoStack: [] as HistoryEntry[],
   editorMode: 'drawing' as EditorMode,
   selectedPages: new Set<number>(),
-  pageUndoStack: [] as { pdfBytes: Uint8Array; totalPages: number; annotations: Record<number, Annotation[]> }[],
+  pageUndoStack: [] as { pdfBytes: Uint8Array; totalPages: number; annotations: Record<number, Annotation[]>; undoStack?: HistoryEntry[]; redoStack?: HistoryEntry[] }[],
   clipboardAnnotation: null as Annotation | null,
   isLoading: false,
   loadingText: '',
@@ -313,6 +313,9 @@ export const useEditorStore = create<EditorState>((set, get) => ({
       pdfBytes: state.pdfBytes!,
       totalPages: state.totalPages,
       annotations: state.annotations,
+      // Save drawing undo/redo stacks so they can be restored on pageUndo
+      undoStack: state.undoStack,
+      redoStack: state.redoStack,
     }
     set({
       pdfBytes: newPdfBytes,
@@ -320,7 +323,9 @@ export const useEditorStore = create<EditorState>((set, get) => ({
       annotations: newAnnotations,
       currentPage: Math.min(state.currentPage, newTotalPages) || 1,
       selectedPages: new Set(),
-      undoStack: [],
+      // Keep drawing undo stack alive after page ops
+      // (user can still undo drawing actions on pages that still exist)
+      undoStack: state.undoStack.filter((e) => (newAnnotations[e.pageNum] !== undefined)),
       redoStack: [],
       selectedAnnotationId: null,
       // Limit undo stack by total memory: ~50MB max
@@ -349,8 +354,9 @@ export const useEditorStore = create<EditorState>((set, get) => ({
       annotations: entry.annotations,
       currentPage: Math.min(state.currentPage, entry.totalPages) || 1,
       selectedPages: new Set(),
-      undoStack: [],
-      redoStack: [],
+      // Restore drawing undo/redo stacks that were saved at the time of page operation
+      undoStack: entry.undoStack || [],
+      redoStack: entry.redoStack || [],
       selectedAnnotationId: null,
       pageUndoStack: state.pageUndoStack.slice(0, -1),
     })
