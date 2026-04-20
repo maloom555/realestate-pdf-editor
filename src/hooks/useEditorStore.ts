@@ -87,6 +87,8 @@ interface EditorState {
   addAnnotation: (pageNum: number, annotation: Annotation) => void
   removeAnnotation: (pageNum: number, id: string) => void
   updateAnnotation: (pageNum: number, id: string, data: Partial<Annotation>) => void
+  bringForward: (pageNum: number, id: string) => void
+  sendBackward: (pageNum: number, id: string) => void
   saveUndoSnapshot: (pageNum: number) => void
   setSelectedAnnotationId: (id: string | null) => void
   toggleSelectedAnnotation: (id: string) => void
@@ -212,6 +214,38 @@ export const useEditorStore = create<EditorState>((set, get) => ({
           a.id === id ? { ...a, ...updates } as Annotation : a
         ),
       },
+    })
+  },
+
+  // Z-order: move annotation one step forward (toward front)
+  bringForward: (pageNum, id) => {
+    const state = get()
+    const current = state.annotations[pageNum] || []
+    const idx = current.findIndex((a) => a.id === id)
+    if (idx < 0 || idx === current.length - 1) return // not found or already on top
+    const undoEntry: HistoryEntry = { pageNum, annotations: [...current] }
+    const next = [...current]
+    ;[next[idx], next[idx + 1]] = [next[idx + 1], next[idx]]
+    set({
+      annotations: { ...state.annotations, [pageNum]: next },
+      undoStack: pushUndo(state.undoStack, undoEntry),
+      redoStack: [],
+    })
+  },
+
+  // Z-order: move annotation one step backward (toward back)
+  sendBackward: (pageNum, id) => {
+    const state = get()
+    const current = state.annotations[pageNum] || []
+    const idx = current.findIndex((a) => a.id === id)
+    if (idx <= 0) return // not found or already at bottom
+    const undoEntry: HistoryEntry = { pageNum, annotations: [...current] }
+    const next = [...current]
+    ;[next[idx], next[idx - 1]] = [next[idx - 1], next[idx]]
+    set({
+      annotations: { ...state.annotations, [pageNum]: next },
+      undoStack: pushUndo(state.undoStack, undoEntry),
+      redoStack: [],
     })
   },
 

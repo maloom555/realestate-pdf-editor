@@ -58,6 +58,7 @@ export default function Toolbar() {
     setTextBold, setTextUnderline, setTextBox,
     removeAnnotation, updateAnnotation, undo, redo, clearPage, undoStack, redoStack,
     copyAnnotation, pasteAnnotation, clipboardAnnotation, duplicateAnnotation,
+    bringForward, sendBackward,
   } = store
 
   const [showStampPicker, setShowStampPicker] = useState(false)
@@ -664,10 +665,18 @@ export default function Toolbar() {
         </button>
       )}
 
-      {/* Select tool info & delete */}
+      {/* Select tool: layer order & delete */}
       {currentTool === 'select' && selectedAnnotationId && (
-        <button onClick={handleDelete}
-          className="px-3 py-1.5 text-sm sm:text-xs border border-red-300 text-red-500 rounded-lg hover:bg-red-50">削除</button>
+        <>
+          <button onClick={() => bringForward(currentPage, selectedAnnotationId)}
+            className="px-2.5 py-1.5 text-sm sm:px-2 sm:py-1 sm:text-xs border border-gray-200 text-gray-600 rounded-lg hover:bg-gray-50"
+            title="前面へ">↑ 前面</button>
+          <button onClick={() => sendBackward(currentPage, selectedAnnotationId)}
+            className="px-2.5 py-1.5 text-sm sm:px-2 sm:py-1 sm:text-xs border border-gray-200 text-gray-600 rounded-lg hover:bg-gray-50"
+            title="背面へ">↓ 背面</button>
+          <button onClick={handleDelete}
+            className="px-3 py-1.5 text-sm sm:text-xs border border-red-300 text-red-500 rounded-lg hover:bg-red-50">削除</button>
+        </>
       )}
     </>
   )
