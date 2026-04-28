@@ -29,11 +29,24 @@ function openDB(): Promise<IDBDatabase> {
   })
 }
 
+const MAX_PROJECTS = 5
+
 export async function saveProject(project: ProjectRecord): Promise<void> {
   const db = await openDB()
   return new Promise((resolve, reject) => {
     const tx = db.transaction(STORE_NAME, 'readwrite')
-    tx.objectStore(STORE_NAME).put(project)
+    const store = tx.objectStore(STORE_NAME)
+    store.put(project)
+    // After put, enforce max projects limit by deleting oldest
+    const getAllReq = store.getAll()
+    getAllReq.onsuccess = () => {
+      const all = (getAllReq.result as ProjectRecord[]).sort((a, b) => b.updatedAt - a.updatedAt)
+      if (all.length > MAX_PROJECTS) {
+        for (const p of all.slice(MAX_PROJECTS)) {
+          store.delete(p.id)
+        }
+      }
+    }
     tx.oncomplete = () => resolve()
     tx.onerror = () => reject(tx.error)
   })
@@ -57,7 +70,7 @@ export async function listProjects(): Promise<ProjectRecord[]> {
     request.onsuccess = () => {
       const projects = request.result as ProjectRecord[]
       projects.sort((a, b) => b.updatedAt - a.updatedAt)
-      resolve(projects)
+      resolve(projects.slice(0, MAX_PROJECTS))
     }
     request.onerror = () => reject(request.error)
   })
