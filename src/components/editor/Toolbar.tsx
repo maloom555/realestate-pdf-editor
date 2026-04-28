@@ -901,59 +901,6 @@ export default function Toolbar({ pdfDoc }: ToolbarProps = {}) {
 
         <div className="w-px h-5 bg-gray-200" />
 
-        <div className="flex items-center gap-0.5">
-          <button onClick={duplicateAnnotation} disabled={!selectedAnnotationId}
-            className="px-2 py-1 text-xs border border-gray-200 rounded-lg text-gray-500 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed"
-            title="複製 (Ctrl+C)">📋<span className="hidden xl:inline ml-1">コピー</span></button>
-          <button onClick={() => {
-              const fn = (window as unknown as Record<string, () => void>).__pasteClipboardImage
-              if (fn) fn()
-            }}
-            className="px-2 py-1 text-xs border border-gray-200 rounded-lg text-gray-500 hover:bg-gray-50"
-            title="クリップボード画像を貼付け (Ctrl+V)">📎<span className="hidden xl:inline ml-1">貼付け</span></button>
-          <button onClick={undo} disabled={undoStack.length === 0}
-            className="px-2 py-1 text-xs border border-gray-200 rounded-lg text-gray-500 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed"
-            title="元に戻す (Ctrl+Z)">↩<span className="hidden xl:inline ml-1">戻す</span></button>
-          <button onClick={redo} disabled={redoStack.length === 0}
-            className="px-2 py-1 text-xs border border-gray-200 rounded-lg text-gray-500 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed"
-            title="やり直し (Ctrl+Y)">↪<span className="hidden xl:inline ml-1">やり直し</span></button>
-          <button onClick={() => clearPage(currentPage)}
-            className="px-2 py-1 text-xs border border-gray-200 rounded-lg text-gray-500 hover:bg-gray-50"
-            title="このページの注釈を全クリア">クリア</button>
-        </div>
-
-        <div className="w-px h-5 bg-gray-200" />
-
-        {/* Page navigator - visually separated as a pill group */}
-        {pdfDoc && (
-          <div className="flex items-center gap-0.5 bg-gray-50 border border-gray-200 rounded-lg px-1.5 py-0.5 shadow-inner">
-            <button onClick={handlePrev} disabled={currentPage <= 1}
-              className="px-1.5 py-0.5 text-xs rounded hover:bg-white disabled:opacity-30 disabled:cursor-not-allowed"
-              title="前のページ">◀</button>
-            <span className="text-xs whitespace-nowrap px-1 min-w-[40px] text-center">
-              <span className="font-semibold text-gray-700">{currentPage}</span>
-              <span className="text-gray-400">/{totalPages}</span>
-            </span>
-            <button onClick={handleNext} disabled={currentPage >= totalPages}
-              className="px-1.5 py-0.5 text-xs rounded hover:bg-white disabled:opacity-30 disabled:cursor-not-allowed"
-              title="次のページ">▶</button>
-            <div className="w-px h-4 bg-gray-300 mx-1" />
-            <button onClick={handleZoomOut}
-              className="px-1.5 py-0.5 text-xs rounded hover:bg-white"
-              title="縮小">−</button>
-            <span className="min-w-[40px] text-center text-xs text-gray-500 font-medium">{Math.round(scale * 100)}%</span>
-            <button onClick={handleZoomIn}
-              className="px-1.5 py-0.5 text-xs rounded hover:bg-white"
-              title="拡大">+</button>
-            <div className="w-px h-4 bg-gray-300 mx-1" />
-            <button onClick={handleCycleFit}
-              className="px-2 py-0.5 text-xs rounded hover:bg-white text-gray-600 font-medium"
-              title="表示サイズ切替">{NEXT_FIT_LABELS[fitMode]}</button>
-          </div>
-        )}
-
-        <div className="w-px h-5 bg-gray-200" />
-
         <div className="relative">
           <div className="flex">
             <button onClick={() => handleExport('none')}
@@ -991,25 +938,72 @@ export default function Toolbar({ pdfDoc }: ToolbarProps = {}) {
         </div>
       </div>
 
-      {/* Sub-menu bar - fixed height, wraps content */}
-      <div className="min-h-[40px] border-t border-gray-100 bg-gray-50 flex items-center">
-        {showSubMenu ? (
-          <div className="flex-1 px-3 py-1 flex items-center justify-between gap-3">
-            <div className="flex items-center gap-x-3 gap-y-1 flex-wrap">
+      {/* Sub-menu bar: [Actions left] [Context middle] [Page nav right] */}
+      <div className="min-h-[40px] border-t border-gray-100 bg-gray-50 flex items-center px-3 py-1 gap-3">
+        {/* Left: copy/paste/undo/redo/clear */}
+        <div className="flex items-center gap-0.5 flex-shrink-0">
+          <button onClick={duplicateAnnotation} disabled={!selectedAnnotationId}
+            className="px-2 py-1 text-xs border border-gray-200 rounded-lg text-gray-500 hover:bg-white disabled:opacity-30 disabled:cursor-not-allowed"
+            title="複製 (Ctrl+C)">📋<span className="hidden xl:inline ml-1">コピー</span></button>
+          <button onClick={() => {
+              const fn = (window as unknown as Record<string, () => void>).__pasteClipboardImage
+              if (fn) fn()
+            }}
+            className="px-2 py-1 text-xs border border-gray-200 rounded-lg text-gray-500 hover:bg-white"
+            title="クリップボード画像を貼付け (Ctrl+V)">📎<span className="hidden xl:inline ml-1">貼付け</span></button>
+          <button onClick={undo} disabled={undoStack.length === 0}
+            className="px-2 py-1 text-xs border border-gray-200 rounded-lg text-gray-500 hover:bg-white disabled:opacity-30 disabled:cursor-not-allowed"
+            title="元に戻す (Ctrl+Z)">↩<span className="hidden xl:inline ml-1">戻す</span></button>
+          <button onClick={redo} disabled={redoStack.length === 0}
+            className="px-2 py-1 text-xs border border-gray-200 rounded-lg text-gray-500 hover:bg-white disabled:opacity-30 disabled:cursor-not-allowed"
+            title="やり直し (Ctrl+Y)">↪<span className="hidden xl:inline ml-1">やり直し</span></button>
+          <button onClick={() => clearPage(currentPage)}
+            className="px-2 py-1 text-xs border border-gray-200 rounded-lg text-gray-500 hover:bg-white"
+            title="このページの注釈を全クリア">クリア</button>
+        </div>
+
+        {/* Middle: context content (color/font/etc when selected/tool active) + hint */}
+        <div className="flex-1 min-w-0 flex items-center justify-between gap-3">
+          {showSubMenu ? (
+            <div className="flex items-center gap-x-3 gap-y-1 flex-wrap min-w-0">
               {subMenuContent()}
             </div>
-            {hintText && (
-              <span className="hidden sm:block text-[11px] text-gray-400 whitespace-nowrap flex-shrink-0">
-                {hintText}
-              </span>
-            )}
+          ) : (
+            <div />
+          )}
+          {hintText && (
+            <span className="hidden md:block text-[11px] text-gray-400 whitespace-nowrap flex-shrink-0">
+              {hintText}
+            </span>
+          )}
+        </div>
+
+        {/* Right: page navigator pill */}
+        {pdfDoc && (
+          <div className="flex items-center gap-0.5 bg-white border border-gray-200 rounded-lg px-1.5 py-0.5 shadow-sm flex-shrink-0">
+            <button onClick={handlePrev} disabled={currentPage <= 1}
+              className="px-1.5 py-0.5 text-xs rounded hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed"
+              title="前のページ">◀</button>
+            <span className="text-xs whitespace-nowrap px-1 min-w-[40px] text-center">
+              <span className="font-semibold text-gray-700">{currentPage}</span>
+              <span className="text-gray-400">/{totalPages}</span>
+            </span>
+            <button onClick={handleNext} disabled={currentPage >= totalPages}
+              className="px-1.5 py-0.5 text-xs rounded hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed"
+              title="次のページ">▶</button>
+            <div className="w-px h-4 bg-gray-300 mx-1" />
+            <button onClick={handleZoomOut}
+              className="px-1.5 py-0.5 text-xs rounded hover:bg-gray-100"
+              title="縮小">−</button>
+            <span className="min-w-[40px] text-center text-xs text-gray-500 font-medium">{Math.round(scale * 100)}%</span>
+            <button onClick={handleZoomIn}
+              className="px-1.5 py-0.5 text-xs rounded hover:bg-gray-100"
+              title="拡大">+</button>
+            <div className="w-px h-4 bg-gray-300 mx-1" />
+            <button onClick={handleCycleFit}
+              className="px-2 py-0.5 text-xs rounded hover:bg-gray-100 text-gray-600 font-medium"
+              title="表示サイズ切替">{NEXT_FIT_LABELS[fitMode]}</button>
           </div>
-        ) : hintText ? (
-          <div className="flex-1 px-3 py-1 text-right">
-            <span className="text-[11px] text-gray-400">{hintText}</span>
-          </div>
-        ) : (
-          <div className="flex-1" />
         )}
       </div>
 
