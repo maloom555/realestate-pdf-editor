@@ -127,6 +127,82 @@ export default function EditorPage() {
     }
   }
 
+  // Export/Compress menus (moved from Toolbar)
+  const [showTabExportMenu, setShowTabExportMenu] = useState(false)
+  const [showTabCompressMenu, setShowTabCompressMenu] = useState(false)
+
+  const handleTabExport = useCallback(async (pageNumbers: 'none' | 'bottom-center' | 'bottom-right' | 'bottom-left' = 'none') => {
+    setShowTabExportMenu(false)
+    if (!store.pdfBytes) return
+    const { exportFlattenedPdf, downloadBlob } = await import('@/lib/export-engine')
+    store.setLoading(true, 'マスク済みPDFを生成中...')
+    try {
+      const doc = await window.pdfjsLib.getDocument({ data: store.pdfBytes.slice() }).promise
+      const result = await exportFlattenedPdf(
+        doc,
+        store.annotations,
+        (current, total) => store.setLoading(true, `フラット化中... ${current} / ${total} ページ`),
+        undefined,
+        pageNumbers
+      )
+      const fileName = store.projectName ? `${store.projectName}_edited.pdf` : 'edited_output.pdf'
+      downloadBlob(result, fileName, 'application/pdf')
+    } catch (err) {
+      showToast('PDF出力に失敗しました: ' + (err as Error).message, 'error')
+    } finally {
+      store.setLoading(false)
+    }
+  }, [store])
+
+  const handleTabCompress = useCallback(async (level: 'high' | 'standard' | 'light') => {
+    setShowTabCompressMenu(false)
+    if (!store.pdfBytes) return
+    const { compressPdf, downloadBlob } = await import('@/lib/export-engine')
+    store.setLoading(true, 'PDFを圧縮中...')
+    try {
+      const doc = await window.pdfjsLib.getDocument({ data: store.pdfBytes.slice() }).promise
+      const originalSize = store.pdfBytes.length
+      const result = await compressPdf(doc, level, (current, total) => {
+        store.setLoading(true, `圧縮中... ${current} / ${total} ページ`)
+      }, store.pdfBytes)
+      const sizeStr = (sz: number) => sz > 1048576 ? (sz / 1048576).toFixed(1) + ' MB' : Math.round(sz / 1024) + ' KB'
+      store.setLoading(false)
+      if (result.length >= originalSize) {
+        showToast(`このPDFは既に十分小さいため圧縮できません（${sizeStr(originalSize)}）`, 'info')
+        return
+      }
+      const ratio = Math.round((1 - result.length / originalSize) * 100)
+      showToast(`圧縮完了！ ${sizeStr(originalSize)} → ${sizeStr(result.length)}（${ratio}%削減）`, 'success')
+      const fileName = store.projectName ? `${store.projectName}_compressed.pdf` : 'compressed.pdf'
+      downloadBlob(result, fileName, 'application/pdf')
+    } catch (err) {
+      showToast('圧縮に失敗しました: ' + (err as Error).message, 'error')
+      store.setLoading(false)
+    }
+  }, [store])
+
+  // Page navigator handlers
+  const handleTabPrev = () => { if (store.currentPage > 1) store.setCurrentPage(store.currentPage - 1) }
+  const handleTabNext = () => { if (store.currentPage < store.totalPages) store.setCurrentPage(store.currentPage + 1) }
+  const handleTabZoomIn = () => store.setScale(Math.min(store.scale + 0.25, 4))
+  const handleTabZoomOut = () => store.setScale(Math.max(store.scale - 0.25, 0.5))
+  const handleTabCycleFit = useCallback(async () => {
+    if (!pdfDoc) return
+    const NEXT_FIT_LABELS_LOCAL = ['横フィット', '100%', '縦フィット']
+    void NEXT_FIT_LABELS_LOCAL
+    const nextMode = (store.fitMode + 1) % 3
+    store.setFitMode(nextMode)
+    const page = await pdfDoc.getPage(store.currentPage)
+    const viewport = page.getViewport({ scale: 1 })
+    const maxW = window.innerWidth - 60
+    const maxH = window.innerHeight - 220
+    if (nextMode === 0) store.setScale(Math.min(maxH / viewport.height, 4))
+    else if (nextMode === 1) store.setScale(Math.min(maxW / viewport.width, 4))
+    else store.setScale(1.0)
+  }, [pdfDoc, store])
+
+  const NEXT_FIT_LABELS = ['横フィット', '100%', '縦フィット']
+
   // Listen for load-project events from Toolbar
   useEffect(() => {
     const { on } = require('@/lib/event-bus')
@@ -351,34 +427,108 @@ export default function EditorPage() {
 
       {pdfDoc ? (
         <>
-          {/* Mode tabs */}
-          <div className="flex bg-white border-b border-gray-200">
-            <button
-              onClick={() => store.setEditorMode('drawing')}
-              className={`flex-1 sm:flex-none px-6 py-2 text-sm font-medium transition-colors relative
-                ${store.editorMode === 'drawing'
-                  ? 'text-indigo-700'
-                  : 'text-gray-400 hover:text-gray-600'
-                }`}
-            >
-              描画編集
-              {store.editorMode === 'drawing' && (
-                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-indigo-600" />
-              )}
-            </button>
-            <button
-              onClick={() => store.setEditorMode('pageEditor')}
-              className={`flex-1 sm:flex-none px-6 py-2 text-sm font-medium transition-colors relative
-                ${store.editorMode === 'pageEditor'
-                  ? 'text-indigo-700'
-                  : 'text-gray-400 hover:text-gray-600'
-                }`}
-            >
-              ページ編集
-              {store.editorMode === 'pageEditor' && (
-                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-indigo-600" />
-              )}
-            </button>
+          {/* Mode tabs + page navigator + export/compress */}
+          <div className="flex items-center bg-white border-b border-gray-200 px-2 gap-2">
+            <div className="flex flex-shrink-0">
+              <button
+                onClick={() => store.setEditorMode('drawing')}
+                className={`px-4 sm:px-6 py-2 text-sm font-medium transition-colors relative
+                  ${store.editorMode === 'drawing'
+                    ? 'text-indigo-700'
+                    : 'text-gray-400 hover:text-gray-600'
+                  }`}
+              >
+                描画編集
+                {store.editorMode === 'drawing' && (
+                  <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-indigo-600" />
+                )}
+              </button>
+              <button
+                onClick={() => store.setEditorMode('pageEditor')}
+                className={`px-4 sm:px-6 py-2 text-sm font-medium transition-colors relative
+                  ${store.editorMode === 'pageEditor'
+                    ? 'text-indigo-700'
+                    : 'text-gray-400 hover:text-gray-600'
+                  }`}
+              >
+                ページ編集
+                {store.editorMode === 'pageEditor' && (
+                  <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-indigo-600" />
+                )}
+              </button>
+            </div>
+
+            {/* Spacer to push right-side controls to the end */}
+            <div className="flex-1" />
+
+            {/* Right side: page navigator + PDF download + compress (drawing mode only) */}
+            {store.editorMode === 'drawing' && (
+              <div className="hidden md:flex items-center gap-2 py-1">
+                {/* Page navigator pill */}
+                <div className="flex items-center gap-0.5 bg-gray-50 border border-gray-200 rounded-lg px-1.5 py-0.5 shadow-inner">
+                  <button onClick={handleTabPrev} disabled={store.currentPage <= 1}
+                    className="px-1.5 py-0.5 text-xs rounded hover:bg-white disabled:opacity-30 disabled:cursor-not-allowed"
+                    title="前のページ">◀</button>
+                  <span className="text-xs whitespace-nowrap px-1 min-w-[40px] text-center">
+                    <span className="font-semibold text-gray-700">{store.currentPage}</span>
+                    <span className="text-gray-400">/{store.totalPages}</span>
+                  </span>
+                  <button onClick={handleTabNext} disabled={store.currentPage >= store.totalPages}
+                    className="px-1.5 py-0.5 text-xs rounded hover:bg-white disabled:opacity-30 disabled:cursor-not-allowed"
+                    title="次のページ">▶</button>
+                  <div className="w-px h-4 bg-gray-300 mx-1" />
+                  <button onClick={handleTabZoomOut}
+                    className="px-1.5 py-0.5 text-xs rounded hover:bg-white"
+                    title="縮小">−</button>
+                  <span className="min-w-[40px] text-center text-xs text-gray-500 font-medium">{Math.round(store.scale * 100)}%</span>
+                  <button onClick={handleTabZoomIn}
+                    className="px-1.5 py-0.5 text-xs rounded hover:bg-white"
+                    title="拡大">+</button>
+                  <div className="w-px h-4 bg-gray-300 mx-1" />
+                  <button onClick={handleTabCycleFit}
+                    className="px-2 py-0.5 text-xs rounded hover:bg-white text-gray-600 font-medium"
+                    title="表示サイズ切替">{NEXT_FIT_LABELS[store.fitMode]}</button>
+                </div>
+
+                {/* PDF Download */}
+                <div className="relative">
+                  <div className="flex">
+                    <button onClick={() => handleTabExport('none')}
+                      className="px-3 py-1 text-xs bg-indigo-600 text-white rounded-l-lg font-semibold hover:bg-indigo-700 transition-colors">
+                      PDFダウンロード
+                    </button>
+                    <button onClick={() => setShowTabExportMenu(!showTabExportMenu)}
+                      className="px-1.5 py-1 text-xs bg-indigo-700 text-white rounded-r-lg hover:bg-indigo-800 transition-colors border-l border-indigo-500">
+                      ▾
+                    </button>
+                  </div>
+                  {showTabExportMenu && (
+                    <div className="absolute top-full right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-20 min-w-[200px]">
+                      <div className="px-3 py-1.5 text-[10px] text-gray-400 font-semibold border-b border-gray-100">ページ番号付きで出力</div>
+                      <button onClick={() => handleTabExport('bottom-center')} className="block w-full px-4 py-2 text-xs text-left hover:bg-gray-50">ページ番号（中央下）</button>
+                      <button onClick={() => handleTabExport('bottom-right')} className="block w-full px-4 py-2 text-xs text-left hover:bg-gray-50">ページ番号（右下）</button>
+                      <button onClick={() => handleTabExport('bottom-left')} className="block w-full px-4 py-2 text-xs text-left hover:bg-gray-50">ページ番号（左下）</button>
+                    </div>
+                  )}
+                </div>
+
+                {/* Compress */}
+                <div className="relative">
+                  <button onClick={() => setShowTabCompressMenu(!showTabCompressMenu)}
+                    className="px-2 py-1 text-xs border border-orange-300 text-orange-600 rounded-lg hover:bg-orange-50"
+                    title="PDFファイルサイズを圧縮します">
+                    圧縮 ▾
+                  </button>
+                  {showTabCompressMenu && (
+                    <div className="absolute top-full right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-20 min-w-[170px]">
+                      <button onClick={() => handleTabCompress('light')} className="block w-full px-4 py-2 text-xs text-left hover:bg-gray-50">軽量圧縮（高品質）</button>
+                      <button onClick={() => handleTabCompress('standard')} className="block w-full px-4 py-2 text-xs text-left hover:bg-gray-50">標準圧縮</button>
+                      <button onClick={() => handleTabCompress('high')} className="block w-full px-4 py-2 text-xs text-left hover:bg-gray-50">最大圧縮（小サイズ）</button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
 
           {store.editorMode === 'drawing' ? (
