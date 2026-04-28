@@ -16,6 +16,8 @@ export default function EditorPage() {
   const [pdfDoc, setPdfDoc] = useState<pdfjsLib.PDFDocumentProxy | null>(null)
   const [pdfJsLoaded, setPdfJsLoaded] = useState(false)
   const [showHelp, setShowHelp] = useState(false)
+  // Auto-save status: 'idle' | 'pending' | 'saving' | 'saved'
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'pending' | 'saving' | 'saved'>('idle')
 
   const handlePdfJsLoad = useCallback(() => {
     window.pdfjsLib.GlobalWorkerOptions.workerSrc =
@@ -183,14 +185,18 @@ export default function EditorPage() {
 
   // Auto-save to IndexedDB
   const saveTimerRef = useRef<NodeJS.Timeout | null>(null)
+  const savedTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   useEffect(() => {
     if (!store.pdfBytes || !store.projectId) return
+    setSaveStatus('pending')
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
+    if (savedTimeoutRef.current) clearTimeout(savedTimeoutRef.current)
     // Larger files get longer debounce to avoid frequent writes
     const fileSize = store.pdfBytes?.length || 0
     const debounceMs = fileSize > 5 * 1024 * 1024 ? 5000 : 2000
     saveTimerRef.current = setTimeout(async () => {
       try {
+        setSaveStatus('saving')
         const { saveProject } = await import('@/lib/project-db')
         await saveProject({
           id: store.projectId!,
@@ -201,8 +207,12 @@ export default function EditorPage() {
           totalPages: store.totalPages,
           updatedAt: Date.now(),
         })
+        setSaveStatus('saved')
+        // Show 'saved' for 2 seconds, then back to idle
+        savedTimeoutRef.current = setTimeout(() => setSaveStatus('idle'), 2000)
       } catch (err) {
         console.error('Auto-save failed:', err)
+        setSaveStatus('idle')
       }
     }, debounceMs)
     return () => { if (saveTimerRef.current) clearTimeout(saveTimerRef.current) }
@@ -247,11 +257,36 @@ export default function EditorPage() {
       <header
         className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-4 sm:px-6 py-1 sm:py-1.5 flex items-center justify-between"
       >
-        <div className="w-7" />
+        {/* Left spacer matches right side width approximately */}
+        <div className="w-32 sm:w-44" />
         <h1 className="text-sm sm:text-base font-bold cursor-pointer hover:opacity-80 transition-opacity" onClick={handleReset} title="トップに戻る">不動産PDF工房</h1>
-        <button onClick={() => setShowHelp(true)}
-          className="w-7 h-7 flex items-center justify-center rounded-full bg-white/20 hover:bg-white/30 border-2 border-white/60 transition-colors text-xs font-bold"
-          title="使い方ガイド">?</button>
+        <div className="flex items-center gap-2">
+          {pdfDoc && (
+            <span className={`hidden sm:flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] transition-all ${
+              saveStatus === 'saving' ? 'bg-yellow-400/20 text-yellow-100' :
+              saveStatus === 'saved' ? 'bg-green-400/20 text-green-100' :
+              saveStatus === 'pending' ? 'bg-white/10 text-white/70' :
+              'bg-white/10 text-white/60'
+            }`}>
+              <span className={`w-1.5 h-1.5 rounded-full ${
+                saveStatus === 'saving' ? 'bg-yellow-300 animate-pulse' :
+                saveStatus === 'saved' ? 'bg-green-300' :
+                saveStatus === 'pending' ? 'bg-white/40 animate-pulse' :
+                'bg-green-300'
+              }`} />
+              {saveStatus === 'saving' ? '保存中...' :
+               saveStatus === 'saved' ? '保存済み' :
+               saveStatus === 'pending' ? '編集中' :
+               '自動保存中'}
+            </span>
+          )}
+          <button onClick={() => setShowHelp(true)}
+            className="px-2.5 py-1 flex items-center gap-1 rounded-full bg-white/20 hover:bg-white/30 border border-white/40 transition-colors text-xs font-medium"
+            title="使い方ガイド">
+            <span className="text-sm leading-none">?</span>
+            <span>使い方</span>
+          </button>
+        </div>
       </header>
 
       {pdfDoc ? (
