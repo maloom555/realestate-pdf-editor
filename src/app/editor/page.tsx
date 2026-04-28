@@ -82,10 +82,50 @@ export default function EditorPage() {
 
   const handleReset = useCallback(() => {
     if (!pdfDoc) return
-    if (!confirm('現在の編集内容は破棄されます。トップに戻りますか？')) return
+    if (!confirm('現在の編集内容は破棄されます。新規作成してよろしいですか？')) return
     store.resetEditor()
     setPdfDoc(null)
   }, [pdfDoc, store])
+
+  // Save project (.rpef) - called from header
+  const headerLoadInputRef = useRef<HTMLInputElement>(null)
+  const handleHeaderSave = useCallback(() => {
+    if (!store.pdfBytes) return
+    let binary = ''
+    const chunkSize = 8192
+    for (let i = 0; i < store.pdfBytes.length; i += chunkSize) {
+      binary += String.fromCharCode(...store.pdfBytes.subarray(i, i + chunkSize))
+    }
+    const base64 = btoa(binary)
+    const data = {
+      version: 1,
+      pdfBase64: base64,
+      annotations: store.annotations,
+      currentPage: store.currentPage,
+      totalPages: store.totalPages,
+    }
+    const blob = new Blob([JSON.stringify(data)], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = store.projectName ? `${store.projectName}.rpef` : 'project.rpef'
+    a.click()
+    URL.revokeObjectURL(url)
+    showToast('プロジェクトを保存しました', 'success')
+  }, [store.pdfBytes, store.annotations, store.currentPage, store.totalPages, store.projectName])
+
+  const handleHeaderLoadFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    e.target.value = ''
+    try {
+      const text = await file.text()
+      const { emit } = await import('@/lib/event-bus')
+      emit('load-project', text)
+    } catch (err) {
+      showToast('プロジェクト読み込みに失敗しました: ' + (err as Error).message, 'error')
+    }
+  }
 
   // Listen for load-project events from Toolbar
   useEffect(() => {
@@ -255,10 +295,30 @@ export default function EditorPage() {
 
       {/* Header - compact */}
       <header
-        className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-4 sm:px-6 py-1 sm:py-1.5 flex items-center justify-between"
+        className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-3 sm:px-4 py-1 sm:py-1.5 flex items-center justify-between gap-2"
       >
-        {/* Left spacer matches right side width approximately */}
-        <div className="w-32 sm:w-44" />
+        {/* Left: file actions (新規/読込/保存) */}
+        <div className="flex items-center gap-1">
+          <button onClick={handleReset} disabled={!pdfDoc}
+            className="px-2 py-1 text-xs rounded-md bg-white/15 hover:bg-white/25 border border-white/30 transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1"
+            title="新規プロジェクト">
+            <span>📄</span>
+            <span className="hidden sm:inline">新規</span>
+          </button>
+          <button onClick={() => headerLoadInputRef.current?.click()}
+            className="px-2 py-1 text-xs rounded-md bg-white/15 hover:bg-white/25 border border-white/30 transition-colors flex items-center gap-1"
+            title="プロジェクトファイル(.rpef)を読込">
+            <span>📂</span>
+            <span className="hidden sm:inline">読込</span>
+          </button>
+          <input ref={headerLoadInputRef} type="file" accept=".rpef,.json" className="hidden" onChange={handleHeaderLoadFile} />
+          <button onClick={handleHeaderSave} disabled={!pdfDoc}
+            className="px-2 py-1 text-xs rounded-md bg-white/15 hover:bg-white/25 border border-white/30 transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1"
+            title="プロジェクトを.rpefファイルに保存">
+            <span>💾</span>
+            <span className="hidden sm:inline">保存</span>
+          </button>
+        </div>
         <h1 className="text-sm sm:text-base font-bold cursor-pointer hover:opacity-80 transition-opacity" onClick={handleReset} title="トップに戻る">不動産PDF工房</h1>
         <div className="flex items-center gap-2">
           {pdfDoc && (
