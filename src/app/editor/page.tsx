@@ -4,7 +4,6 @@ import { useState, useCallback, useEffect, useRef } from 'react'
 import { useEditorStore } from '@/hooks/useEditorStore'
 import DropZone from '@/components/editor/DropZone'
 import Toolbar from '@/components/editor/Toolbar'
-import PageNavigator from '@/components/editor/PageNavigator'
 import EditorCanvas from '@/components/editor/EditorCanvas'
 import PageEditor from '@/components/editor/PageEditor'
 import LoadingOverlay from '@/components/editor/LoadingOverlay'
@@ -289,8 +288,7 @@ export default function EditorPage() {
 
           {store.editorMode === 'drawing' ? (
             <>
-              <Toolbar />
-              <PageNavigator pdfDoc={pdfDoc} />
+              <Toolbar pdfDoc={pdfDoc} />
               <main className="flex-1 min-h-0 flex justify-center items-start overflow-auto p-2 sm:p-4">
                 <EditorCanvas pdfDoc={pdfDoc} />
               </main>

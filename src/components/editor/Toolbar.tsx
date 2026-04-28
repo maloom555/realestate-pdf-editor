@@ -47,12 +47,19 @@ function uint8ArrayToBase64(bytes: Uint8Array): string {
   return btoa(binary)
 }
 
-export default function Toolbar() {
+interface ToolbarProps {
+  pdfDoc?: pdfjsLib.PDFDocumentProxy
+}
+
+const NEXT_FIT_LABELS = ['横フィット', '100%', '縦フィット']
+
+export default function Toolbar({ pdfDoc }: ToolbarProps = {}) {
   const store = useEditorStore()
   const {
     currentTool, maskColor, penSize, fontSize, fontFamily, highlightOpacity, elementOpacity,
     fillEnabled, fillOpacity, textBold, textUnderline, textBox,
     selectedAnnotationId, annotations, currentPage, pdfBytes,
+    totalPages, scale, fitMode, setCurrentPage, setScale, setFitMode,
     setCurrentTool, setMaskColor, setPenSize, setFontSize, setFontFamily, setHighlightOpacity,
     setElementOpacity, setFillEnabled, setFillOpacity,
     setTextBold, setTextUnderline, setTextBox,
@@ -60,6 +67,42 @@ export default function Toolbar() {
     copyAnnotation, pasteAnnotation, clipboardAnnotation, duplicateAnnotation,
     bringForward, sendBackward,
   } = store
+
+  // Hint text - shown in sub-menu area
+  const hintText = (() => {
+    if (currentTool === 'select') {
+      if (selectedAnnotationId) {
+        const pageAnns = annotations[currentPage] || []
+        const ann = pageAnns.find((a) => a.id === selectedAnnotationId)
+        if (ann?.type === 'callout') return 'ダブルクリックで編集 / 黄◆で矢印移動'
+        if (ann?.type === 'text') return 'ダブルクリックで再編集'
+        return null
+      }
+      return null
+    }
+    if (currentTool === 'polyline') return 'クリックで頂点追加 / ダブルクリックで確定 / DELで戻る'
+    if (currentTool === 'text') return 'クリックでテキスト入力'
+    if (currentTool === 'callout') return 'ドラッグでテキスト配置 → 矢印方向に引く'
+    return null
+  })()
+
+  // Page navigator handlers (merged from PageNavigator)
+  const handlePrev = () => { if (currentPage > 1) setCurrentPage(currentPage - 1) }
+  const handleNext = () => { if (currentPage < totalPages) setCurrentPage(currentPage + 1) }
+  const handleZoomIn = () => setScale(Math.min(scale + 0.25, 4))
+  const handleZoomOut = () => setScale(Math.max(scale - 0.25, 0.5))
+  const handleCycleFit = async () => {
+    if (!pdfDoc) return
+    const nextMode = (fitMode + 1) % 3
+    setFitMode(nextMode)
+    const page = await pdfDoc.getPage(currentPage)
+    const viewport = page.getViewport({ scale: 1 })
+    const maxW = window.innerWidth - 60
+    const maxH = window.innerHeight - 220
+    if (nextMode === 0) setScale(Math.min(maxH / viewport.height, 4))
+    else if (nextMode === 1) setScale(Math.min(maxW / viewport.width, 4))
+    else setScale(1.0)
+  }
 
   const [showStampPicker, setShowStampPicker] = useState(false)
   const [showSignatureEditor, setShowSignatureEditor] = useState(false)
@@ -928,15 +971,47 @@ export default function Toolbar() {
             </div>
           )}
         </div>
+
+        {/* Page navigator - merged inline */}
+        {pdfDoc && (
+          <>
+            <div className="w-px h-5 bg-gray-200" />
+            <div className="flex items-center gap-1">
+              <button onClick={handlePrev} disabled={currentPage <= 1}
+                className="px-2 py-1 text-xs border border-gray-200 rounded-md hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed">◀</button>
+              <span className="text-xs whitespace-nowrap">
+                <span className="font-semibold">{currentPage}</span>/{totalPages}
+              </span>
+              <button onClick={handleNext} disabled={currentPage >= totalPages}
+                className="px-2 py-1 text-xs border border-gray-200 rounded-md hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed">▶</button>
+              <button onClick={handleZoomOut}
+                className="px-2 py-1 text-xs border border-gray-200 rounded-md hover:bg-gray-50 ml-1">−</button>
+              <span className="min-w-[36px] text-center text-xs text-gray-400">{Math.round(scale * 100)}%</span>
+              <button onClick={handleZoomIn}
+                className="px-2 py-1 text-xs border border-gray-200 rounded-md hover:bg-gray-50">+</button>
+              <button onClick={handleCycleFit}
+                className="px-2 py-1 text-xs border border-gray-200 rounded-md hover:bg-gray-50">{NEXT_FIT_LABELS[fitMode]}</button>
+            </div>
+          </>
+        )}
       </div>
 
       {/* Sub-menu bar - fixed height, wraps content */}
       <div className="min-h-[40px] border-t border-gray-100 bg-gray-50 flex items-center">
         {showSubMenu ? (
-          <div className="flex-1 px-3 py-1">
+          <div className="flex-1 px-3 py-1 flex items-center justify-between gap-3">
             <div className="flex items-center gap-x-3 gap-y-1 flex-wrap">
               {subMenuContent()}
             </div>
+            {hintText && (
+              <span className="hidden sm:block text-[11px] text-gray-400 whitespace-nowrap flex-shrink-0">
+                {hintText}
+              </span>
+            )}
+          </div>
+        ) : hintText ? (
+          <div className="flex-1 px-3 py-1 text-right">
+            <span className="text-[11px] text-gray-400">{hintText}</span>
           </div>
         ) : (
           <div className="flex-1" />
