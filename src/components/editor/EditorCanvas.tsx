@@ -233,6 +233,13 @@ export default function EditorCanvas({ pdfDoc }: EditorCanvasProps) {
     const ds = drawStateRef.current
     const pageAnns = annotations[currentPage] || []
 
+    // If text input is active, commit it first (click outside = confirm)
+    if (textInput.visible) {
+      commitText()
+      // Stop propagation - don't immediately start new tool action
+      return
+    }
+
     // Handle stamp leg placement mode
     if (stampLegModeRef.current && selectedAnnotationId) {
       const selected = pageAnns.find((a) => a.id === selectedAnnotationId)
@@ -449,7 +456,8 @@ export default function EditorCanvas({ pdfDoc }: EditorCanvasProps) {
     if (currentTool === 'pen') {
       ds.currentPath = [{ x: pos.x, y: pos.y }]
     }
-  }, [currentTool, getPos, annotations, currentPage, selectedAnnotationId, setSelectedAnnotationId, addAndSelect, updateAnnotation, scale])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentTool, getPos, annotations, currentPage, selectedAnnotationId, setSelectedAnnotationId, addAndSelect, updateAnnotation, scale, textInput.visible])
 
   // Double-click to re-edit text/callout or commit polyline
   const handleDoubleClick = useCallback((e: React.MouseEvent) => {
