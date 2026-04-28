@@ -300,7 +300,7 @@ export default function EditorPage() {
           )}
         </>
       ) : (
-        <main className="flex-1 flex justify-center items-start px-4">
+        <main className="flex-1 min-h-0 overflow-auto flex justify-center items-start px-4">
           <DropZone onFileLoad={handleFileLoad} onFilesLoad={handleFilesLoad} onProjectLoad={handleProjectLoad} />
         </main>
       )}
