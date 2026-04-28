@@ -68,23 +68,8 @@ export default function Toolbar({ pdfDoc }: ToolbarProps = {}) {
     bringForward, sendBackward,
   } = store
 
-  // Hint text - shown in sub-menu area
-  const hintText = (() => {
-    if (currentTool === 'select') {
-      if (selectedAnnotationId) {
-        const pageAnns = annotations[currentPage] || []
-        const ann = pageAnns.find((a) => a.id === selectedAnnotationId)
-        if (ann?.type === 'callout') return 'ダブルクリックで編集 / 黄◆で矢印移動'
-        if (ann?.type === 'text') return 'ダブルクリックで再編集'
-        return null
-      }
-      return null
-    }
-    if (currentTool === 'polyline') return 'クリックで頂点追加 / ダブルクリックで確定 / DELで戻る'
-    if (currentTool === 'text') return 'クリックでテキスト入力'
-    if (currentTool === 'callout') return 'ドラッグでテキスト配置 → 矢印方向に引く'
-    return null
-  })()
+  // Hint text removed per user request
+  const hintText: string | null = null
 
   // Page navigator handlers (merged from PageNavigator)
   const handlePrev = () => { if (currentPage > 1) setCurrentPage(currentPage - 1) }
@@ -998,15 +983,6 @@ export default function Toolbar({ pdfDoc }: ToolbarProps = {}) {
         {showSubMenu ? (
           <div className="flex-1 flex items-center gap-x-3 gap-y-1 flex-wrap">
             {subMenuContent()}
-            {hintText && (
-              <span className="hidden lg:inline text-[11px] text-gray-400 whitespace-nowrap ml-auto pl-3">
-                {hintText}
-              </span>
-            )}
-          </div>
-        ) : hintText ? (
-          <div className="flex-1 text-right">
-            <span className="text-[11px] text-gray-400">{hintText}</span>
           </div>
         ) : (
           <div className="flex-1" />
