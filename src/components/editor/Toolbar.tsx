@@ -938,8 +938,8 @@ export default function Toolbar({ pdfDoc }: ToolbarProps = {}) {
         </div>
       </div>
 
-      {/* Sub-menu bar: grouped together, centered (not stretched to both sides) */}
-      <div className="min-h-[40px] border-t border-gray-100 bg-gray-50 flex items-center justify-center px-3 py-1 gap-3 flex-wrap">
+      {/* Action row: copy/paste actions (left side group) + page navigator (right side group) - grouped center */}
+      <div className="border-t border-gray-100 bg-gray-50 flex items-center justify-center px-3 py-1 gap-3 flex-wrap">
         {/* Actions: copy/paste/undo/redo/clear */}
         <div className="flex items-center gap-0.5">
           <button onClick={duplicateAnnotation} disabled={!selectedAnnotationId}
@@ -961,13 +961,6 @@ export default function Toolbar({ pdfDoc }: ToolbarProps = {}) {
             className="px-2 py-1 text-xs border border-gray-200 rounded-lg text-gray-500 hover:bg-white"
             title="このページの注釈を全クリア">クリア</button>
         </div>
-
-        {/* Context content (color/font/etc when selected/tool active) */}
-        {showSubMenu && (
-          <div className="flex items-center gap-x-3 gap-y-1 flex-wrap">
-            {subMenuContent()}
-          </div>
-        )}
 
         {/* Page navigator pill */}
         {pdfDoc && (
@@ -996,12 +989,27 @@ export default function Toolbar({ pdfDoc }: ToolbarProps = {}) {
               title="表示サイズ切替">{NEXT_FIT_LABELS[fitMode]}</button>
           </div>
         )}
+      </div>
 
-        {/* Hint text */}
-        {hintText && (
-          <span className="hidden md:block text-[11px] text-gray-400 whitespace-nowrap">
-            {hintText}
-          </span>
+      {/* Context bar (color/font/opacity etc) - shown only when tool/selection requires it */}
+      <div className="min-h-[40px] border-t border-gray-100 bg-white flex items-center px-3 py-1">
+        {showSubMenu ? (
+          <div className="flex-1 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-x-3 gap-y-1 flex-wrap">
+              {subMenuContent()}
+            </div>
+            {hintText && (
+              <span className="hidden md:block text-[11px] text-gray-400 whitespace-nowrap flex-shrink-0">
+                {hintText}
+              </span>
+            )}
+          </div>
+        ) : hintText ? (
+          <div className="flex-1 text-right">
+            <span className="text-[11px] text-gray-400">{hintText}</span>
+          </div>
+        ) : (
+          <div className="flex-1" />
         )}
       </div>
 
