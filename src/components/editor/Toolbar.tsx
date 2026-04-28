@@ -899,47 +899,12 @@ export default function Toolbar({ pdfDoc }: ToolbarProps = {}) {
           ))}
         </div>
 
-        <div className="w-px h-5 bg-gray-200" />
-
-        <div className="relative">
-          <div className="flex">
-            <button onClick={() => handleExport('none')}
-              className="px-3 py-1 text-xs bg-indigo-600 text-white rounded-l-lg font-semibold hover:bg-indigo-700 transition-colors">
-              PDFダウンロード
-            </button>
-            <button onClick={() => setShowExportMenu(!showExportMenu)}
-              className="px-1.5 py-1 text-xs bg-indigo-700 text-white rounded-r-lg hover:bg-indigo-800 transition-colors border-l border-indigo-500">
-              ▾
-            </button>
-          </div>
-          {showExportMenu && (
-            <div className="absolute top-full right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-10 min-w-[200px]">
-              <div className="px-3 py-1.5 text-[10px] text-gray-400 font-semibold border-b border-gray-100">ページ番号付きで出力</div>
-              <button onClick={() => handleExport('bottom-center')} className="block w-full px-4 py-2 text-xs text-left hover:bg-gray-50">ページ番号（中央下）</button>
-              <button onClick={() => handleExport('bottom-right')} className="block w-full px-4 py-2 text-xs text-left hover:bg-gray-50">ページ番号（右下）</button>
-              <button onClick={() => handleExport('bottom-left')} className="block w-full px-4 py-2 text-xs text-left hover:bg-gray-50">ページ番号（左下）</button>
-            </div>
-          )}
-        </div>
-
-        <div className="relative">
-          <button onClick={() => setShowCompressMenu(!showCompressMenu)} disabled={!pdfBytes}
-            className="px-2 py-1 text-xs border border-orange-300 text-orange-600 rounded-lg hover:bg-orange-50 disabled:opacity-30 disabled:cursor-not-allowed"
-            title="PDFファイルサイズを圧縮します">
-            圧縮 ▾
-          </button>
-          {showCompressMenu && (
-            <div className="absolute top-full right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-10 min-w-[170px]">
-              <button onClick={() => handleCompress('light')} className="block w-full px-4 py-2 text-xs text-left hover:bg-gray-50">軽量圧縮（高品質）</button>
-              <button onClick={() => handleCompress('standard')} className="block w-full px-4 py-2 text-xs text-left hover:bg-gray-50">標準圧縮</button>
-              <button onClick={() => handleCompress('high')} className="block w-full px-4 py-2 text-xs text-left hover:bg-gray-50">最大圧縮（小サイズ）</button>
-            </div>
-          )}
-        </div>
       </div>
 
-      {/* Action row: copy/paste actions (left side group) + page navigator (right side group) - grouped center */}
-      <div className="border-t border-gray-100 bg-gray-50 flex items-center justify-center px-3 py-1 gap-3 flex-wrap">
+      {/* Action row: actions + page navigator (centered group) + PDFダウンロード/圧縮 (right) */}
+      <div className="relative border-t border-gray-100 bg-gray-50 flex items-center px-3 py-1 gap-3 flex-wrap">
+        {/* Centered group: copy/paste actions + page navigator */}
+        <div className="flex items-center justify-center gap-3 flex-wrap flex-1">
         {/* Actions: copy/paste/undo/redo/clear */}
         <div className="flex items-center gap-0.5">
           <button onClick={duplicateAnnotation} disabled={!selectedAnnotationId}
@@ -989,6 +954,46 @@ export default function Toolbar({ pdfDoc }: ToolbarProps = {}) {
               title="表示サイズ切替">{NEXT_FIT_LABELS[fitMode]}</button>
           </div>
         )}
+        </div>
+
+        {/* Right side: PDFダウンロード + 圧縮 */}
+        <div className="flex items-center gap-1 flex-shrink-0">
+          <div className="relative">
+            <div className="flex">
+              <button onClick={() => handleExport('none')}
+                className="px-3 py-1 text-xs bg-indigo-600 text-white rounded-l-lg font-semibold hover:bg-indigo-700 transition-colors">
+                PDFダウンロード
+              </button>
+              <button onClick={() => setShowExportMenu(!showExportMenu)}
+                className="px-1.5 py-1 text-xs bg-indigo-700 text-white rounded-r-lg hover:bg-indigo-800 transition-colors border-l border-indigo-500">
+                ▾
+              </button>
+            </div>
+            {showExportMenu && (
+              <div className="absolute bottom-full right-0 mb-1 bg-white border border-gray-200 rounded-lg shadow-lg z-10 min-w-[200px]">
+                <div className="px-3 py-1.5 text-[10px] text-gray-400 font-semibold border-b border-gray-100">ページ番号付きで出力</div>
+                <button onClick={() => handleExport('bottom-center')} className="block w-full px-4 py-2 text-xs text-left hover:bg-gray-50">ページ番号（中央下）</button>
+                <button onClick={() => handleExport('bottom-right')} className="block w-full px-4 py-2 text-xs text-left hover:bg-gray-50">ページ番号（右下）</button>
+                <button onClick={() => handleExport('bottom-left')} className="block w-full px-4 py-2 text-xs text-left hover:bg-gray-50">ページ番号（左下）</button>
+              </div>
+            )}
+          </div>
+
+          <div className="relative">
+            <button onClick={() => setShowCompressMenu(!showCompressMenu)} disabled={!pdfBytes}
+              className="px-2 py-1 text-xs border border-orange-300 text-orange-600 rounded-lg hover:bg-orange-50 disabled:opacity-30 disabled:cursor-not-allowed bg-white"
+              title="PDFファイルサイズを圧縮します">
+              圧縮 ▾
+            </button>
+            {showCompressMenu && (
+              <div className="absolute bottom-full right-0 mb-1 bg-white border border-gray-200 rounded-lg shadow-lg z-10 min-w-[170px]">
+                <button onClick={() => handleCompress('light')} className="block w-full px-4 py-2 text-xs text-left hover:bg-gray-50">軽量圧縮（高品質）</button>
+                <button onClick={() => handleCompress('standard')} className="block w-full px-4 py-2 text-xs text-left hover:bg-gray-50">標準圧縮</button>
+                <button onClick={() => handleCompress('high')} className="block w-full px-4 py-2 text-xs text-left hover:bg-gray-50">最大圧縮（小サイズ）</button>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
 
       {/* Context bar (color/font/opacity etc) - shown only when tool/selection requires it */}
