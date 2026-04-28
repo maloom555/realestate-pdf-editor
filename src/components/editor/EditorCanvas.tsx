@@ -236,8 +236,9 @@ export default function EditorCanvas({ pdfDoc }: EditorCanvasProps) {
     // If text input is active, commit it first (click outside = confirm)
     if (textInput.visible) {
       commitText()
-      // Stop propagation - don't immediately start new tool action
-      return
+      // If text tool is active, stop here to avoid opening a new text input on this same click.
+      // For other tools, continue processing so click can select/draw normally.
+      if (currentTool === 'text') return
     }
 
     // Handle stamp leg placement mode
