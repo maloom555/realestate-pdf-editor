@@ -924,16 +924,6 @@ export default function Toolbar({ pdfDoc }: ToolbarProps = {}) {
 
         <div className="w-px h-5 bg-gray-200" />
 
-        <div className="flex items-center gap-0.5">
-          <button onClick={handleSaveProject} disabled={!pdfBytes}
-            className="px-2 py-1 text-xs border border-green-300 text-green-700 rounded-lg hover:bg-green-50 disabled:opacity-30 disabled:cursor-not-allowed"
-            title="編集内容をファイルに保存して後から再開できます">💾<span className="hidden xl:inline ml-1">保存</span></button>
-          <button onClick={() => loadProjectInputRef.current?.click()}
-            className="px-2 py-1 text-xs border border-blue-300 text-blue-700 rounded-lg hover:bg-blue-50"
-            title="保存したプロジェクトファイルを読み込みます">📂<span className="hidden xl:inline ml-1">読込</span></button>
-          <input ref={loadProjectInputRef} type="file" accept=".rpef,.json" className="hidden" onChange={handleLoadProject} />
-        </div>
-
         {/* Page navigator - visually separated as a pill group */}
         {pdfDoc && (
           <div className="flex items-center gap-0.5 bg-gray-50 border border-gray-200 rounded-lg px-1.5 py-0.5 shadow-inner">
@@ -961,6 +951,16 @@ export default function Toolbar({ pdfDoc }: ToolbarProps = {}) {
               title="表示サイズ切替">{NEXT_FIT_LABELS[fitMode]}</button>
           </div>
         )}
+
+        <div className="flex items-center gap-0.5">
+          <button onClick={handleSaveProject} disabled={!pdfBytes}
+            className="px-2 py-1 text-xs border border-green-300 text-green-700 rounded-lg hover:bg-green-50 disabled:opacity-30 disabled:cursor-not-allowed"
+            title="編集内容をファイルに保存して後から再開できます">💾<span className="hidden xl:inline ml-1">保存</span></button>
+          <button onClick={() => loadProjectInputRef.current?.click()}
+            className="px-2 py-1 text-xs border border-blue-300 text-blue-700 rounded-lg hover:bg-blue-50"
+            title="保存したプロジェクトファイルを読み込みます">📂<span className="hidden xl:inline ml-1">読込</span></button>
+          <input ref={loadProjectInputRef} type="file" accept=".rpef,.json" className="hidden" onChange={handleLoadProject} />
+        </div>
 
         <div className="w-px h-5 bg-gray-200" />
 
