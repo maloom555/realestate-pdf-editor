@@ -934,6 +934,34 @@ export default function Toolbar({ pdfDoc }: ToolbarProps = {}) {
           <input ref={loadProjectInputRef} type="file" accept=".rpef,.json" className="hidden" onChange={handleLoadProject} />
         </div>
 
+        {/* Page navigator - visually separated as a pill group */}
+        {pdfDoc && (
+          <div className="flex items-center gap-0.5 bg-gray-50 border border-gray-200 rounded-lg px-1.5 py-0.5 shadow-inner">
+            <button onClick={handlePrev} disabled={currentPage <= 1}
+              className="px-1.5 py-0.5 text-xs rounded hover:bg-white disabled:opacity-30 disabled:cursor-not-allowed"
+              title="前のページ">◀</button>
+            <span className="text-xs whitespace-nowrap px-1 min-w-[40px] text-center">
+              <span className="font-semibold text-gray-700">{currentPage}</span>
+              <span className="text-gray-400">/{totalPages}</span>
+            </span>
+            <button onClick={handleNext} disabled={currentPage >= totalPages}
+              className="px-1.5 py-0.5 text-xs rounded hover:bg-white disabled:opacity-30 disabled:cursor-not-allowed"
+              title="次のページ">▶</button>
+            <div className="w-px h-4 bg-gray-300 mx-1" />
+            <button onClick={handleZoomOut}
+              className="px-1.5 py-0.5 text-xs rounded hover:bg-white"
+              title="縮小">−</button>
+            <span className="min-w-[40px] text-center text-xs text-gray-500 font-medium">{Math.round(scale * 100)}%</span>
+            <button onClick={handleZoomIn}
+              className="px-1.5 py-0.5 text-xs rounded hover:bg-white"
+              title="拡大">+</button>
+            <div className="w-px h-4 bg-gray-300 mx-1" />
+            <button onClick={handleCycleFit}
+              className="px-2 py-0.5 text-xs rounded hover:bg-white text-gray-600 font-medium"
+              title="表示サイズ切替">{NEXT_FIT_LABELS[fitMode]}</button>
+          </div>
+        )}
+
         <div className="w-px h-5 bg-gray-200" />
 
         <div className="relative">
@@ -971,34 +999,6 @@ export default function Toolbar({ pdfDoc }: ToolbarProps = {}) {
             </div>
           )}
         </div>
-
-        {/* Page navigator - visually separated as a pill group */}
-        {pdfDoc && (
-          <div className="ml-2 flex items-center gap-0.5 bg-gray-50 border border-gray-200 rounded-lg px-1.5 py-0.5 shadow-inner">
-            <button onClick={handlePrev} disabled={currentPage <= 1}
-              className="px-1.5 py-0.5 text-xs rounded hover:bg-white disabled:opacity-30 disabled:cursor-not-allowed"
-              title="前のページ">◀</button>
-            <span className="text-xs whitespace-nowrap px-1 min-w-[40px] text-center">
-              <span className="font-semibold text-gray-700">{currentPage}</span>
-              <span className="text-gray-400">/{totalPages}</span>
-            </span>
-            <button onClick={handleNext} disabled={currentPage >= totalPages}
-              className="px-1.5 py-0.5 text-xs rounded hover:bg-white disabled:opacity-30 disabled:cursor-not-allowed"
-              title="次のページ">▶</button>
-            <div className="w-px h-4 bg-gray-300 mx-1" />
-            <button onClick={handleZoomOut}
-              className="px-1.5 py-0.5 text-xs rounded hover:bg-white"
-              title="縮小">−</button>
-            <span className="min-w-[40px] text-center text-xs text-gray-500 font-medium">{Math.round(scale * 100)}%</span>
-            <button onClick={handleZoomIn}
-              className="px-1.5 py-0.5 text-xs rounded hover:bg-white"
-              title="拡大">+</button>
-            <div className="w-px h-4 bg-gray-300 mx-1" />
-            <button onClick={handleCycleFit}
-              className="px-2 py-0.5 text-xs rounded hover:bg-white text-gray-600 font-medium"
-              title="表示サイズ切替">{NEXT_FIT_LABELS[fitMode]}</button>
-          </div>
-        )}
       </div>
 
       {/* Sub-menu bar - fixed height, wraps content */}
