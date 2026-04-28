@@ -901,10 +901,8 @@ export default function Toolbar({ pdfDoc }: ToolbarProps = {}) {
 
       </div>
 
-      {/* Action row: actions + page navigator (centered group) + PDFダウンロード/圧縮 (right) */}
-      <div className="relative border-t border-gray-100 bg-gray-50 flex items-center px-3 py-1 gap-3 flex-wrap">
-        {/* Centered group: copy/paste actions + page navigator */}
-        <div className="flex items-center justify-center gap-3 flex-wrap flex-1">
+      {/* Action row: actions + page navigator + PDF/圧縮, all grouped centered */}
+      <div className="relative border-t border-gray-100 bg-gray-50 flex items-center justify-center px-3 py-1 gap-3 flex-wrap">
         {/* Actions: copy/paste/undo/redo/clear */}
         <div className="flex items-center gap-0.5">
           <button onClick={duplicateAnnotation} disabled={!selectedAnnotationId}
@@ -954,10 +952,9 @@ export default function Toolbar({ pdfDoc }: ToolbarProps = {}) {
               title="表示サイズ切替">{NEXT_FIT_LABELS[fitMode]}</button>
           </div>
         )}
-        </div>
 
-        {/* Right side: PDFダウンロード + 圧縮 */}
-        <div className="flex items-center gap-1 flex-shrink-0">
+        {/* PDFダウンロード + 圧縮 (in center group) */}
+        <div className="flex items-center gap-1">
           <div className="relative">
             <div className="flex">
               <button onClick={() => handleExport('none')}
