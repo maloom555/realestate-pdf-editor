@@ -244,14 +244,14 @@ export default function EditorPage() {
         onLoad={handlePdfJsLoad}
       />
 
-      {/* Header - compact on mobile */}
+      {/* Header - compact */}
       <header
-        className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-4 sm:px-6 py-2 sm:py-3 flex items-center justify-between"
+        className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-4 sm:px-6 py-1 sm:py-1.5 flex items-center justify-between"
       >
-        <div className="w-8" />
-        <h1 className="text-base sm:text-xl font-bold cursor-pointer hover:opacity-80 transition-opacity" onClick={handleReset} title="トップに戻る">不動産PDF工房</h1>
+        <div className="w-7" />
+        <h1 className="text-sm sm:text-base font-bold cursor-pointer hover:opacity-80 transition-opacity" onClick={handleReset} title="トップに戻る">不動産PDF工房</h1>
         <button onClick={() => setShowHelp(true)}
-          className="w-8 h-8 flex items-center justify-center rounded-full bg-white/20 hover:bg-white/30 border-2 border-white/60 transition-colors text-sm font-bold"
+          className="w-7 h-7 flex items-center justify-center rounded-full bg-white/20 hover:bg-white/30 border-2 border-white/60 transition-colors text-xs font-bold"
           title="使い方ガイド">?</button>
       </header>
 
