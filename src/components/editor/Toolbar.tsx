@@ -836,14 +836,14 @@ export default function Toolbar() {
   // ===== DESKTOP LAYOUT =====
   return (
     <div className="bg-white border-b border-gray-200 shadow-sm relative">
-      {/* Main tool bar */}
-      <div className="px-3 py-2 flex items-center justify-center gap-3 flex-wrap">
-        <div className="flex items-center gap-1">
+      {/* Main tool bar - compacted for single-row layout */}
+      <div className="px-2 py-1.5 flex items-center justify-center gap-2 flex-wrap">
+        <div className="flex items-center gap-0.5">
           {tools.map((tool) => (
             <button
               key={tool.id}
               onClick={() => handleToolSelect(tool.id)}
-              className={`flex items-center gap-1 px-2.5 py-1.5 border-2 rounded-lg text-xs transition-all
+              className={`flex items-center gap-1 px-2 py-1 border-2 rounded-lg text-xs transition-all
                 ${currentTool === tool.id
                   ? 'border-indigo-500 bg-indigo-50 text-indigo-700 font-semibold'
                   : 'border-gray-200 text-gray-500 hover:border-indigo-400 hover:text-indigo-500'
@@ -851,55 +851,56 @@ export default function Toolbar() {
               title={tool.label}
             >
               <span className="text-base leading-none">{tool.icon}</span>
-              <span className="hidden sm:inline">{tool.label}</span>
+              <span className="hidden lg:inline">{tool.label}</span>
             </button>
           ))}
         </div>
 
-        <div className="w-px h-6 bg-gray-200" />
+        <div className="w-px h-5 bg-gray-200" />
 
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-0.5">
           <button onClick={duplicateAnnotation} disabled={!selectedAnnotationId}
-            className="px-3 py-1.5 text-xs border border-gray-200 rounded-lg text-gray-500 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed"
-            title="複製 (Ctrl+C)">📋 コピー</button>
+            className="px-2 py-1 text-xs border border-gray-200 rounded-lg text-gray-500 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed"
+            title="複製 (Ctrl+C)">📋<span className="hidden xl:inline ml-1">コピー</span></button>
           <button onClick={() => {
               const fn = (window as unknown as Record<string, () => void>).__pasteClipboardImage
               if (fn) fn()
             }}
-            className="px-3 py-1.5 text-xs border border-gray-200 rounded-lg text-gray-500 hover:bg-gray-50"
-            title="クリップボード画像を貼付け (Ctrl+V)">📎 貼付け</button>
+            className="px-2 py-1 text-xs border border-gray-200 rounded-lg text-gray-500 hover:bg-gray-50"
+            title="クリップボード画像を貼付け (Ctrl+V)">📎<span className="hidden xl:inline ml-1">貼付け</span></button>
           <button onClick={undo} disabled={undoStack.length === 0}
-            className="px-3 py-1.5 text-xs border border-gray-200 rounded-lg text-gray-500 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed"
-            title="元に戻す (Ctrl+Z)">↩ 戻す</button>
+            className="px-2 py-1 text-xs border border-gray-200 rounded-lg text-gray-500 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed"
+            title="元に戻す (Ctrl+Z)">↩<span className="hidden xl:inline ml-1">戻す</span></button>
           <button onClick={redo} disabled={redoStack.length === 0}
-            className="px-3 py-1.5 text-xs border border-gray-200 rounded-lg text-gray-500 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed"
-            title="やり直し (Ctrl+Y)">↪ やり直し</button>
+            className="px-2 py-1 text-xs border border-gray-200 rounded-lg text-gray-500 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed"
+            title="やり直し (Ctrl+Y)">↪<span className="hidden xl:inline ml-1">やり直し</span></button>
           <button onClick={() => clearPage(currentPage)}
-            className="px-3 py-1.5 text-xs border border-gray-200 rounded-lg text-gray-500 hover:bg-gray-50">クリア</button>
+            className="px-2 py-1 text-xs border border-gray-200 rounded-lg text-gray-500 hover:bg-gray-50"
+            title="このページの注釈を全クリア">クリア</button>
         </div>
 
-        <div className="w-px h-6 bg-gray-200" />
+        <div className="w-px h-5 bg-gray-200" />
 
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-0.5">
           <button onClick={handleSaveProject} disabled={!pdfBytes}
-            className="px-3 py-1.5 text-xs border border-green-300 text-green-700 rounded-lg hover:bg-green-50 disabled:opacity-30 disabled:cursor-not-allowed"
-            title="編集内容をファイルに保存して後から再開できます">💾 保存</button>
+            className="px-2 py-1 text-xs border border-green-300 text-green-700 rounded-lg hover:bg-green-50 disabled:opacity-30 disabled:cursor-not-allowed"
+            title="編集内容をファイルに保存して後から再開できます">💾<span className="hidden xl:inline ml-1">保存</span></button>
           <button onClick={() => loadProjectInputRef.current?.click()}
-            className="px-3 py-1.5 text-xs border border-blue-300 text-blue-700 rounded-lg hover:bg-blue-50"
-            title="保存したプロジェクトファイルを読み込みます">📂 読込</button>
+            className="px-2 py-1 text-xs border border-blue-300 text-blue-700 rounded-lg hover:bg-blue-50"
+            title="保存したプロジェクトファイルを読み込みます">📂<span className="hidden xl:inline ml-1">読込</span></button>
           <input ref={loadProjectInputRef} type="file" accept=".rpef,.json" className="hidden" onChange={handleLoadProject} />
         </div>
 
-        <div className="w-px h-6 bg-gray-200" />
+        <div className="w-px h-5 bg-gray-200" />
 
         <div className="relative">
           <div className="flex">
             <button onClick={() => handleExport('none')}
-              className="px-4 py-1.5 text-xs bg-indigo-600 text-white rounded-l-lg font-semibold hover:bg-indigo-700 transition-colors">
+              className="px-3 py-1 text-xs bg-indigo-600 text-white rounded-l-lg font-semibold hover:bg-indigo-700 transition-colors">
               PDFダウンロード
             </button>
             <button onClick={() => setShowExportMenu(!showExportMenu)}
-              className="px-1.5 py-1.5 text-xs bg-indigo-700 text-white rounded-r-lg hover:bg-indigo-800 transition-colors border-l border-indigo-500">
+              className="px-1.5 py-1 text-xs bg-indigo-700 text-white rounded-r-lg hover:bg-indigo-800 transition-colors border-l border-indigo-500">
               ▾
             </button>
           </div>
@@ -915,7 +916,7 @@ export default function Toolbar() {
 
         <div className="relative">
           <button onClick={() => setShowCompressMenu(!showCompressMenu)} disabled={!pdfBytes}
-            className="px-3 py-1.5 text-xs border border-orange-300 text-orange-600 rounded-lg hover:bg-orange-50 disabled:opacity-30 disabled:cursor-not-allowed"
+            className="px-2 py-1 text-xs border border-orange-300 text-orange-600 rounded-lg hover:bg-orange-50 disabled:opacity-30 disabled:cursor-not-allowed"
             title="PDFファイルサイズを圧縮します">
             圧縮 ▾
           </button>
