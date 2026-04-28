@@ -713,10 +713,10 @@ export default function Toolbar({ pdfDoc }: ToolbarProps = {}) {
         <>
           <button onClick={() => bringForward(currentPage, selectedAnnotationId)}
             className="px-2.5 py-1.5 text-sm sm:px-2 sm:py-1 sm:text-xs border border-gray-200 text-gray-600 rounded-lg hover:bg-gray-50"
-            title="前面へ">↑ 前面</button>
+            title="最前面へ">↑ 前面</button>
           <button onClick={() => sendBackward(currentPage, selectedAnnotationId)}
             className="px-2.5 py-1.5 text-sm sm:px-2 sm:py-1 sm:text-xs border border-gray-200 text-gray-600 rounded-lg hover:bg-gray-50"
-            title="背面へ">↓ 背面</button>
+            title="最背面へ">↓ 背面</button>
           <button onClick={handleDelete}
             className="px-3 py-1.5 text-sm sm:text-xs border border-red-300 text-red-500 rounded-lg hover:bg-red-50">削除</button>
         </>

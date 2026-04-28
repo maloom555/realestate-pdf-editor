@@ -217,15 +217,15 @@ export const useEditorStore = create<EditorState>((set, get) => ({
     })
   },
 
-  // Z-order: move annotation one step forward (toward front)
+  // Z-order: move annotation to the very front (top of stack)
   bringForward: (pageNum, id) => {
     const state = get()
     const current = state.annotations[pageNum] || []
     const idx = current.findIndex((a) => a.id === id)
     if (idx < 0 || idx === current.length - 1) return // not found or already on top
     const undoEntry: HistoryEntry = { pageNum, annotations: [...current] }
-    const next = [...current]
-    ;[next[idx], next[idx + 1]] = [next[idx + 1], next[idx]]
+    const item = current[idx]
+    const next = [...current.slice(0, idx), ...current.slice(idx + 1), item]
     set({
       annotations: { ...state.annotations, [pageNum]: next },
       undoStack: pushUndo(state.undoStack, undoEntry),
@@ -233,15 +233,15 @@ export const useEditorStore = create<EditorState>((set, get) => ({
     })
   },
 
-  // Z-order: move annotation one step backward (toward back)
+  // Z-order: move annotation to the very back (bottom of stack)
   sendBackward: (pageNum, id) => {
     const state = get()
     const current = state.annotations[pageNum] || []
     const idx = current.findIndex((a) => a.id === id)
     if (idx <= 0) return // not found or already at bottom
     const undoEntry: HistoryEntry = { pageNum, annotations: [...current] }
-    const next = [...current]
-    ;[next[idx], next[idx - 1]] = [next[idx - 1], next[idx]]
+    const item = current[idx]
+    const next = [item, ...current.slice(0, idx), ...current.slice(idx + 1)]
     set({
       annotations: { ...state.annotations, [pageNum]: next },
       undoStack: pushUndo(state.undoStack, undoEntry),
