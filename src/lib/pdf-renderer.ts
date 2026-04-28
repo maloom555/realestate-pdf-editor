@@ -707,6 +707,16 @@ export function drawAnnotationScaled(
   ctx.restore()
 }
 
+// Reusable canvas for text measurement
+let measureCanvas: HTMLCanvasElement | null = null
+function getMeasureCtx(): CanvasRenderingContext2D | null {
+  if (typeof document === 'undefined') return null
+  if (!measureCanvas) {
+    measureCanvas = document.createElement('canvas')
+  }
+  return measureCanvas.getContext('2d')
+}
+
 // Raw bounds without rotation consideration (used for rotation transform origin)
 function getAnnotationBoundsRaw(ann: Annotation): RectData | null {
   switch (ann.type) {
@@ -726,18 +736,33 @@ function getAnnotationBoundsRaw(ann: Annotation): RectData | null {
       const d = ann.data
       const lines = d.text.split('\n')
       const lineHeight = d.fontSize * 1.2
-      const maxWidth = Math.max(...lines.map((l) => {
-        let w = 0
-        for (const ch of l) {
-          w += ch.charCodeAt(0) > 255 ? 1.0 : 0.6
+      // Use canvas measureText for accurate hit testing
+      const ctx = getMeasureCtx()
+      let maxWidth = 0
+      if (ctx) {
+        const fontWeight = d.bold ? 'bold ' : ''
+        ctx.font = `${fontWeight}${d.fontSize}px "${d.fontFamily}"`
+        for (const line of lines) {
+          const m = ctx.measureText(line)
+          if (m.width > maxWidth) maxWidth = m.width
         }
-        return w
-      }))
+      } else {
+        // Fallback: approximate calculation (server-side render)
+        maxWidth = Math.max(...lines.map((l) => {
+          let w = 0
+          for (const ch of l) {
+            w += ch.charCodeAt(0) > 255 ? d.fontSize : d.fontSize * 0.6
+          }
+          return w
+        }))
+      }
+      // Add small padding to make hit-testing more forgiving
+      const padding = d.textBox ? 6 : 2
       return {
-        x: d.x,
-        y: d.y,
-        w: d.fontSize * maxWidth,
-        h: lines.length * lineHeight,
+        x: d.x - padding,
+        y: d.y - padding,
+        w: maxWidth + padding * 2,
+        h: lines.length * lineHeight + padding * 2,
       }
     }
 
