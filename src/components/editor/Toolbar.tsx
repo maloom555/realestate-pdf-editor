@@ -996,12 +996,10 @@ export default function Toolbar({ pdfDoc }: ToolbarProps = {}) {
       {/* Context bar (color/font/opacity etc) - shown only when tool/selection requires it */}
       <div className="min-h-[40px] border-t border-gray-100 bg-white flex items-center px-3 py-1">
         {showSubMenu ? (
-          <div className="flex-1 flex items-center justify-between gap-3">
-            <div className="flex items-center gap-x-3 gap-y-1 flex-wrap">
-              {subMenuContent()}
-            </div>
+          <div className="flex-1 flex items-center gap-x-3 gap-y-1 flex-wrap">
+            {subMenuContent()}
             {hintText && (
-              <span className="hidden md:block text-[11px] text-gray-400 whitespace-nowrap flex-shrink-0">
+              <span className="hidden lg:inline text-[11px] text-gray-400 whitespace-nowrap ml-auto pl-3">
                 {hintText}
               </span>
             )}
