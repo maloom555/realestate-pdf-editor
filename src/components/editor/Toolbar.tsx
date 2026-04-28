@@ -938,10 +938,10 @@ export default function Toolbar({ pdfDoc }: ToolbarProps = {}) {
         </div>
       </div>
 
-      {/* Sub-menu bar: [Actions left] [Context middle] [Page nav right] */}
-      <div className="min-h-[40px] border-t border-gray-100 bg-gray-50 flex items-center px-3 py-1 gap-3">
-        {/* Left: copy/paste/undo/redo/clear */}
-        <div className="flex items-center gap-0.5 flex-shrink-0">
+      {/* Sub-menu bar: grouped together, centered (not stretched to both sides) */}
+      <div className="min-h-[40px] border-t border-gray-100 bg-gray-50 flex items-center justify-center px-3 py-1 gap-3 flex-wrap">
+        {/* Actions: copy/paste/undo/redo/clear */}
+        <div className="flex items-center gap-0.5">
           <button onClick={duplicateAnnotation} disabled={!selectedAnnotationId}
             className="px-2 py-1 text-xs border border-gray-200 rounded-lg text-gray-500 hover:bg-white disabled:opacity-30 disabled:cursor-not-allowed"
             title="複製 (Ctrl+C)">📋<span className="hidden xl:inline ml-1">コピー</span></button>
@@ -962,25 +962,16 @@ export default function Toolbar({ pdfDoc }: ToolbarProps = {}) {
             title="このページの注釈を全クリア">クリア</button>
         </div>
 
-        {/* Middle: context content (color/font/etc when selected/tool active) + hint */}
-        <div className="flex-1 min-w-0 flex items-center justify-between gap-3">
-          {showSubMenu ? (
-            <div className="flex items-center gap-x-3 gap-y-1 flex-wrap min-w-0">
-              {subMenuContent()}
-            </div>
-          ) : (
-            <div />
-          )}
-          {hintText && (
-            <span className="hidden md:block text-[11px] text-gray-400 whitespace-nowrap flex-shrink-0">
-              {hintText}
-            </span>
-          )}
-        </div>
+        {/* Context content (color/font/etc when selected/tool active) */}
+        {showSubMenu && (
+          <div className="flex items-center gap-x-3 gap-y-1 flex-wrap">
+            {subMenuContent()}
+          </div>
+        )}
 
-        {/* Right: page navigator pill */}
+        {/* Page navigator pill */}
         {pdfDoc && (
-          <div className="flex items-center gap-0.5 bg-white border border-gray-200 rounded-lg px-1.5 py-0.5 shadow-sm flex-shrink-0">
+          <div className="flex items-center gap-0.5 bg-white border border-gray-200 rounded-lg px-1.5 py-0.5 shadow-sm">
             <button onClick={handlePrev} disabled={currentPage <= 1}
               className="px-1.5 py-0.5 text-xs rounded hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed"
               title="前のページ">◀</button>
@@ -1004,6 +995,13 @@ export default function Toolbar({ pdfDoc }: ToolbarProps = {}) {
               className="px-2 py-0.5 text-xs rounded hover:bg-gray-100 text-gray-600 font-medium"
               title="表示サイズ切替">{NEXT_FIT_LABELS[fitMode]}</button>
           </div>
+        )}
+
+        {/* Hint text */}
+        {hintText && (
+          <span className="hidden md:block text-[11px] text-gray-400 whitespace-nowrap">
+            {hintText}
+          </span>
         )}
       </div>
 
