@@ -108,7 +108,10 @@ export default function DropZone({ onFileLoad, onFilesLoad, onProjectLoad }: Dro
       {/* Saved projects */}
       {savedProjects.length > 0 && (
         <div className="mt-8">
-          <h2 className="text-base font-semibold text-gray-700 mb-3">保存済みプロジェクト</h2>
+          <div className="flex items-end justify-between mb-3">
+            <h2 className="text-base font-semibold text-gray-700">直前の編集</h2>
+            <span className="text-xs text-gray-400">自動保存・最新{savedProjects.length}件</span>
+          </div>
           <div className="space-y-2">
             {savedProjects.map((project) => (
               <div
