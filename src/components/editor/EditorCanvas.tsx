@@ -72,6 +72,10 @@ export default function EditorCanvas({ pdfDoc }: EditorCanvasProps) {
   // Editing existing annotation (double-click to re-edit)
   const [editingAnnotationId, setEditingAnnotationId] = useState<string | null>(null)
 
+  // Ref to latest commitText - allows handleMouseDown to call latest version
+  // without circular dependency (commitText is defined later in file)
+  const commitTextRef = useRef<(() => void) | null>(null)
+
   // PDF page render cache: key = `${pageNum}-${scale}`, value = ImageBitmap
   const pageCacheRef = useRef<Map<string, ImageBitmap>>(new Map())
   const renderingKeyRef = useRef<string | null>(null)
@@ -235,7 +239,7 @@ export default function EditorCanvas({ pdfDoc }: EditorCanvasProps) {
 
     // If text input is active, commit it first (click outside = confirm)
     if (textInput.visible) {
-      commitText()
+      commitTextRef.current?.()
       // For text-creating tools, stop here to avoid opening a new text input on this same click.
       // For other tools (select/drawing), continue processing so click can select/draw normally.
       if (currentTool === 'text' || currentTool === 'callout') return
@@ -1213,6 +1217,11 @@ export default function EditorCanvas({ pdfDoc }: EditorCanvasProps) {
     setTextInput((prev) => ({ ...prev, visible: false }))
     setTextValue('')
   }, [textValue, textInput, maskColor, fontSize, fontFamily, currentPage, addAnnotation, addAndSelect, editingAnnotationId, annotations, updateAnnotation])
+
+  // Keep commitTextRef updated to latest commitText (for handleMouseDown to call without circular dep)
+  useEffect(() => {
+    commitTextRef.current = commitText
+  }, [commitText])
 
   // Pending stamp: store stamp info, place on next canvas click
   const pendingStampRef = useRef<{ stampId: string; label: string; color: string } | null>(null)
