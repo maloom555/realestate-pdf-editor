@@ -53,6 +53,44 @@ interface ToolbarProps {
 
 const NEXT_FIT_LABELS = ['横フィット', '100%', '縦フィット']
 
+// Zoom input: editable percentage with proper empty-state handling
+function ZoomInput({ scale, setScale }: { scale: number; setScale: (s: number) => void }) {
+  const [draft, setDraft] = useState<string | null>(null)
+  const display = draft !== null ? draft : `${Math.round(scale * 100)}%`
+
+  const commit = () => {
+    if (draft === null) return
+    // Empty input: revert to current scale (no change)
+    const trimmed = draft.replace('%', '').trim()
+    if (trimmed === '') {
+      setDraft(null)
+      return
+    }
+    const num = parseFloat(trimmed)
+    if (!isNaN(num)) {
+      const clamped = Math.max(50, Math.min(400, num))
+      setScale(clamped / 100)
+    }
+    setDraft(null)
+  }
+
+  return (
+    <input
+      type="text"
+      value={display}
+      onFocus={(e) => { setDraft(`${Math.round(scale * 100)}`); setTimeout(() => e.currentTarget.select(), 0) }}
+      onChange={(e) => setDraft(e.currentTarget.value)}
+      onBlur={commit}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter') (e.currentTarget as HTMLInputElement).blur()
+        if (e.key === 'Escape') { setDraft(null); (e.currentTarget as HTMLInputElement).blur() }
+      }}
+      className="w-14 text-center text-xs text-gray-600 font-medium bg-transparent rounded focus:outline-none focus:bg-white focus:ring-1 focus:ring-indigo-300"
+      title="表示倍率を直接入力（50〜400%）"
+    />
+  )
+}
+
 export default function Toolbar({ pdfDoc }: ToolbarProps = {}) {
   const store = useEditorStore()
   const {
@@ -927,23 +965,7 @@ export default function Toolbar({ pdfDoc }: ToolbarProps = {}) {
             <button onClick={handleZoomOut}
               className="px-1.5 py-0.5 text-xs rounded hover:bg-gray-100"
               title="縮小">−</button>
-            <input
-              type="text"
-              value={`${Math.round(scale * 100)}%`}
-              onFocus={(e) => e.currentTarget.select()}
-              onChange={(e) => {
-                const num = parseFloat(e.currentTarget.value.replace('%', ''))
-                if (!isNaN(num)) {
-                  const clamped = Math.max(50, Math.min(400, num))
-                  setScale(clamped / 100)
-                }
-              }}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') (e.currentTarget as HTMLInputElement).blur()
-              }}
-              className="w-14 text-center text-xs text-gray-600 font-medium bg-transparent rounded focus:outline-none focus:bg-white focus:ring-1 focus:ring-indigo-300"
-              title="表示倍率を直接入力（50〜400%）"
-            />
+            <ZoomInput scale={scale} setScale={setScale} />
             <button onClick={handleZoomIn}
               className="px-1.5 py-0.5 text-xs rounded hover:bg-gray-100"
               title="拡大">+</button>

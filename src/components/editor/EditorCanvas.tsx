@@ -1219,9 +1219,8 @@ export default function EditorCanvas({ pdfDoc }: EditorCanvasProps) {
   }, [textValue, textInput, maskColor, fontSize, fontFamily, currentPage, addAnnotation, addAndSelect, editingAnnotationId, annotations, updateAnnotation])
 
   // Keep commitTextRef updated to latest commitText (for handleMouseDown to call without circular dep)
-  useEffect(() => {
-    commitTextRef.current = commitText
-  }, [commitText])
+  // Direct assignment (not in useEffect) - avoids unnecessary effect runs
+  commitTextRef.current = commitText
 
   // Pending stamp: store stamp info, place on next canvas click
   const pendingStampRef = useRef<{ stampId: string; label: string; color: string } | null>(null)

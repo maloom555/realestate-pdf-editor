@@ -319,7 +319,7 @@ export default function EditorPage() {
             <span className="hidden sm:inline">保存</span>
           </button>
         </div>
-        <h1 className="text-sm sm:text-base font-bold cursor-pointer hover:opacity-80 transition-opacity" onClick={handleReset} title="トップに戻る">不動産PDF工房</h1>
+        <h1 className="text-sm sm:text-base font-bold">不動産PDF工房</h1>
         <div className="flex items-center gap-2">
           {pdfDoc && (
             <span className={`hidden sm:flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] transition-all ${
