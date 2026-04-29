@@ -927,7 +927,23 @@ export default function Toolbar({ pdfDoc }: ToolbarProps = {}) {
             <button onClick={handleZoomOut}
               className="px-1.5 py-0.5 text-xs rounded hover:bg-gray-100"
               title="縮小">−</button>
-            <span className="min-w-[40px] text-center text-xs text-gray-500 font-medium">{Math.round(scale * 100)}%</span>
+            <input
+              type="text"
+              value={`${Math.round(scale * 100)}%`}
+              onFocus={(e) => e.currentTarget.select()}
+              onChange={(e) => {
+                const num = parseFloat(e.currentTarget.value.replace('%', ''))
+                if (!isNaN(num)) {
+                  const clamped = Math.max(50, Math.min(400, num))
+                  setScale(clamped / 100)
+                }
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') (e.currentTarget as HTMLInputElement).blur()
+              }}
+              className="w-14 text-center text-xs text-gray-600 font-medium bg-transparent rounded focus:outline-none focus:bg-white focus:ring-1 focus:ring-indigo-300"
+              title="表示倍率を直接入力（50〜400%）"
+            />
             <button onClick={handleZoomIn}
               className="px-1.5 py-0.5 text-xs rounded hover:bg-gray-100"
               title="拡大">+</button>
