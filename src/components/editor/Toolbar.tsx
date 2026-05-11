@@ -173,20 +173,6 @@ export default function Toolbar({ pdfDoc }: ToolbarProps = {}) {
   const [signatureTemplates, setSignatureTemplates] = useState<import('@/types/annotations').SignatureTemplate[]>([])
   const loadProjectInputRef = useRef<HTMLInputElement>(null)
 
-  // Close PDF download/compress dropdowns on outside click
-  useEffect(() => {
-    if (!showExportMenu && !showCompressMenu) return
-    const handleClickOutside = (e: MouseEvent) => {
-      const target = e.target as HTMLElement
-      // Don't close if clicking inside a menu or its toggle button
-      if (target.closest('[data-toolbar-menu]') || target.closest('[data-toolbar-menu-trigger]')) return
-      setShowExportMenu(false)
-      setShowCompressMenu(false)
-    }
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [showExportMenu, showCompressMenu])
-
   // Load signature templates when stamp picker opens
   useEffect(() => {
     if (showStampPicker) {
@@ -272,6 +258,20 @@ export default function Toolbar({ pdfDoc }: ToolbarProps = {}) {
   }
 
   const [showCompressMenu, setShowCompressMenu] = useState(false)
+
+  // Close PDF download/compress dropdowns on outside click
+  useEffect(() => {
+    if (!showExportMenu && !showCompressMenu) return
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as HTMLElement
+      // Don't close if clicking inside a menu or its toggle button
+      if (target.closest('[data-toolbar-menu]') || target.closest('[data-toolbar-menu-trigger]')) return
+      setShowExportMenu(false)
+      setShowCompressMenu(false)
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [showExportMenu, showCompressMenu])
 
   const handleCompress = async (level: 'high' | 'standard' | 'light') => {
     setShowCompressMenu(false)
