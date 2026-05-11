@@ -3,7 +3,7 @@
 import { useState, useCallback, useEffect, useRef } from 'react'
 import { useEditorStore } from '@/hooks/useEditorStore'
 import DropZone from '@/components/editor/DropZone'
-import Toolbar from '@/components/editor/Toolbar'
+import Toolbar, { TOOLS } from '@/components/editor/Toolbar'
 import EditorCanvas from '@/components/editor/EditorCanvas'
 import PageEditor from '@/components/editor/PageEditor'
 import LoadingOverlay from '@/components/editor/LoadingOverlay'
@@ -352,33 +352,63 @@ export default function EditorPage() {
       {pdfDoc ? (
         <>
           {/* Mode tabs */}
-          <div className="flex bg-white border-b border-gray-200">
-            <button
-              onClick={() => store.setEditorMode('drawing')}
-              className={`flex-1 sm:flex-none px-6 py-2 text-sm font-medium transition-colors relative
-                ${store.editorMode === 'drawing'
-                  ? 'text-indigo-700'
-                  : 'text-gray-400 hover:text-gray-600'
-                }`}
-            >
-              描画編集
-              {store.editorMode === 'drawing' && (
-                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-indigo-600" />
-              )}
-            </button>
-            <button
-              onClick={() => store.setEditorMode('pageEditor')}
-              className={`flex-1 sm:flex-none px-6 py-2 text-sm font-medium transition-colors relative
-                ${store.editorMode === 'pageEditor'
-                  ? 'text-indigo-700'
-                  : 'text-gray-400 hover:text-gray-600'
-                }`}
-            >
-              ページ編集
-              {store.editorMode === 'pageEditor' && (
-                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-indigo-600" />
-              )}
-            </button>
+          <div className="flex items-center bg-white border-b border-gray-200 gap-2 px-2">
+            <div className="flex flex-shrink-0">
+              <button
+                onClick={() => store.setEditorMode('drawing')}
+                className={`px-4 sm:px-6 py-2 text-sm font-medium transition-colors relative
+                  ${store.editorMode === 'drawing'
+                    ? 'text-indigo-700'
+                    : 'text-gray-400 hover:text-gray-600'
+                  }`}
+              >
+                描画編集
+                {store.editorMode === 'drawing' && (
+                  <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-indigo-600" />
+                )}
+              </button>
+              <button
+                onClick={() => store.setEditorMode('pageEditor')}
+                className={`px-4 sm:px-6 py-2 text-sm font-medium transition-colors relative
+                  ${store.editorMode === 'pageEditor'
+                    ? 'text-indigo-700'
+                    : 'text-gray-400 hover:text-gray-600'
+                  }`}
+              >
+                ページ編集
+                {store.editorMode === 'pageEditor' && (
+                  <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-indigo-600" />
+                )}
+              </button>
+            </div>
+
+            {/* Tool buttons inline (drawing mode only) - hidden on small screens */}
+            {store.editorMode === 'drawing' && (
+              <div className="hidden md:flex items-center gap-0.5 flex-1 overflow-x-auto py-1">
+                {TOOLS.map((tool) => (
+                  <button
+                    key={tool.id}
+                    onClick={() => {
+                      if (tool.id === 'stamp') {
+                        store.setShowStampPicker(!store.showStampPicker)
+                      } else {
+                        store.setShowStampPicker(false)
+                      }
+                      store.setCurrentTool(tool.id)
+                    }}
+                    className={`flex-shrink-0 flex items-center gap-1 px-2 py-1 border-2 rounded-lg text-xs transition-all
+                      ${store.currentTool === tool.id
+                        ? 'border-indigo-500 bg-indigo-50 text-indigo-700 font-semibold'
+                        : 'border-gray-200 text-gray-500 hover:border-indigo-400 hover:text-indigo-500'
+                      }`}
+                    title={tool.label}
+                  >
+                    <span className="text-base leading-none">{tool.icon}</span>
+                    <span className="hidden lg:inline">{tool.label}</span>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           {store.editorMode === 'drawing' ? (

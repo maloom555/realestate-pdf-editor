@@ -48,6 +48,7 @@ interface EditorState {
 
   // Editor mode
   editorMode: EditorMode
+  showStampPicker: boolean
   selectedPages: Set<number>
 
   // Page operation history
@@ -62,6 +63,7 @@ interface EditorState {
 
   // Actions
   setEditorMode: (mode: EditorMode) => void
+  setShowStampPicker: (show: boolean) => void
   togglePageSelection: (pageNum: number) => void
   selectAllPages: () => void
   clearPageSelection: () => void
@@ -131,6 +133,7 @@ const initialState = {
   undoStack: [] as HistoryEntry[],
   redoStack: [] as HistoryEntry[],
   editorMode: 'drawing' as EditorMode,
+  showStampPicker: false,
   selectedPages: new Set<number>(),
   pageUndoStack: [] as { pdfBytes: Uint8Array; totalPages: number; annotations: Record<number, Annotation[]>; undoStack?: HistoryEntry[]; redoStack?: HistoryEntry[] }[],
   clipboardAnnotation: null as Annotation | null,
@@ -325,6 +328,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   setProjectName: (name) => set({ projectName: name }),
 
   setEditorMode: (mode) => set({ editorMode: mode, selectedPages: new Set() }),
+  setShowStampPicker: (show) => set({ showStampPicker: show }),
 
   togglePageSelection: (pageNum) => {
     const pages = new Set(get().selectedPages)

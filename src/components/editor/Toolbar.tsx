@@ -9,7 +9,7 @@ import { TEXT_TEMPLATES } from '@/lib/text-templates'
 import { emit } from '@/lib/event-bus'
 import { showToast } from '@/components/ui/Toast'
 
-const tools: { id: ToolType; label: string; icon: string }[] = [
+export const TOOLS: { id: ToolType; label: string; icon: string }[] = [
   { id: 'rect', label: '墨消し', icon: '■' },
   { id: 'circle', label: '円', icon: '○' },
   { id: 'shape-rect', label: '四角', icon: '□' },
@@ -164,7 +164,8 @@ export default function Toolbar({ pdfDoc }: ToolbarProps = {}) {
     else setScale(1.0)
   }
 
-  const [showStampPicker, setShowStampPicker] = useState(false)
+  const showStampPicker = store.showStampPicker
+  const setShowStampPicker = store.setShowStampPicker
   const [showSignatureEditor, setShowSignatureEditor] = useState(false)
   const [showTextTemplates, setShowTextTemplates] = useState(false)
   const [showMobileMenu, setShowMobileMenu] = useState(false)
@@ -820,7 +821,7 @@ export default function Toolbar({ pdfDoc }: ToolbarProps = {}) {
         <div className="flex items-center gap-1.5 px-2 py-2">
           {/* Scrollable tool buttons */}
           <div className="flex-1 overflow-x-auto flex items-center gap-1.5 min-w-0">
-            {tools.map((tool) => (
+            {TOOLS.map((tool) => (
               <button
                 key={tool.id}
                 onClick={() => handleToolSelect(tool.id)}
@@ -965,30 +966,9 @@ export default function Toolbar({ pdfDoc }: ToolbarProps = {}) {
   }
 
   // ===== DESKTOP LAYOUT =====
+  // Tool buttons row is now rendered in page.tsx tab row (next to mode tabs).
   return (
     <div className="bg-white border-b border-gray-200 shadow-sm relative">
-      {/* Main tool bar - compacted for single-row layout */}
-      <div className="px-2 py-1.5 flex items-center justify-center gap-2 flex-wrap">
-        <div className="flex items-center gap-0.5">
-          {tools.map((tool) => (
-            <button
-              key={tool.id}
-              onClick={() => handleToolSelect(tool.id)}
-              className={`flex items-center gap-1 px-2 py-1 border-2 rounded-lg text-xs transition-all
-                ${currentTool === tool.id
-                  ? 'border-indigo-500 bg-indigo-50 text-indigo-700 font-semibold'
-                  : 'border-gray-200 text-gray-500 hover:border-indigo-400 hover:text-indigo-500'
-                }`}
-              title={tool.label}
-            >
-              <span className="text-base leading-none">{tool.icon}</span>
-              <span className="hidden lg:inline">{tool.label}</span>
-            </button>
-          ))}
-        </div>
-
-      </div>
-
       {/* Action row: actions + page navigator + PDF/圧縮, all grouped centered */}
       <div className="relative border-t border-gray-100 bg-gray-50 flex items-center justify-center px-3 py-1 gap-3 flex-wrap">
         {/* Actions: copy/paste/undo/redo/clear */}
