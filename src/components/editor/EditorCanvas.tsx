@@ -610,8 +610,8 @@ export default function EditorCanvas({ pdfDoc }: EditorCanvasProps) {
     const ctx = maskCanvas.getContext('2d')!
 
     if (currentTool === 'select' && ds.dragMode && ds.dragStart && selectedAnnotationId) {
-      const dx = pos.x - ds.dragStart.x
-      const dy = pos.y - ds.dragStart.y
+      let dx = pos.x - ds.dragStart.x
+      let dy = pos.y - ds.dragStart.y
       const pageAnns = annotations[currentPage] || []
       const ann = pageAnns.find((a) => a.id === selectedAnnotationId)
       if (!ann) return
@@ -651,6 +651,44 @@ export default function EditorCanvas({ pdfDoc }: EditorCanvasProps) {
           })
         }
       } else if (ds.dragMode === 'move') {
+        // Compute bounding box of orig position, then clamp dx/dy so annotation stays within canvas
+        const canvas = pdfCanvasRef.current
+        if (canvas) {
+          const cw = canvas.width / scale
+          const ch = canvas.height / scale
+          let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity
+          if (ann.type === 'rect' || ann.type === 'highlight' || ann.type === 'circle' || ann.type === 'shape-rect' || ann.type === 'image' || ann.type === 'stamp') {
+            const o = orig as unknown as RectData
+            minX = o.x; minY = o.y; maxX = o.x + o.w; maxY = o.y + o.h
+          } else if (ann.type === 'text') {
+            const o = orig as unknown as { x: number; y: number }
+            const annBounds = getAnnotationBounds(ann)
+            minX = o.x; minY = o.y
+            maxX = o.x + (annBounds?.w ?? 50)
+            maxY = o.y + (annBounds?.h ?? 20)
+          } else if (ann.type === 'arrow' || ann.type === 'callout') {
+            const o = orig as unknown as ArrowData
+            minX = Math.min(o.startX, o.endX); minY = Math.min(o.startY, o.endY)
+            maxX = Math.max(o.startX, o.endX); maxY = Math.max(o.startY, o.endY)
+          } else if (ann.type === 'pen') {
+            const pts = orig as unknown as Point[]
+            for (const p of pts) {
+              if (p.x < minX) minX = p.x; if (p.y < minY) minY = p.y
+              if (p.x > maxX) maxX = p.x; if (p.y > maxY) maxY = p.y
+            }
+          } else if (ann.type === 'polyline') {
+            const o = orig as unknown as PolylineData
+            for (const p of o.points) {
+              if (p.x < minX) minX = p.x; if (p.y < minY) minY = p.y
+              if (p.x > maxX) maxX = p.x; if (p.y > maxY) maxY = p.y
+            }
+          }
+          if (isFinite(minX) && isFinite(maxX)) {
+            dx = Math.max(-minX, Math.min(cw - maxX, dx))
+            dy = Math.max(-minY, Math.min(ch - maxY, dy))
+          }
+        }
+
         if (ann.type === 'stamp') {
           // Move stamp body + leg together
           const o = orig as unknown as StampData
@@ -694,8 +732,42 @@ export default function EditorCanvas({ pdfDoc }: EditorCanvasProps) {
           })
         }
       } else if (ds.dragMode === 'group-move') {
-        // Move all selected annotations together
+        // Move all selected annotations together - clamp to canvas
         const groupData = ds.origGroupData as Record<string, unknown>
+        const canvas = pdfCanvasRef.current
+        if (groupData && canvas) {
+          const cw = canvas.width / scale
+          const ch = canvas.height / scale
+          // Compute union bbox from orig group data
+          let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity
+          for (const id of store.selectedAnnotationIds) {
+            const a = pageAnns.find(ann => ann.id === id)
+            if (!a) continue
+            const o = groupData[id] as Record<string, unknown>
+            if (!o) continue
+            if (a.type === 'arrow' || a.type === 'callout') {
+              const sx = o.startX as number, sy = o.startY as number, ex = o.endX as number, ey = o.endY as number
+              minX = Math.min(minX, sx, ex); minY = Math.min(minY, sy, ey)
+              maxX = Math.max(maxX, sx, ex); maxY = Math.max(maxY, sy, ey)
+            } else if (a.type === 'pen') {
+              const pts = o as unknown as Point[]
+              for (const p of pts) { minX = Math.min(minX, p.x); minY = Math.min(minY, p.y); maxX = Math.max(maxX, p.x); maxY = Math.max(maxY, p.y) }
+            } else if (a.type === 'polyline') {
+              const op = o as unknown as PolylineData
+              for (const p of op.points) { minX = Math.min(minX, p.x); minY = Math.min(minY, p.y); maxX = Math.max(maxX, p.x); maxY = Math.max(maxY, p.y) }
+            } else {
+              // rect/circle/highlight/text/image/shape-rect/stamp
+              const x = o.x as number, y = o.y as number
+              const w = (o.w as number) ?? 50, h = (o.h as number) ?? 20
+              minX = Math.min(minX, x); minY = Math.min(minY, y)
+              maxX = Math.max(maxX, x + w); maxY = Math.max(maxY, y + h)
+            }
+          }
+          if (isFinite(minX)) {
+            dx = Math.max(-minX, Math.min(cw - maxX, dx))
+            dy = Math.max(-minY, Math.min(ch - maxY, dy))
+          }
+        }
         if (groupData) {
           for (const id of store.selectedAnnotationIds) {
             const a = pageAnns.find(ann => ann.id === id)
