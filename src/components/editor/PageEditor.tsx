@@ -439,6 +439,11 @@ export default function PageEditor({ pdfDoc, onReloadPdf }: PageEditorProps) {
                 onDrop={(e) => handleDrop(e, pageNum - 1)}
                 onDragEnd={handleDragEnd}
                 onClick={() => store.togglePageSelection(pageNum)}
+                onDoubleClick={() => {
+                  store.setCurrentPage(pageNum)
+                  store.setEditorMode('drawing')
+                }}
+                title="クリックで選択 / ダブルクリックで描画編集を開く"
                 className={`relative cursor-pointer rounded-xl overflow-hidden transition-all
                   ${isSelected ? 'ring-3 ring-indigo-500 shadow-lg scale-[1.02]' : 'ring-1 ring-gray-200 hover:ring-indigo-300 hover:shadow-md'}
                   ${isDragTarget ? 'ring-3 ring-yellow-400' : ''}
