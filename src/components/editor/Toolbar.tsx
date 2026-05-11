@@ -876,7 +876,7 @@ export default function Toolbar({ pdfDoc }: ToolbarProps = {}) {
               <button data-toolbar-menu-trigger onClick={() => setShowCompressMenu(!showCompressMenu)}
                 className="px-3 py-2 text-sm border border-orange-300 text-orange-600 rounded-lg">圧縮 ▾</button>
               {showCompressMenu && (
-                <div data-toolbar-menu className="absolute bottom-full left-0 mb-1 bg-white border border-gray-200 rounded-lg shadow-lg z-10 min-w-[160px]">
+                <div data-toolbar-menu className="absolute top-full left-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-10 min-w-[160px]">
                   <button onClick={() => handleCompress('light')} className="block w-full px-4 py-2 text-sm text-left hover:bg-gray-50">軽量圧縮（高品質）</button>
                   <button onClick={() => handleCompress('standard')} className="block w-full px-4 py-2 text-sm text-left hover:bg-gray-50">標準圧縮</button>
                   <button onClick={() => handleCompress('high')} className="block w-full px-4 py-2 text-sm text-left hover:bg-gray-50">最大圧縮（小サイズ）</button>
@@ -1052,7 +1052,7 @@ export default function Toolbar({ pdfDoc }: ToolbarProps = {}) {
               </button>
             </div>
             {showExportMenu && (
-              <div data-toolbar-menu className="absolute bottom-full right-0 mb-1 bg-white border border-gray-200 rounded-lg shadow-lg z-10 min-w-[200px]">
+              <div data-toolbar-menu className="absolute top-full right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-30 min-w-[200px]">
                 <div className="px-3 py-1.5 text-[10px] text-gray-400 font-semibold border-b border-gray-100">ページ番号付きで出力</div>
                 <button onClick={() => handleExport('bottom-center')} className="block w-full px-4 py-2 text-xs text-left hover:bg-gray-50">ページ番号（中央下）</button>
                 <button onClick={() => handleExport('bottom-right')} className="block w-full px-4 py-2 text-xs text-left hover:bg-gray-50">ページ番号（右下）</button>
@@ -1068,7 +1068,7 @@ export default function Toolbar({ pdfDoc }: ToolbarProps = {}) {
               圧縮 ▾
             </button>
             {showCompressMenu && (
-              <div data-toolbar-menu className="absolute bottom-full right-0 mb-1 bg-white border border-gray-200 rounded-lg shadow-lg z-10 min-w-[170px]">
+              <div data-toolbar-menu className="absolute top-full right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-30 min-w-[170px]">
                 <button onClick={() => handleCompress('light')} className="block w-full px-4 py-2 text-xs text-left hover:bg-gray-50">軽量圧縮（高品質）</button>
                 <button onClick={() => handleCompress('standard')} className="block w-full px-4 py-2 text-xs text-left hover:bg-gray-50">標準圧縮</button>
                 <button onClick={() => handleCompress('high')} className="block w-full px-4 py-2 text-xs text-left hover:bg-gray-50">最大圧縮（小サイズ）</button>
