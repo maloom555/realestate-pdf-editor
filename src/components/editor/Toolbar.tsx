@@ -53,6 +53,43 @@ interface ToolbarProps {
 
 const NEXT_FIT_LABELS = ['横フィット', '100%', '縦フィット']
 
+// Page input: editable page number, jumps to that page on commit
+function PageInput({ currentPage, totalPages, setCurrentPage }: { currentPage: number; totalPages: number; setCurrentPage: (n: number) => void }) {
+  const [draft, setDraft] = useState<string | null>(null)
+  const display = draft !== null ? draft : `${currentPage}`
+
+  const commit = () => {
+    if (draft === null) return
+    const trimmed = draft.trim()
+    if (trimmed === '') { setDraft(null); return }
+    const num = parseInt(trimmed, 10)
+    if (!isNaN(num)) {
+      const clamped = Math.max(1, Math.min(totalPages, num))
+      setCurrentPage(clamped)
+    }
+    setDraft(null)
+  }
+
+  return (
+    <span className="text-xs whitespace-nowrap px-1 text-center inline-flex items-center">
+      <input
+        type="text"
+        value={display}
+        onFocus={(e) => { setDraft(`${currentPage}`); setTimeout(() => e.currentTarget.select(), 0) }}
+        onChange={(e) => setDraft(e.currentTarget.value)}
+        onBlur={commit}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') (e.currentTarget as HTMLInputElement).blur()
+          if (e.key === 'Escape') { setDraft(null); (e.currentTarget as HTMLInputElement).blur() }
+        }}
+        className="w-8 text-right text-xs font-semibold text-gray-700 bg-transparent rounded focus:outline-none focus:bg-gray-50 focus:ring-1 focus:ring-indigo-300"
+        title="ページ番号を直接入力"
+      />
+      <span className="text-gray-400">/{totalPages}</span>
+    </span>
+  )
+}
+
 // Zoom input: editable percentage with proper empty-state handling
 function ZoomInput({ scale, setScale }: { scale: number; setScale: (s: number) => void }) {
   const [draft, setDraft] = useState<string | null>(null)
@@ -225,28 +262,42 @@ export default function Toolbar({ pdfDoc }: ToolbarProps = {}) {
   const handleCompress = async (level: 'high' | 'standard' | 'light') => {
     setShowCompressMenu(false)
     if (!pdfBytes) return
-    const { compressPdf, downloadBlob } = await import('@/lib/export-engine')
+    const { compressPdf, exportFlattenedPdf, downloadBlob } = await import('@/lib/export-engine')
 
-    store.setLoading(true, 'PDFを圧縮中...')
+    store.setLoading(true, '編集内容を反映中...')
     try {
-      const pdfDoc = await window.pdfjsLib.getDocument({ data: pdfBytes.slice() }).promise
       const originalSize = pdfBytes.length
-      const result = await compressPdf(pdfDoc, level, (current, total) => {
+
+      // Step 1: Flatten annotations into PDF (so compression includes edits)
+      const sourceDoc = await window.pdfjsLib.getDocument({ data: pdfBytes.slice() }).promise
+      const flattenedBytes = await exportFlattenedPdf(
+        sourceDoc,
+        store.annotations,
+        (current, total) => {
+          store.setLoading(true, `編集内容を反映中... ${current} / ${total} ページ`)
+        }
+      )
+
+      // Step 2: Compress the flattened PDF
+      const flattenedDoc = await window.pdfjsLib.getDocument({ data: flattenedBytes.slice() }).promise
+      const result = await compressPdf(flattenedDoc, level, (current, total) => {
         store.setLoading(true, `圧縮中... ${current} / ${total} ページ`)
-      }, pdfBytes)
+      }, flattenedBytes)
+
       const sizeStr = (sz: number) => sz > 1048576 ? (sz / 1048576).toFixed(1) + ' MB' : Math.round(sz / 1024) + ' KB'
       store.setLoading(false)
 
-      // If compressed is larger than original, use original
-      if (result.length >= originalSize) {
-        showToast(`このPDFは既に十分小さいため圧縮できません（${sizeStr(originalSize)}）`, 'info')
-        return
-      }
+      // If compressed is larger than flattened, use flattened
+      const finalBytes = result.length >= flattenedBytes.length ? flattenedBytes : result
+      const ratio = Math.round((1 - finalBytes.length / originalSize) * 100)
 
-      const ratio = Math.round((1 - result.length / originalSize) * 100)
-      showToast(`圧縮完了！ ${sizeStr(originalSize)} → ${sizeStr(result.length)}（${ratio}%削減）`, 'success')
+      if (finalBytes.length >= originalSize) {
+        showToast(`圧縮完了 ${sizeStr(originalSize)} → ${sizeStr(finalBytes.length)}（編集反映済み）`, 'success')
+      } else {
+        showToast(`圧縮完了！ ${sizeStr(originalSize)} → ${sizeStr(finalBytes.length)}（${ratio}%削減・編集反映済み）`, 'success')
+      }
       const fileName = store.projectName ? `${store.projectName}_compressed.pdf` : 'compressed.pdf'
-      downloadBlob(result, fileName, 'application/pdf')
+      downloadBlob(finalBytes, fileName, 'application/pdf')
     } catch (err) {
       showToast('圧縮に失敗しました: ' + (err as Error).message, 'error')
     } finally {
@@ -954,10 +1005,7 @@ export default function Toolbar({ pdfDoc }: ToolbarProps = {}) {
             <button onClick={handlePrev} disabled={currentPage <= 1}
               className="px-1.5 py-0.5 text-xs rounded hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed"
               title="前のページ">◀</button>
-            <span className="text-xs whitespace-nowrap px-1 min-w-[40px] text-center">
-              <span className="font-semibold text-gray-700">{currentPage}</span>
-              <span className="text-gray-400">/{totalPages}</span>
-            </span>
+            <PageInput currentPage={currentPage} totalPages={totalPages} setCurrentPage={setCurrentPage} />
             <button onClick={handleNext} disabled={currentPage >= totalPages}
               className="px-1.5 py-0.5 text-xs rounded hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed"
               title="次のページ">▶</button>
