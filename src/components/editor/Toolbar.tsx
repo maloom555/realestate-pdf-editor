@@ -173,6 +173,20 @@ export default function Toolbar({ pdfDoc }: ToolbarProps = {}) {
   const [signatureTemplates, setSignatureTemplates] = useState<import('@/types/annotations').SignatureTemplate[]>([])
   const loadProjectInputRef = useRef<HTMLInputElement>(null)
 
+  // Close PDF download/compress dropdowns on outside click
+  useEffect(() => {
+    if (!showExportMenu && !showCompressMenu) return
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as HTMLElement
+      // Don't close if clicking inside a menu or its toggle button
+      if (target.closest('[data-toolbar-menu]') || target.closest('[data-toolbar-menu-trigger]')) return
+      setShowExportMenu(false)
+      setShowCompressMenu(false)
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [showExportMenu, showCompressMenu])
+
   // Load signature templates when stamp picker opens
   useEffect(() => {
     if (showStampPicker) {
@@ -859,10 +873,10 @@ export default function Toolbar({ pdfDoc }: ToolbarProps = {}) {
             <button onClick={() => handleExport('bottom-center')}
               className="px-3 py-2 text-sm border border-indigo-300 text-indigo-600 rounded-lg">+頁番号</button>
             <div className="relative">
-              <button onClick={() => setShowCompressMenu(!showCompressMenu)}
+              <button data-toolbar-menu-trigger onClick={() => setShowCompressMenu(!showCompressMenu)}
                 className="px-3 py-2 text-sm border border-orange-300 text-orange-600 rounded-lg">圧縮 ▾</button>
               {showCompressMenu && (
-                <div className="absolute bottom-full left-0 mb-1 bg-white border border-gray-200 rounded-lg shadow-lg z-10 min-w-[160px]">
+                <div data-toolbar-menu className="absolute bottom-full left-0 mb-1 bg-white border border-gray-200 rounded-lg shadow-lg z-10 min-w-[160px]">
                   <button onClick={() => handleCompress('light')} className="block w-full px-4 py-2 text-sm text-left hover:bg-gray-50">軽量圧縮（高品質）</button>
                   <button onClick={() => handleCompress('standard')} className="block w-full px-4 py-2 text-sm text-left hover:bg-gray-50">標準圧縮</button>
                   <button onClick={() => handleCompress('high')} className="block w-full px-4 py-2 text-sm text-left hover:bg-gray-50">最大圧縮（小サイズ）</button>
@@ -1032,13 +1046,13 @@ export default function Toolbar({ pdfDoc }: ToolbarProps = {}) {
                 className="px-3 py-1 text-xs bg-indigo-600 text-white rounded-l-lg font-semibold hover:bg-indigo-700 transition-colors">
                 PDFダウンロード
               </button>
-              <button onClick={() => setShowExportMenu(!showExportMenu)}
+              <button data-toolbar-menu-trigger onClick={() => setShowExportMenu(!showExportMenu)}
                 className="px-1.5 py-1 text-xs bg-indigo-700 text-white rounded-r-lg hover:bg-indigo-800 transition-colors border-l border-indigo-500">
                 ▾
               </button>
             </div>
             {showExportMenu && (
-              <div className="absolute bottom-full right-0 mb-1 bg-white border border-gray-200 rounded-lg shadow-lg z-10 min-w-[200px]">
+              <div data-toolbar-menu className="absolute bottom-full right-0 mb-1 bg-white border border-gray-200 rounded-lg shadow-lg z-10 min-w-[200px]">
                 <div className="px-3 py-1.5 text-[10px] text-gray-400 font-semibold border-b border-gray-100">ページ番号付きで出力</div>
                 <button onClick={() => handleExport('bottom-center')} className="block w-full px-4 py-2 text-xs text-left hover:bg-gray-50">ページ番号（中央下）</button>
                 <button onClick={() => handleExport('bottom-right')} className="block w-full px-4 py-2 text-xs text-left hover:bg-gray-50">ページ番号（右下）</button>
@@ -1048,13 +1062,13 @@ export default function Toolbar({ pdfDoc }: ToolbarProps = {}) {
           </div>
 
           <div className="relative">
-            <button onClick={() => setShowCompressMenu(!showCompressMenu)} disabled={!pdfBytes}
+            <button data-toolbar-menu-trigger onClick={() => setShowCompressMenu(!showCompressMenu)} disabled={!pdfBytes}
               className="px-2 py-1 text-xs border border-orange-300 text-orange-600 rounded-lg hover:bg-orange-50 disabled:opacity-30 disabled:cursor-not-allowed bg-white"
               title="PDFファイルサイズを圧縮します">
               圧縮 ▾
             </button>
             {showCompressMenu && (
-              <div className="absolute bottom-full right-0 mb-1 bg-white border border-gray-200 rounded-lg shadow-lg z-10 min-w-[170px]">
+              <div data-toolbar-menu className="absolute bottom-full right-0 mb-1 bg-white border border-gray-200 rounded-lg shadow-lg z-10 min-w-[170px]">
                 <button onClick={() => handleCompress('light')} className="block w-full px-4 py-2 text-xs text-left hover:bg-gray-50">軽量圧縮（高品質）</button>
                 <button onClick={() => handleCompress('standard')} className="block w-full px-4 py-2 text-xs text-left hover:bg-gray-50">標準圧縮</button>
                 <button onClick={() => handleCompress('high')} className="block w-full px-4 py-2 text-xs text-left hover:bg-gray-50">最大圧縮（小サイズ）</button>
