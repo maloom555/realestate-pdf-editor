@@ -1072,7 +1072,11 @@ export default function Toolbar({ pdfDoc }: ToolbarProps = {}) {
       {/* Stamp Picker - overlay */}
       {showStampPicker && !showSignatureEditor && (
         <>
-        <div className="fixed inset-0 z-10" onClick={() => setShowStampPicker(false)} />
+        <div className="fixed inset-0 z-10" onClick={() => {
+          setShowStampPicker(false)
+          // If user didn't pick a stamp, also deselect the stamp tool
+          if (currentTool === 'stamp') setCurrentTool('select')
+        }} />
         <div className="absolute left-0 right-0 top-full z-20 px-3 py-3 bg-white/95 backdrop-blur-sm border-b border-gray-200 shadow-md">
           {Object.entries(stampsByCategory).map(([category, stamps]) => (
             <div key={category} className="mb-2">

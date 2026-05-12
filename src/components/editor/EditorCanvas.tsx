@@ -433,6 +433,10 @@ export default function EditorCanvas({ pdfDoc }: EditorCanvasProps) {
         })
         // Keep pendingStampRef alive for continuous placement
         // User can switch tools to stop placing
+      } else {
+        // Stamp tool active but no stamp picked → close picker and revert to select
+        if (store.showStampPicker) store.setShowStampPicker(false)
+        setCurrentTool('select')
       }
       return
     }
