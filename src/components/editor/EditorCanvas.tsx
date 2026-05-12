@@ -342,6 +342,29 @@ export default function EditorCanvas({ pdfDoc }: EditorCanvasProps) {
     }
 
     if (currentTool === 'text') {
+      // If a template text is pending, place it directly at click position
+      if (pendingTemplateTextRef.current) {
+        const tplText = pendingTemplateTextRef.current
+        pendingTemplateTextRef.current = null
+        addAndSelect(currentPage, {
+          id: generateId(),
+          type: 'text',
+          color: maskColor,
+          data: {
+            x: pos.x,
+            y: pos.y,
+            text: tplText,
+            fontSize,
+            fontFamily,
+            bold: false,
+            underline: false,
+            textBox: false,
+          },
+        })
+        setCurrentTool('select')
+        return
+      }
+
       // Show text input at click position (pos is in PDF space, convert to display)
       const canvas = maskCanvasRef.current!
       const rect = canvas.getBoundingClientRect()
@@ -1319,35 +1342,15 @@ export default function EditorCanvas({ pdfDoc }: EditorCanvasProps) {
     setCurrentTool('stamp')
   }, [setCurrentTool])
 
-  // Insert template text as annotation at center of visible area
+  // Pending template text: stored until user clicks on canvas
+  const pendingTemplateTextRef = useRef<string | null>(null)
+
   const insertTemplateText = useCallback((text: string) => {
-    const container = containerRef.current
-    const canvas = pdfCanvasRef.current
-    let cx = 150 / scale, cy = 150 / scale
-    if (container && canvas) {
-      const cRect = canvas.getBoundingClientRect()
-      const conRect = container.getBoundingClientRect()
-      cx = (conRect.width / 2 - cRect.left + conRect.left) / scale
-      cy = (conRect.height / 2 - cRect.top + conRect.top) / scale
-    }
-    const newId = generateId()
-    addAndSelect(currentPage, {
-      id: newId,
-      type: 'text',
-      color: maskColor,
-      data: {
-        x: cx,
-        y: cy,
-        text,
-        fontSize,
-        fontFamily,
-        bold: false,
-        underline: false,
-        textBox: false,
-      },
-    })
-    setCurrentTool('select')
-  }, [currentPage, scale, maskColor, fontSize, fontFamily, addAndSelect, setCurrentTool])
+    // Store the template text and switch to text tool;
+    // next canvas click places it at that position.
+    pendingTemplateTextRef.current = text
+    setCurrentTool('text')
+  }, [setCurrentTool])
 
   // Signature text edit dialog
   const [sigEditState, setSigEditState] = useState<{ id: string; text: string } | null>(null)
