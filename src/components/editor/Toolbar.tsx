@@ -841,7 +841,7 @@ export default function Toolbar({ pdfDoc }: ToolbarProps = {}) {
           <div className="flex items-center gap-1 flex-shrink-0 border-l border-gray-200 pl-1.5">
             <button onClick={duplicateAnnotation} disabled={!selectedAnnotationId}
               className="w-9 h-9 flex items-center justify-center text-sm text-gray-500 disabled:opacity-30 rounded active:bg-gray-100"
-              title="複製 (Ctrl+C)">📋</button>
+              title="コピー＆貼付け (Ctrl+C)">📋</button>
             <button onClick={() => {
                 emit('paste-clipboard-image')
               }}
@@ -975,7 +975,7 @@ export default function Toolbar({ pdfDoc }: ToolbarProps = {}) {
         <div className="flex items-center gap-0.5">
           <button onClick={duplicateAnnotation} disabled={!selectedAnnotationId}
             className="px-2 py-1 text-xs border border-gray-200 rounded-lg text-gray-500 hover:bg-white disabled:opacity-30 disabled:cursor-not-allowed"
-            title="複製 (Ctrl+C)">📋<span className="hidden xl:inline ml-1">コピー</span></button>
+            title="コピー＆貼付け (Ctrl+C)">📋<span className="hidden xl:inline ml-1">複製</span></button>
           <button onClick={() => {
               const fn = (window as unknown as Record<string, () => void>).__pasteClipboardImage
               if (fn) fn()
