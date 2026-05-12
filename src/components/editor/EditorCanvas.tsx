@@ -1597,9 +1597,19 @@ export default function EditorCanvas({ pdfDoc }: EditorCanvasProps) {
     return () => container.removeEventListener('wheel', handleWheel)
   }, [scale, store])
 
-  // Reset polylinePoints when switching tools
+  // Reset pending state when switching tools
   useEffect(() => {
     drawStateRef.current.polylinePoints = []
+    drawStateRef.current.calloutPending = null
+    // Clear pendings that don't belong to the new tool
+    if (currentTool !== 'text') {
+      pendingTemplateTextRef.current = null
+    }
+    if (currentTool !== 'stamp') {
+      pendingStampRef.current = null
+      pendingSignatureRef.current = null
+      stampLegModeRef.current = false
+    }
   }, [currentTool])
 
   const cursorClass = currentTool === 'select' ? 'cursor-default' :
