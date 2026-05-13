@@ -256,6 +256,20 @@ export default function PageEditor({ pdfDoc, onReloadPdf }: PageEditorProps) {
   const [showCompressMenu, setShowCompressMenu] = useState(false)
   const [showResizeMenu, setShowResizeMenu] = useState(false)
 
+  // Close dropdown menus on outside click
+  useEffect(() => {
+    if (!showRotateMenu && !showCompressMenu && !showResizeMenu) return
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as HTMLElement
+      if (target.closest('[data-pe-menu]') || target.closest('[data-pe-menu-trigger]')) return
+      setShowRotateMenu(false)
+      setShowCompressMenu(false)
+      setShowResizeMenu(false)
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [showRotateMenu, showCompressMenu, showResizeMenu])
+
   const handleResize = async (sizeKey: string) => {
     setShowResizeMenu(false)
     if (selectedPages.size === 0) return
@@ -348,12 +362,12 @@ export default function PageEditor({ pdfDoc, onReloadPdf }: PageEditorProps) {
 
         {/* Rotate dropdown */}
         <div className="relative">
-          <button onClick={() => setShowRotateMenu(!showRotateMenu)} disabled={selectedPages.size === 0}
+          <button data-pe-menu-trigger onClick={() => setShowRotateMenu(!showRotateMenu)} disabled={selectedPages.size === 0}
             className="px-3 py-1.5 text-sm sm:text-xs border border-gray-200 text-gray-600 rounded-lg hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed">
             回転 ▾
           </button>
           {showRotateMenu && (
-            <div className="absolute top-full left-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-10">
+            <div data-pe-menu className="absolute top-full left-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-10">
               <button onClick={() => { handleRotate(90); setShowRotateMenu(false) }}
                 className="block w-full px-4 py-2 text-sm text-left hover:bg-gray-50">90° 右</button>
               <button onClick={() => { handleRotate(180); setShowRotateMenu(false) }}
@@ -366,12 +380,14 @@ export default function PageEditor({ pdfDoc, onReloadPdf }: PageEditorProps) {
 
         {/* Resize dropdown */}
         <div className="relative">
-          <button onClick={() => setShowResizeMenu(!showResizeMenu)} disabled={selectedPages.size === 0}
-            className="px-3 py-1.5 text-sm sm:text-xs border border-gray-200 text-gray-600 rounded-lg hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed">
+          <button data-pe-menu-trigger onClick={() => setShowResizeMenu(!showResizeMenu)} disabled={selectedPages.size === 0}
+            className="px-3 py-1.5 text-sm sm:text-xs border border-gray-200 text-gray-600 rounded-lg hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed"
+            title="選択ページのサイズを変更（全ページ統一にする場合は全選択してから）">
             サイズ ▾
           </button>
           {showResizeMenu && (
-            <div className="absolute top-full left-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-10 min-w-[160px]">
+            <div data-pe-menu className="absolute top-full left-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-10 min-w-[160px]">
+              <div className="px-3 py-1.5 text-[10px] text-gray-400 font-semibold border-b border-gray-100">選択ページのサイズ変更</div>
               {Object.entries(
                 // dynamic import workaround: inline the sizes
                 {
@@ -405,12 +421,12 @@ export default function PageEditor({ pdfDoc, onReloadPdf }: PageEditorProps) {
           PDFダウンロード
         </button>
         <div className="relative">
-          <button onClick={() => setShowCompressMenu(!showCompressMenu)}
+          <button data-pe-menu-trigger onClick={() => setShowCompressMenu(!showCompressMenu)}
             className="px-3 py-1.5 text-sm sm:text-xs border border-orange-300 text-orange-600 rounded-lg hover:bg-orange-50">
-            圧縮 ▾
+            圧縮DL ▾
           </button>
           {showCompressMenu && (
-            <div className="absolute top-full left-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-10 min-w-[140px]">
+            <div data-pe-menu className="absolute top-full left-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-10 min-w-[140px]">
               <button onClick={() => handleCompress('light')} className="block w-full px-4 py-2 text-sm text-left hover:bg-gray-50">軽量圧縮</button>
               <button onClick={() => handleCompress('standard')} className="block w-full px-4 py-2 text-sm text-left hover:bg-gray-50">標準圧縮</button>
               <button onClick={() => handleCompress('high')} className="block w-full px-4 py-2 text-sm text-left hover:bg-gray-50">最大圧縮</button>
