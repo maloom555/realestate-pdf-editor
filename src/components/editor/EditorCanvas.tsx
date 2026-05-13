@@ -863,6 +863,25 @@ export default function EditorCanvas({ pdfDoc }: EditorCanvasProps) {
             nw = size
             nh = size
           }
+          // Stamps: corner handles preserve aspect ratio
+          const isCorner = mode === 'resize-nw' || mode === 'resize-ne' || mode === 'resize-sw' || mode === 'resize-se'
+          if (ann.type === 'stamp' && isCorner && o.w > 0 && o.h > 0) {
+            const aspect = o.w / o.h
+            const newAspect = nw / nh
+            if (newAspect > aspect) {
+              // Width grew more → adjust height
+              nh = nw / aspect
+              if (mode === 'resize-nw' || mode === 'resize-ne') {
+                ny = o.y + o.h - nh
+              }
+            } else {
+              // Height grew more → adjust width
+              nw = nh * aspect
+              if (mode === 'resize-nw' || mode === 'resize-sw') {
+                nx = o.x + o.w - nw
+              }
+            }
+          }
           updateAnnotation(currentPage, ann.id, {
             data: { ...ann.data, x: nx, y: ny, w: nw, h: nh } as unknown as typeof ann.data,
           })

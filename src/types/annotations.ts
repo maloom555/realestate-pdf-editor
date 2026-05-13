@@ -82,6 +82,7 @@ export interface CalloutData {
   underline?: boolean
   fontFamily?: string
   arrowSize?: number
+  bgOpacity?: number  // Box background opacity 0-1 (default 0.9)
 }
 
 export interface PolylineData {
