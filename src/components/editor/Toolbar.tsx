@@ -875,7 +875,7 @@ export default function Toolbar({ pdfDoc }: ToolbarProps = {}) {
               className="px-3 py-2 text-sm border border-indigo-300 text-indigo-600 rounded-lg">+頁番号</button>
             <div className="relative">
               <button data-toolbar-menu-trigger onClick={() => setShowCompressMenu(!showCompressMenu)}
-                className="px-3 py-2 text-sm border border-orange-300 text-orange-600 rounded-lg">圧縮 ▾</button>
+                className="px-3 py-2 text-sm border border-orange-300 text-orange-600 rounded-lg">圧縮DL ▾</button>
               {showCompressMenu && (
                 <div data-toolbar-menu className="absolute top-full left-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-10 min-w-[160px]">
                   <button onClick={() => handleCompress('light')} className="block w-full px-4 py-2 text-sm text-left hover:bg-gray-50">軽量圧縮（高品質）</button>
@@ -1045,7 +1045,7 @@ export default function Toolbar({ pdfDoc }: ToolbarProps = {}) {
             <button data-toolbar-menu-trigger onClick={() => setShowCompressMenu(!showCompressMenu)} disabled={!pdfBytes}
               className="px-2 py-1 text-xs border border-orange-300 text-orange-600 rounded-lg hover:bg-orange-50 disabled:opacity-30 disabled:cursor-not-allowed bg-white"
               title="PDFファイルサイズを圧縮します">
-              圧縮 ▾
+              圧縮DL ▾
             </button>
             {showCompressMenu && (
               <div data-toolbar-menu className="absolute top-full right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-30 min-w-[170px]">
