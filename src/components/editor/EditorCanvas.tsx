@@ -276,6 +276,9 @@ export default function EditorCanvas({ pdfDoc }: EditorCanvasProps) {
               } else if (handle === 'stamp-leg') {
                 const sd = selected.data as StampData
                 ds.origData = { legX: sd.legX, legY: sd.legY }
+              } else if (handle === 'stamp-body-only') {
+                const sd = selected.data as StampData
+                ds.origData = { x: sd.x, y: sd.y }
               } else if (handle === 'callout-start') {
                 const d = selected.data as CalloutData
                 ds.origData = { startX: d.startX, startY: d.startY }
@@ -661,6 +664,14 @@ export default function EditorCanvas({ pdfDoc }: EditorCanvasProps) {
           const o = orig as { legX: number; legY: number }
           updateAnnotation(currentPage, ann.id, {
             data: { ...ann.data, legX: o.legX + dx, legY: o.legY + dy } as unknown as typeof ann.data,
+          })
+        }
+      } else if (ds.dragMode === 'stamp-body-only') {
+        // Move stamp body without affecting leg position
+        if (ann.type === 'stamp') {
+          const o = orig as { x: number; y: number }
+          updateAnnotation(currentPage, ann.id, {
+            data: { ...ann.data, x: o.x + dx, y: o.y + dy } as unknown as typeof ann.data,
           })
         }
       } else if (ds.dragMode === 'callout-start') {

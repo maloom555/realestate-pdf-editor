@@ -906,10 +906,16 @@ export function hitTestHandle(
     }
   }
 
-  // Stamp: check leg handle
+  // Stamp: check center handle (move body only) and leg handle
   if (ann?.type === 'stamp') {
     const sd = ann.data as StampData
     if (sd.legX != null && sd.legY != null) {
+      // Stamp center handle: only present when leg exists
+      const ccx = sd.x + sd.w / 2
+      const ccy = sd.y + sd.h / 2
+      if (Math.hypot(tx - ccx, ty - ccy) < hs * 2) {
+        return 'stamp-body-only'
+      }
       if (Math.hypot(tx - sd.legX, ty - sd.legY) < hs * 2.5) {
         return 'stamp-leg'
       }
@@ -1057,8 +1063,27 @@ export function drawSelectionUI(ctx: CanvasRenderingContext2D, bounds: RectData,
   if (ann?.type === 'stamp') {
     const sd = ann.data as StampData
     if (sd.legX != null && sd.legY != null) {
-      const lx = sd.legX * s, ly = sd.legY * s
+      // Stamp center handle (move stamp body only, leg stays fixed)
+      // Drawn as double circle to distinguish from regular drag
+      const cx = (sd.x + sd.w / 2) * s
+      const cy = (sd.y + sd.h / 2) * s
       ctx.setLineDash([])
+      ctx.fillStyle = '#ffffff'
+      ctx.strokeStyle = '#6366f1'
+      ctx.lineWidth = 1.5
+      // outer circle
+      ctx.beginPath()
+      ctx.arc(cx, cy, 9, 0, Math.PI * 2)
+      ctx.fill()
+      ctx.stroke()
+      // inner circle
+      ctx.beginPath()
+      ctx.arc(cx, cy, 4, 0, Math.PI * 2)
+      ctx.fillStyle = '#6366f1'
+      ctx.fill()
+
+      // Leg endpoint handle (yellow diamond, original behavior)
+      const lx = sd.legX * s, ly = sd.legY * s
       const hr = 6
       ctx.beginPath()
       ctx.moveTo(lx, ly - hr)
