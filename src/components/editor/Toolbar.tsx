@@ -785,6 +785,30 @@ export default function Toolbar({ pdfDoc }: ToolbarProps = {}) {
         </button>
       )}
 
+      {/* Stamp background opacity slider (non-signature stamps only) */}
+      {isSelectedStamp && !(selectedAnn.data as StampData).isSignature && (selectedAnn.data as StampData).stampId !== 'compass' && (
+        <div className="flex items-center gap-1.5">
+          <label className="text-xs text-gray-500 whitespace-nowrap">背景:</label>
+          <input
+            type="range"
+            min={0}
+            max={100}
+            value={Math.round(((selectedAnn.data as StampData).bgOpacity ?? 0.2) * 100)}
+            onChange={(e) => {
+              const val = parseInt(e.target.value, 10) / 100
+              updateAnnotation(currentPage, selectedAnn.id, {
+                data: { ...selectedAnn.data, bgOpacity: val } as unknown as typeof selectedAnn.data,
+              })
+            }}
+            className="w-20 accent-indigo-500"
+            title="スタンプの背景塗り濃度（0〜100%）"
+          />
+          <span className="text-xs text-gray-400 min-w-[32px]">
+            {Math.round(((selectedAnn.data as StampData).bgOpacity ?? 0.2) * 100)}%
+          </span>
+        </div>
+      )}
+
       {/* Signature stamp edit button */}
       {isSelectedStamp && (selectedAnn.data as StampData).isSignature && (
         <button onClick={() => {

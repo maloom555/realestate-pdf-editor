@@ -34,6 +34,7 @@ export interface StampData {
   label: string
   legX?: number  // Arrow/leg target X
   legY?: number  // Arrow/leg target Y
+  bgOpacity?: number  // Background fill opacity (0-1, default 0.2)
   // Signature stamp fields
   isSignature?: boolean
   multiLineText?: string  // Full multi-line text (after variable substitution)

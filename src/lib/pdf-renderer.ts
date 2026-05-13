@@ -565,6 +565,17 @@ export function drawAnnotation(ctx: CanvasRenderingContext2D, ann: Annotation, s
       }
 
       // Regular stamp (single-line)
+      // Background fill (uses stamp color with opacity)
+      const bgOpacity = d.bgOpacity != null ? d.bgOpacity : 0.2
+      if (bgOpacity > 0) {
+        const savedAlpha = ctx.globalAlpha
+        ctx.globalAlpha = savedAlpha * bgOpacity
+        ctx.fillStyle = stampColor
+        ctx.beginPath()
+        ctx.roundRect(d.x, d.y, d.w, d.h, radius)
+        ctx.fill()
+        ctx.globalAlpha = savedAlpha
+      }
       ctx.strokeStyle = stampColor
       ctx.lineWidth = 3
       ctx.beginPath()
