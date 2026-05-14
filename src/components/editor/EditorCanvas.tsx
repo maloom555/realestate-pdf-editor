@@ -1269,8 +1269,14 @@ export default function EditorCanvas({ pdfDoc }: EditorCanvasProps) {
 
     if (!textValue.trim()) {
       setTextInput((prev) => ({ ...prev, visible: false }))
+      const wasNewPlacement = !editingAnnotationId
       ds.calloutPending = null
       setEditingAnnotationId(null)
+      // If user opened text/callout input and didn't type anything,
+      // cancel and revert to select tool (avoid spamming text inputs)
+      if (wasNewPlacement && (currentTool === 'text' || currentTool === 'callout')) {
+        setCurrentTool('select')
+      }
       return
     }
 
@@ -1345,7 +1351,7 @@ export default function EditorCanvas({ pdfDoc }: EditorCanvasProps) {
 
     setTextInput((prev) => ({ ...prev, visible: false }))
     setTextValue('')
-  }, [textValue, textInput, maskColor, fontSize, fontFamily, currentPage, addAnnotation, addAndSelect, editingAnnotationId, annotations, updateAnnotation])
+  }, [textValue, textInput, maskColor, fontSize, fontFamily, currentPage, addAnnotation, addAndSelect, editingAnnotationId, annotations, updateAnnotation, currentTool, setCurrentTool])
 
   // Keep commitTextRef updated to latest commitText (for handleMouseDown to call without circular dep)
   // Direct assignment (not in useEffect) - avoids unnecessary effect runs
