@@ -299,6 +299,20 @@ export default function EditorCanvas({ pdfDoc }: EditorCanvasProps) {
           }
           if (hitTestAnnotation(pos.x, pos.y, selected)) {
             store.saveUndoSnapshot(currentPage)
+            // Ctrl+drag: duplicate then drag the copy
+            if ((e as React.MouseEvent).ctrlKey || (e as React.MouseEvent).metaKey) {
+              const copy: Annotation = {
+                ...JSON.parse(JSON.stringify(selected)),
+                id: generateId(),
+              } as Annotation
+              store.addAnnotation(currentPage, copy)
+              setSelectedAnnotationId(copy.id)
+              ds.dragMode = 'move'
+              ds.dragStart = pos
+              ds.origData = JSON.parse(JSON.stringify(copy.data))
+              setIsDrawing(true)
+              return
+            }
             ds.dragMode = 'move'
             ds.dragStart = pos
             ds.origData = JSON.parse(JSON.stringify(selected.data))
@@ -314,6 +328,22 @@ export default function EditorCanvas({ pdfDoc }: EditorCanvasProps) {
           if (e.shiftKey) {
             // Shift+click: toggle multi-selection
             store.toggleSelectedAnnotation(pageAnns[i].id)
+            return
+          }
+          // Ctrl+drag: duplicate then drag
+          if ((e as React.MouseEvent).ctrlKey || (e as React.MouseEvent).metaKey) {
+            store.saveUndoSnapshot(currentPage)
+            const target = pageAnns[i]
+            const copy: Annotation = {
+              ...JSON.parse(JSON.stringify(target)),
+              id: generateId(),
+            } as Annotation
+            store.addAnnotation(currentPage, copy)
+            setSelectedAnnotationId(copy.id)
+            ds.dragMode = 'move'
+            ds.dragStart = pos
+            ds.origData = JSON.parse(JSON.stringify(copy.data))
+            setIsDrawing(true)
             return
           }
           // Check if clicking on an already multi-selected item → start group move
