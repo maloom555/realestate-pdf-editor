@@ -809,14 +809,10 @@ function getAnnotationBoundsRaw(ann: Annotation): RectData | null {
         boxW = fs * maxWidth + padding * 2
         boxH = lines.length * lineHeight + padding * 2
       }
-      // Box is fixed at endX/endY center
+      // Return just the text box (arrow tip is handled separately via callout-start)
       const boxX = d.endX - boxW / 2
       const boxY = d.endY - boxH / 2
-      const minX = Math.min(d.startX, d.endX, boxX)
-      const minY = Math.min(d.startY, d.endY, boxY)
-      const maxX = Math.max(d.startX, d.endX, boxX + boxW)
-      const maxY = Math.max(d.startY, d.endY, boxY + boxH)
-      return { x: minX - 5, y: minY - 5, w: maxX - minX + 10, h: maxY - minY + 10 }
+      return { x: boxX, y: boxY, w: boxW, h: boxH }
     }
 
     case 'arrow': {

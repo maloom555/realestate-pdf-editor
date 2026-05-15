@@ -918,24 +918,31 @@ export default function EditorCanvas({ pdfDoc }: EditorCanvasProps) {
             },
           })
         } else if (ann.type === 'callout') {
+          // For callout, resize handles control TEXT SIZE (fontSize), not the arrow tip.
+          // bounds = text box only. Arrow startX/Y stays fixed.
           const o = orig as unknown as { data: CalloutData; bounds: RectData }
           const ob = o.bounds
-          if (!ob) return // safety guard
-          let nx = ob.x, ny = ob.y, nw = ob.w, nh = ob.h
-          if (ds.dragMode.includes('w')) { nx = ob.x + dx; nw = ob.w - dx }
+          if (!ob) return
+          let nw = ob.w, nh = ob.h
+          if (ds.dragMode.includes('w')) { nw = ob.w - dx }
           if (ds.dragMode.includes('e') && !ds.dragMode.includes('w')) { nw = ob.w + dx }
-          if (ds.dragMode === 'resize-ne' || ds.dragMode === 'resize-nw') { ny = ob.y + dy; nh = ob.h - dy }
+          if (ds.dragMode === 'resize-ne' || ds.dragMode === 'resize-nw') { nh = ob.h - dy }
           if (ds.dragMode === 'resize-se' || ds.dragMode === 'resize-sw') { nh = ob.h + dy }
-          if (nw < 10) nw = 10
-          if (nh < 10) nh = 10
-          const sx = nw / ob.w, sy = nh / ob.h
+          if (nw < 20) nw = 20
+          if (nh < 20) nh = 20
+          // Use the larger ratio for uniform-feel scaling
+          const scaleRatio = Math.max(nw / ob.w, nh / ob.h)
+          const originalFs = o.data.fontSize || 16
+          const newFs = Math.max(8, Math.min(72, Math.round(originalFs * scaleRatio)))
+          // Keep box center at original endX/endY (don't move the box, just resize text)
           updateAnnotation(currentPage, ann.id, {
             data: {
               ...ann.data,
-              startX: nx + (o.data.startX - ob.x) * sx,
-              startY: ny + (o.data.startY - ob.y) * sy,
-              endX: nx + (o.data.endX - ob.x) * sx,
-              endY: ny + (o.data.endY - ob.y) * sy,
+              startX: o.data.startX,  // arrow tip unchanged
+              startY: o.data.startY,
+              endX: o.data.endX,      // box center unchanged
+              endY: o.data.endY,
+              fontSize: newFs,
             } as unknown as typeof ann.data,
           })
         } else if (ann.type === 'pen') {
