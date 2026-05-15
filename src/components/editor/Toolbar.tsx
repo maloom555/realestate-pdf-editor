@@ -806,28 +806,50 @@ export default function Toolbar({ pdfDoc }: ToolbarProps = {}) {
         </button>
       )}
 
-      {/* Stamp background opacity slider (non-signature stamps only) */}
+      {/* Stamp background controls (non-signature stamps only) */}
       {isSelectedStamp && !(selectedAnn.data as StampData).isSignature && (selectedAnn.data as StampData).stampId !== 'compass' && (
-        <div className="flex items-center gap-1.5">
-          <label className="text-xs text-gray-500 whitespace-nowrap">背景:</label>
-          <input
-            type="range"
-            min={0}
-            max={100}
-            value={Math.round(((selectedAnn.data as StampData).bgOpacity ?? 0.2) * 100)}
-            onChange={(e) => {
-              const val = parseInt(e.target.value, 10) / 100
+        <>
+          {/* White fill toggle */}
+          <button
+            onClick={() => {
+              const sd = selectedAnn.data as StampData
               updateAnnotation(currentPage, selectedAnn.id, {
-                data: { ...selectedAnn.data, bgOpacity: val } as unknown as typeof selectedAnn.data,
+                data: { ...selectedAnn.data, whiteFill: !sd.whiteFill } as unknown as typeof selectedAnn.data,
               })
             }}
-            className="w-20 accent-indigo-500"
-            title="スタンプの背景塗り濃度（0〜100%）"
-          />
-          <span className="text-xs text-gray-400 min-w-[32px]">
-            {Math.round(((selectedAnn.data as StampData).bgOpacity ?? 0.2) * 100)}%
-          </span>
-        </div>
+            className={`px-2 py-1 text-xs border-2 rounded-lg ${
+              (selectedAnn.data as StampData).whiteFill
+                ? 'border-indigo-500 bg-indigo-50 text-indigo-700 font-semibold'
+                : 'border-gray-200 text-gray-500 hover:bg-gray-50'
+            }`}
+            title="背景を白で塗りつぶす（下の図を完全に隠す）">
+            ⬜ 白塗り{(selectedAnn.data as StampData).whiteFill ? '✓' : ''}
+          </button>
+
+          {/* Background opacity (only when not white-fill) */}
+          {!(selectedAnn.data as StampData).whiteFill && (
+            <div className="flex items-center gap-1.5">
+              <label className="text-xs text-gray-500 whitespace-nowrap">背景:</label>
+              <input
+                type="range"
+                min={0}
+                max={100}
+                value={Math.round(((selectedAnn.data as StampData).bgOpacity ?? 0.2) * 100)}
+                onChange={(e) => {
+                  const val = parseInt(e.target.value, 10) / 100
+                  updateAnnotation(currentPage, selectedAnn.id, {
+                    data: { ...selectedAnn.data, bgOpacity: val } as unknown as typeof selectedAnn.data,
+                  })
+                }}
+                className="w-20 accent-indigo-500"
+                title="スタンプの背景塗り濃度（0〜100%）"
+              />
+              <span className="text-xs text-gray-400 min-w-[32px]">
+                {Math.round(((selectedAnn.data as StampData).bgOpacity ?? 0.2) * 100)}%
+              </span>
+            </div>
+          )}
+        </>
       )}
 
       {/* Signature stamp edit button */}
