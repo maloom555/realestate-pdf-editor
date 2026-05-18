@@ -229,10 +229,14 @@ export function drawAnnotation(ctx: CanvasRenderingContext2D, ann: Annotation, s
         const boxW = maxWidth + padding * 2
         const boxH = lines.length * lineHeight + padding * 2
         const tbr = ann.borderRadius || 0
-        ctx.fillStyle = 'rgba(255,255,255,0.9)'
+        // Background is always opaque (ignores element opacity)
+        const savedAlpha = ctx.globalAlpha
+        ctx.globalAlpha = 1
+        ctx.fillStyle = '#ffffff'
         ctx.beginPath()
         ctx.roundRect(d.x - padding, d.y - padding, boxW, boxH, tbr)
         ctx.fill()
+        ctx.globalAlpha = savedAlpha
         ctx.strokeStyle = ann.color
         ctx.lineWidth = 1.5
         ctx.beginPath()
