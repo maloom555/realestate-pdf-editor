@@ -132,6 +132,42 @@ function PageInput({ currentPage, totalPages, setCurrentPage }: { currentPage: n
   )
 }
 
+// Editable font-size input with decimal support (1.0 - 100.0)
+function FontSizeInput({ value, onChange }: { value: number; onChange: (v: number) => void }) {
+  const [draft, setDraft] = useState<string | null>(null)
+  const display = draft !== null ? draft : `${value}px`
+
+  const commit = () => {
+    if (draft === null) return
+    const trimmed = draft.replace('px', '').trim()
+    if (trimmed === '') { setDraft(null); return }
+    const num = parseFloat(trimmed)
+    if (!isNaN(num)) {
+      const clamped = Math.max(1, Math.min(100, num))
+      // Preserve up to 1 decimal place
+      const rounded = Math.round(clamped * 10) / 10
+      onChange(rounded)
+    }
+    setDraft(null)
+  }
+
+  return (
+    <input
+      type="text"
+      value={display}
+      onFocus={(e) => { setDraft(`${value}`); setTimeout(() => e.currentTarget.select(), 0) }}
+      onChange={(e) => setDraft(e.currentTarget.value)}
+      onBlur={commit}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter') (e.currentTarget as HTMLInputElement).blur()
+        if (e.key === 'Escape') { setDraft(null); (e.currentTarget as HTMLInputElement).blur() }
+      }}
+      className="w-14 text-center text-xs text-gray-600 font-medium bg-transparent rounded focus:outline-none focus:bg-white focus:ring-1 focus:ring-indigo-300"
+      title="フォントサイズ（1.0〜100.0、小数可）"
+    />
+  )
+}
+
 // Zoom input: editable percentage with proper empty-state handling
 function ZoomInput({ scale, setScale }: { scale: number; setScale: (s: number) => void }) {
   const [draft, setDraft] = useState<string | null>(null)
@@ -666,10 +702,10 @@ export default function Toolbar({ pdfDoc }: ToolbarProps = {}) {
           <div className="w-px h-5 bg-gray-300 hidden sm:block" />
           <div className="flex items-center gap-1.5">
             <label className="text-sm sm:text-xs text-gray-400 font-semibold shrink-0">文字:</label>
-            <input type="range" min={1} max={100} value={displayFontSize}
-              onChange={(e) => handleSelectedFontSizeChange(parseInt(e.target.value))}
+            <input type="range" min={1} max={100} step={0.5} value={displayFontSize}
+              onChange={(e) => handleSelectedFontSizeChange(parseFloat(e.target.value))}
               className="w-20 accent-indigo-500" />
-            <span className="text-sm sm:text-xs text-gray-400 min-w-[30px]">{displayFontSize}px</span>
+            <FontSizeInput value={displayFontSize} onChange={handleSelectedFontSizeChange} />
           </div>
           {(currentTool === 'text' || currentTool === 'callout' || isSelectedText || isSelectedCallout) && (
             <select value={displayFontFamily} onChange={(e) => handleFontFamilyChange(e.target.value)}
