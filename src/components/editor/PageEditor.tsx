@@ -26,6 +26,10 @@ export default function PageEditor({ pdfDoc, onReloadPdf }: PageEditorProps) {
   const importInputRef = useRef<HTMLInputElement>(null)
   const thumbRefs = useRef<Map<number, HTMLDivElement>>(new Map())
   const renderingRef = useRef<Set<number>>(new Set())
+  // Truth source for thumbnails (ref). setThumbnails is for React re-render trigger only.
+  // useEffect の deps から `thumbnails` を外せば、batch render 中に古い effect が
+  // cancel されて「読込中…」で固定化するバグを防げる。
+  const thumbnailsRef = useRef<Map<number, string>>(new Map())
 
   // IntersectionObserver: created once, refs attach via callback ref
   // (this ensures pages mounted later, e.g. last page, are also observed)
@@ -56,14 +60,16 @@ export default function PageEditor({ pdfDoc, onReloadPdf }: PageEditorProps) {
     }
   }, [pdfDoc])
 
-  // Render only visible thumbnails, in batches
+  // Render only visible thumbnails, in batches.
+  // IMPORTANT: deps に `thumbnails` を入れない（入れると古いbatchが毎回cancelされる）。
+  // 真実のソースは thumbnailsRef、setThumbnails は React の再描画 trigger のみ。
   useEffect(() => {
     if (!pdfDoc) return
     let cancelled = false
 
     const renderBatch = async () => {
       const toRender = Array.from(visiblePages).filter(
-        (p) => !thumbnails.has(p) && !renderingRef.current.has(p)
+        (p) => !thumbnailsRef.current.has(p) && !renderingRef.current.has(p)
       )
       if (toRender.length === 0) return
 
@@ -79,11 +85,10 @@ export default function PageEditor({ pdfDoc, onReloadPdf }: PageEditorProps) {
           const ctx = canvas.getContext('2d')!
           await page.render({ canvasContext: ctx, viewport }).promise
           if (!cancelled) {
-            setThumbnails((prev) => {
-              const next = new Map(prev)
-              next.set(pageNum, canvas.toDataURL('image/jpeg', 0.6))
-              return next
-            })
+            const dataUrl = canvas.toDataURL('image/jpeg', 0.6)
+            // ref に書く → setState は再描画 trigger のみ
+            thumbnailsRef.current.set(pageNum, dataUrl)
+            setThumbnails(new Map(thumbnailsRef.current))
           }
         } catch {
           // Skip failed pages
@@ -97,10 +102,11 @@ export default function PageEditor({ pdfDoc, onReloadPdf }: PageEditorProps) {
 
     renderBatch()
     return () => { cancelled = true }
-  }, [pdfDoc, visiblePages, thumbnails])
+  }, [pdfDoc, visiblePages])
 
   // Clear thumbnails when pdfDoc changes
   useEffect(() => {
+    thumbnailsRef.current.clear()
     setThumbnails(new Map())
     setVisiblePages(new Set())
     renderingRef.current.clear()
