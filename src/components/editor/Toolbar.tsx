@@ -442,7 +442,7 @@ export default function Toolbar({ pdfDoc }: ToolbarProps = {}) {
 
   // Selected annotation conditions
   const canAdjustSize = selectedAnn && ['circle', 'shape-rect', 'arrow', 'polyline', 'pen'].includes(selectedAnn.type)
-  const isPolyline = selectedAnn && (selectedAnn.type === 'polyline' || selectedAnn.type === 'pen' || selectedAnn.type === 'arrow')
+  const isPolyline = selectedAnn && (selectedAnn.type === 'polyline' || selectedAnn.type === 'pen')
   const canChangeColor = !!selectedAnn
   const isSelectedText = selectedAnn?.type === 'text'
   const isSelectedCallout = selectedAnn?.type === 'callout'
@@ -455,7 +455,7 @@ export default function Toolbar({ pdfDoc }: ToolbarProps = {}) {
   // Close-applicable types (pen/polyline)
   const showCloseForSelected = selectedAnn && ['pen', 'polyline'].includes(selectedAnn.type)
   // Dash-applicable types
-  const dashToolTypes = ['pen', 'circle', 'shape-rect', 'polyline', 'arrow']
+  const dashToolTypes = ['pen', 'circle', 'shape-rect', 'polyline']
   const showDashForTool = dashToolTypes.includes(currentTool)
   const showDashForSelected = selectedAnn && dashToolTypes.includes(selectedAnn.type)
   // Border-radius applicable types
