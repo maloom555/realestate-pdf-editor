@@ -30,6 +30,31 @@ const COLOR_PALETTE = [
   '#ffffff', '#facc15', '#84cc16', '#06b6d4',
 ]
 
+const MY_COLORS_KEY = 'pdf-editor:my-colors'
+const MY_COLORS_MAX = 6
+const PALETTE_SET = new Set(COLOR_PALETTE.map((c) => c.toLowerCase()))
+
+function loadMyColors(): string[] {
+  if (typeof localStorage === 'undefined') return []
+  try {
+    const raw = localStorage.getItem(MY_COLORS_KEY)
+    if (!raw) return []
+    const parsed = JSON.parse(raw)
+    return Array.isArray(parsed) ? parsed.filter((v): v is string => typeof v === 'string') : []
+  } catch {
+    return []
+  }
+}
+
+function saveMyColors(colors: string[]) {
+  if (typeof localStorage === 'undefined') return
+  try {
+    localStorage.setItem(MY_COLORS_KEY, JSON.stringify(colors))
+  } catch {
+    // localStorage full or restricted - ignore silently
+  }
+}
+
 const FONT_FAMILIES = [
   { value: 'Noto Sans JP', label: 'Noto Sans JP' },
   { value: 'Yu Gothic', label: '游ゴシック' },
@@ -402,12 +427,34 @@ export default function Toolbar({ pdfDoc }: ToolbarProps = {}) {
   const showRadiusForTool = radiusTypes.includes(currentTool)
   const showRadiusForSelected = selectedAnn && (radiusTypes.includes(selectedAnn.type) || (selectedAnn.type === 'text' && (selectedAnn.data as { textBox?: boolean }).textBox))
 
-  // Handle color change
-  const handleColorChange = (color: string) => {
+  // My Colors (saved custom colors, persisted to localStorage)
+  const [myColors, setMyColors] = useState<string[]>([])
+  useEffect(() => {
+    setMyColors(loadMyColors())
+  }, [])
+
+  // Handle color change. If a custom color (not in palette) is chosen,
+  // auto-save it to "My Colors" for quick reuse.
+  const handleColorChange = (color: string, registerToMy = false) => {
     if (currentTool === 'select' && selectedAnn) {
       updateAnnotation(currentPage, selectedAnn.id, { color })
     }
     setMaskColor(color)
+    if (registerToMy && color && !PALETTE_SET.has(color.toLowerCase())) {
+      setMyColors((prev) => {
+        const next = [color, ...prev.filter((c) => c.toLowerCase() !== color.toLowerCase())].slice(0, MY_COLORS_MAX)
+        saveMyColors(next)
+        return next
+      })
+    }
+  }
+
+  const handleRemoveMyColor = (color: string) => {
+    setMyColors((prev) => {
+      const next = prev.filter((c) => c !== color)
+      saveMyColors(next)
+      return next
+    })
   }
 
   // Handle font family change
@@ -528,9 +575,44 @@ export default function Toolbar({ pdfDoc }: ToolbarProps = {}) {
                 style={{ backgroundColor: c }} title={c} />
             ))}
           </div>
-          <input type="color" value={canChangeColor ? selectedAnn.color : maskColor}
-            onChange={(e) => handleColorChange(e.target.value)}
-            className="w-6 h-6 border border-gray-300 rounded cursor-pointer p-0 shrink-0" title="カスタムカラー" />
+          {/* Custom color picker: rainbow + "+" icon to make it discoverable */}
+          <label
+            className="relative w-6 h-6 sm:w-5 sm:h-5 rounded-sm border-2 border-gray-300 hover:border-indigo-400 cursor-pointer overflow-hidden flex items-center justify-center shrink-0"
+            title="カスタムカラーを選択（自動的にマイカラーに保存）"
+            style={{
+              background: 'conic-gradient(from 0deg, #f43f5e, #f59e0b, #eab308, #84cc16, #10b981, #06b6d4, #6366f1, #a855f7, #ec4899, #f43f5e)',
+            }}
+          >
+            <span className="absolute inset-0 flex items-center justify-center text-[10px] sm:text-[9px] font-bold text-white pointer-events-none"
+              style={{ textShadow: '0 0 2px rgba(0,0,0,0.7)' }}>+</span>
+            <input
+              type="color"
+              value={canChangeColor ? selectedAnn.color : maskColor}
+              onChange={(e) => handleColorChange(e.target.value, true)}
+              className="absolute inset-0 opacity-0 cursor-pointer"
+            />
+          </label>
+          {/* My Colors (saved) */}
+          {myColors.length > 0 && (
+            <>
+              <div className="w-px h-4 bg-gray-300 mx-0.5" />
+              <div className="flex items-center gap-0.5 flex-wrap" title="マイカラー（右クリックで削除）">
+                {myColors.map((c) => (
+                  <button
+                    key={c}
+                    onClick={() => handleColorChange(c)}
+                    onContextMenu={(e) => { e.preventDefault(); handleRemoveMyColor(c) }}
+                    className={`w-6 h-6 sm:w-5 sm:h-5 rounded-sm border-2 transition-all ${
+                      (canChangeColor ? selectedAnn.color : maskColor) === c
+                        ? 'border-indigo-500 scale-125' : 'border-gray-300 hover:border-indigo-400'
+                    }`}
+                    style={{ backgroundColor: c }}
+                    title={`${c}（右クリックで削除）`}
+                  />
+                ))}
+              </div>
+            </>
+          )}
         </div>
       )}
 
