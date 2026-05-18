@@ -429,6 +429,18 @@ export default function Toolbar({ pdfDoc }: ToolbarProps = {}) {
 
   // My Colors (saved custom colors, persisted to localStorage)
   const [myColors, setMyColors] = useState<string[]>([])
+  const [showCustomColor, setShowCustomColor] = useState(false)
+  // Close custom color popup on outside click
+  useEffect(() => {
+    if (!showCustomColor) return
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as HTMLElement
+      if (target.closest('[data-toolbar-menu]') || target.closest('[data-toolbar-menu-trigger]')) return
+      setShowCustomColor(false)
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [showCustomColor])
   useEffect(() => {
     setMyColors(loadMyColors())
   }, [])
@@ -575,44 +587,55 @@ export default function Toolbar({ pdfDoc }: ToolbarProps = {}) {
                 style={{ backgroundColor: c }} title={c} />
             ))}
           </div>
-          {/* Custom color picker: rainbow + "+" icon to make it discoverable */}
-          <label
-            className="relative w-6 h-6 sm:w-5 sm:h-5 rounded-sm border-2 border-gray-300 hover:border-indigo-400 cursor-pointer overflow-hidden flex items-center justify-center shrink-0"
-            title="カスタムカラーを選択（自動的にマイカラーに保存）"
-            style={{
-              background: 'conic-gradient(from 0deg, #f43f5e, #f59e0b, #eab308, #84cc16, #10b981, #06b6d4, #6366f1, #a855f7, #ec4899, #f43f5e)',
-            }}
-          >
-            <span className="absolute inset-0 flex items-center justify-center text-[10px] sm:text-[9px] font-bold text-white pointer-events-none"
-              style={{ textShadow: '0 0 2px rgba(0,0,0,0.7)' }}>+</span>
-            <input
-              type="color"
-              value={canChangeColor ? selectedAnn.color : maskColor}
-              onChange={(e) => handleColorChange(e.target.value, true)}
-              className="absolute inset-0 opacity-0 cursor-pointer"
-            />
-          </label>
-          {/* My Colors (saved) */}
-          {myColors.length > 0 && (
-            <>
-              <div className="w-px h-4 bg-gray-300 mx-0.5" />
-              <div className="flex items-center gap-0.5 flex-wrap" title="マイカラー（右クリックで削除）">
-                {myColors.map((c) => (
-                  <button
-                    key={c}
-                    onClick={() => handleColorChange(c)}
-                    onContextMenu={(e) => { e.preventDefault(); handleRemoveMyColor(c) }}
-                    className={`w-6 h-6 sm:w-5 sm:h-5 rounded-sm border-2 transition-all ${
-                      (canChangeColor ? selectedAnn.color : maskColor) === c
-                        ? 'border-indigo-500 scale-125' : 'border-gray-300 hover:border-indigo-400'
-                    }`}
-                    style={{ backgroundColor: c }}
-                    title={`${c}（右クリックで削除）`}
-                  />
-                ))}
+          {/* Custom color picker button (toggles popup) */}
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setShowCustomColor(v => !v)}
+              data-toolbar-menu-trigger
+              className="relative w-6 h-6 sm:w-5 sm:h-5 rounded-sm border-2 border-gray-300 hover:border-indigo-400 overflow-hidden flex items-center justify-center shrink-0"
+              title="カスタムカラー＆マイカラー"
+              style={{
+                background: 'conic-gradient(from 0deg, #f43f5e, #f59e0b, #eab308, #84cc16, #10b981, #06b6d4, #6366f1, #a855f7, #ec4899, #f43f5e)',
+              }}
+            >
+              <span className="absolute inset-0 flex items-center justify-center text-[10px] sm:text-[9px] font-bold text-white pointer-events-none"
+                style={{ textShadow: '0 0 2px rgba(0,0,0,0.7)' }}>+</span>
+            </button>
+            {showCustomColor && (
+              <div data-toolbar-menu className="absolute top-full left-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-30 p-2 min-w-[180px]">
+                <div className="text-[10px] text-gray-400 font-semibold mb-1">カスタムカラー</div>
+                <input
+                  type="color"
+                  value={canChangeColor ? selectedAnn.color : maskColor}
+                  onChange={(e) => handleColorChange(e.target.value, true)}
+                  className="w-full h-8 border border-gray-200 rounded cursor-pointer p-0"
+                />
+                <div className="text-[10px] text-gray-400 font-semibold mt-2 mb-1">マイカラー
+                  {myColors.length > 0 && <span className="ml-1 text-gray-300 font-normal">（右クリックで削除）</span>}
+                </div>
+                {myColors.length === 0 ? (
+                  <div className="text-[10px] text-gray-400 py-1">上で色を選ぶと自動保存されます</div>
+                ) : (
+                  <div className="flex flex-wrap gap-1">
+                    {myColors.map((c) => (
+                      <button
+                        key={c}
+                        onClick={() => { handleColorChange(c); setShowCustomColor(false) }}
+                        onContextMenu={(e) => { e.preventDefault(); handleRemoveMyColor(c) }}
+                        className={`w-6 h-6 rounded-sm border-2 transition-all ${
+                          (canChangeColor ? selectedAnn.color : maskColor) === c
+                            ? 'border-indigo-500 scale-110' : 'border-gray-300 hover:border-indigo-400'
+                        }`}
+                        style={{ backgroundColor: c }}
+                        title={`${c}（右クリックで削除）`}
+                      />
+                    ))}
+                  </div>
+                )}
               </div>
-            </>
-          )}
+            )}
+          </div>
         </div>
       )}
 
