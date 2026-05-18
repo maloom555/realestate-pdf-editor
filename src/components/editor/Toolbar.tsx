@@ -670,10 +670,11 @@ export default function Toolbar({ pdfDoc }: ToolbarProps = {}) {
       )}
 
 
-      {/* Opacity slider - 13インチ溢れ対策で非表示化 (2026-05)。
-          SHOW_OPACITY_SLIDER=true で復活可能。
-          マーカーの半透明性は store.highlightOpacity の初期値で維持される。 */}
-      {SHOW_OPACITY_SLIDER && (
+      {/* Opacity slider:
+          13インチ溢れ対策で、他ツールでは非表示。マーカーのみ表示する。
+          - 完全に元に戻したい場合: SHOW_OPACITY_SLIDER = true
+          - マーカー以外でも表示したい場合: 下の条件を緩める */}
+      {(SHOW_OPACITY_SLIDER || currentTool === 'highlight' || selectedAnn?.type === 'highlight') && (
         <div className="flex items-center gap-1.5">
           <label className="text-sm sm:text-xs text-gray-400 font-semibold shrink-0">透過:</label>
           <input type="range" min={5} max={100} value={displayOpacity}
