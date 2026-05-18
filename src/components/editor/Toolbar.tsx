@@ -652,26 +652,6 @@ export default function Toolbar({ pdfDoc }: ToolbarProps = {}) {
         </div>
       )}
 
-      {/* Callout box background opacity */}
-      {isSelectedCallout && selectedAnn && (
-        <div className="flex items-center gap-1.5">
-          <label className="text-sm sm:text-xs text-gray-400 font-semibold shrink-0">背景:</label>
-          <input type="range" min={0} max={100} value={
-            Math.round((((selectedAnn.data as { bgOpacity?: number }).bgOpacity ?? 0.9) * 100))
-          }
-            onChange={(e) => {
-              const v = parseInt(e.target.value) / 100
-              updateAnnotation(currentPage, selectedAnn.id, {
-                data: { ...selectedAnn.data, bgOpacity: v } as never,
-              })
-            }}
-            className="w-16 accent-indigo-500"
-            title="吹き出し背景の濃度（0〜100%）" />
-          <span className="text-sm sm:text-xs text-gray-400 min-w-[30px]">{
-            Math.round((((selectedAnn.data as { bgOpacity?: number }).bgOpacity ?? 0.9) * 100))
-          }%</span>
-        </div>
-      )}
 
       {/* Opacity */}
       <div className="flex items-center gap-1.5">

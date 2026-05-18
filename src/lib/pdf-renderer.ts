@@ -167,9 +167,8 @@ export function drawAnnotation(ctx: CanvasRenderingContext2D, ann: Annotation, s
         const boxX = d.endX - boxW / 2
         const boxY = d.endY - boxH / 2
         const br = ann.borderRadius || 0
-        // Background opacity (only affects fill, not border/text)
-        const calloutBgOpacity = d.bgOpacity != null ? d.bgOpacity : 0.9
-        ctx.fillStyle = `rgba(255,255,255,${calloutBgOpacity})`
+        // Background is always opaque white (no transparency)
+        ctx.fillStyle = '#ffffff'
         ctx.beginPath()
         ctx.roundRect(boxX, boxY, boxW, boxH, br)
         ctx.fill()

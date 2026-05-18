@@ -1054,20 +1054,23 @@ export default function EditorCanvas({ pdfDoc }: EditorCanvasProps) {
       ctx.save()
       ctx.fillStyle = maskColor
       ctx.globalAlpha = highlightOpacity
-      let hx = Math.min(ds.startX, pos.x)
-      let hy = Math.min(ds.startY, pos.y)
-      let hw = Math.abs(pos.x - ds.startX)
-      let hh = Math.abs(pos.y - ds.startY)
-      if (shiftKeyRef.current) {
-        if (hw >= hh) {
-          hy = ds.startY
-          hh = penSize > 1 ? penSize * 2 : 20
-          hy -= hh / 2
-        } else {
-          hx = ds.startX
-          hw = penSize > 1 ? penSize * 2 : 20
-          hx -= hw / 2
-        }
+      // Marker: always a fixed-width straight strip following dominant drag direction
+      const rawW = Math.abs(pos.x - ds.startX)
+      const rawH = Math.abs(pos.y - ds.startY)
+      const fixedThickness = penSize > 1 ? penSize * 3 : 20
+      let hx, hy, hw, hh
+      if (rawW >= rawH) {
+        // Horizontal strip
+        hx = Math.min(ds.startX, pos.x)
+        hy = ds.startY - fixedThickness / 2
+        hw = rawW
+        hh = fixedThickness
+      } else {
+        // Vertical strip
+        hx = ds.startX - fixedThickness / 2
+        hy = Math.min(ds.startY, pos.y)
+        hw = fixedThickness
+        hh = rawH
       }
       ctx.fillRect(hx, hy, hw, hh)
       ctx.restore()
@@ -1199,23 +1202,21 @@ export default function EditorCanvas({ pdfDoc }: EditorCanvasProps) {
         })
       }
     } else if (currentTool === 'highlight') {
-      let hx = Math.min(ds.startX, pos.x)
-      let hy = Math.min(ds.startY, pos.y)
-      let hw = Math.abs(pos.x - ds.startX)
-      let hh = Math.abs(pos.y - ds.startY)
-      // Shift: constrain to horizontal or vertical strip
-      if (shiftKeyRef.current) {
-        if (hw >= hh) {
-          // Horizontal strip: fix y to start, use full width
-          hy = ds.startY
-          hh = penSize > 1 ? penSize * 2 : 20
-          hy -= hh / 2
-        } else {
-          // Vertical strip: fix x to start, use full height
-          hx = ds.startX
-          hw = penSize > 1 ? penSize * 2 : 20
-          hx -= hw / 2
-        }
+      // Marker: always a fixed-width straight strip following dominant drag direction
+      const rawW = Math.abs(pos.x - ds.startX)
+      const rawH = Math.abs(pos.y - ds.startY)
+      const fixedThickness = penSize > 1 ? penSize * 3 : 20
+      let hx, hy, hw, hh
+      if (rawW >= rawH) {
+        hx = Math.min(ds.startX, pos.x)
+        hy = ds.startY - fixedThickness / 2
+        hw = rawW
+        hh = fixedThickness
+      } else {
+        hx = ds.startX - fixedThickness / 2
+        hy = Math.min(ds.startY, pos.y)
+        hw = fixedThickness
+        hh = rawH
       }
       if (hw > 2 && hh > 2) {
         addAndSelect(currentPage, {
