@@ -30,6 +30,8 @@ export default function PageEditor({ pdfDoc, onReloadPdf }: PageEditorProps) {
   // useEffect の deps から `thumbnails` を外せば、batch render 中に古い effect が
   // cancel されて「読込中…」で固定化するバグを防げる。
   const thumbnailsRef = useRef<Map<number, string>>(new Map())
+  // 「現在の」pdfDoc を持つ ref。古いbatchが新しいdocに対して描画しないように比較用。
+  const pdfDocRef = useRef<pdfjsLib.PDFDocumentProxy | null>(null)
 
   // IntersectionObserver: created once, refs attach via callback ref
   // (this ensures pages mounted later, e.g. last page, are also observed)
@@ -61,11 +63,15 @@ export default function PageEditor({ pdfDoc, onReloadPdf }: PageEditorProps) {
   }, [pdfDoc])
 
   // Render only visible thumbnails, in batches.
-  // IMPORTANT: deps に `thumbnails` を入れない（入れると古いbatchが毎回cancelされる）。
-  // 真実のソースは thumbnailsRef、setThumbnails は React の再描画 trigger のみ。
+  // 重要: 古い batch を cancel しない方式。理由:
+  //   cancel すると進行中ページが renderingRef に残ったまま新 batch が起動し、
+  //   新 batch がそのページを skip → 古 batch の finally で renderingRef から消えるが、
+  //   既に新 batch は終わっている → 永久に「読込中…」で固定化するレースが起きる。
+  // 解決: 古い batch は自然に完走させる。pdfDoc 変更時のみ generation で stale 化。
+  // 排他制御は renderingRef のみで十分（同じページの並行 render を防止）。
   useEffect(() => {
     if (!pdfDoc) return
-    let cancelled = false
+    const myDoc = pdfDoc // この batch が属する doc
 
     const renderBatch = async () => {
       const toRender = Array.from(visiblePages).filter(
@@ -74,19 +80,22 @@ export default function PageEditor({ pdfDoc, onReloadPdf }: PageEditorProps) {
       if (toRender.length === 0) return
 
       for (const pageNum of toRender) {
-        if (cancelled) return
+        // pdfDoc が差し替わっていたら以降は無駄なので中断
+        if (myDoc !== pdfDocRef.current) return
+        // 念のため再チェック（既に他 batch が処理開始したら skip）
+        if (thumbnailsRef.current.has(pageNum) || renderingRef.current.has(pageNum)) continue
         renderingRef.current.add(pageNum)
         try {
-          const page = await pdfDoc.getPage(pageNum)
+          const page = await myDoc.getPage(pageNum)
+          if (myDoc !== pdfDocRef.current) return
           const viewport = page.getViewport({ scale: 0.3 })
           const canvas = document.createElement('canvas')
           canvas.width = viewport.width
           canvas.height = viewport.height
           const ctx = canvas.getContext('2d')!
           await page.render({ canvasContext: ctx, viewport }).promise
-          if (!cancelled) {
+          if (myDoc === pdfDocRef.current) {
             const dataUrl = canvas.toDataURL('image/jpeg', 0.6)
-            // ref に書く → setState は再描画 trigger のみ
             thumbnailsRef.current.set(pageNum, dataUrl)
             setThumbnails(new Map(thumbnailsRef.current))
           }
@@ -101,11 +110,12 @@ export default function PageEditor({ pdfDoc, onReloadPdf }: PageEditorProps) {
     }
 
     renderBatch()
-    return () => { cancelled = true }
+    // cleanup無し（古いbatchを自然に完走させる）
   }, [pdfDoc, visiblePages])
 
   // Clear thumbnails when pdfDoc changes
   useEffect(() => {
+    pdfDocRef.current = pdfDoc
     thumbnailsRef.current.clear()
     setThumbnails(new Map())
     setVisiblePages(new Set())
