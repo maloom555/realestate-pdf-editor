@@ -933,7 +933,7 @@ export default function Toolbar({ pdfDoc }: ToolbarProps = {}) {
 
       {/* Stamp leg toggle - clicks now place leg at a visible offset immediately */}
       {isSelectedStamp && (
-        <button onClick={() => {
+        <button onClick={async () => {
           const sd = selectedAnn.data as StampData
           if (sd.legX != null) {
             // Already has leg → remove
@@ -941,11 +941,29 @@ export default function Toolbar({ pdfDoc }: ToolbarProps = {}) {
               data: { ...selectedAnn.data, legX: undefined, legY: undefined } as unknown as typeof selectedAnn.data,
             })
           } else {
-            // No leg yet → place leg at a visible offset (60px right + 60px below stamp)
+            // No leg yet → place leg at a visible offset (60px right + 60px below stamp),
+            // but clamp within current page bounds so it's reachable
             const cx = sd.x + sd.w / 2
             const bottomY = sd.y + sd.h
+            let legX = cx + 60
+            let legY = bottomY + 60
+            // Clamp using current pdfDoc viewport (if available)
+            if (pdfDoc) {
+              try {
+                const page = await pdfDoc.getPage(currentPage)
+                const viewport = page.getViewport({ scale: 1 })
+                const margin = 20
+                // If default offset goes off-page, mirror to inside direction
+                if (legX > viewport.width - margin) legX = Math.max(margin, cx - 60)
+                if (legY > viewport.height - margin) legY = Math.max(margin, sd.y - 60)
+                legX = Math.max(margin, Math.min(viewport.width - margin, legX))
+                legY = Math.max(margin, Math.min(viewport.height - margin, legY))
+              } catch {
+                // ignore, fallback to raw offset
+              }
+            }
             updateAnnotation(currentPage, selectedAnn.id, {
-              data: { ...selectedAnn.data, legX: cx + 60, legY: bottomY + 60 } as unknown as typeof selectedAnn.data,
+              data: { ...selectedAnn.data, legX, legY } as unknown as typeof selectedAnn.data,
             })
           }
         }}

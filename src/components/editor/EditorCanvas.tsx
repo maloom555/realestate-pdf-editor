@@ -1355,7 +1355,8 @@ export default function EditorCanvas({ pdfDoc }: EditorCanvasProps) {
           text: textValue,
           fontSize,
           bold: textBold,
-          underline: textUnderline,
+          // Callout doesn't support underline UI (toggle removed) - always false
+          underline: false,
           fontFamily: fontFamily,
           arrowSize: penSize,
         },
