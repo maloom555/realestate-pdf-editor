@@ -288,13 +288,27 @@ export function drawAnnotation(ctx: CanvasRenderingContext2D, ann: Annotation, s
       ctx.fillStyle = ann.color
       ctx.lineWidth = aw
       ctx.lineCap = 'round'
-      // Arrowhead at endpoint (tip exactly at endpoint)
-      const aBase = drawArrowhead(ctx, d.endX, d.endY, d.startX, d.startY, aw, ann.color)
-      // Line from start to arrowhead base (so line doesn't poke through)
+      // Default behavior (no flags set) = arrow at end only, for backward compat
+      const hasStart = ann.arrowStart === true
+      const hasEnd = ann.arrowEnd !== false // default true
+      // Draw arrowheads first to know base points for the line
+      let lineStartX = d.startX, lineStartY = d.startY
+      let lineEndX = d.endX, lineEndY = d.endY
+      if (hasEnd) {
+        const aBase = drawArrowhead(ctx, d.endX, d.endY, d.startX, d.startY, aw, ann.color)
+        lineEndX = aBase.baseX; lineEndY = aBase.baseY
+      }
+      if (hasStart) {
+        const aBase = drawArrowhead(ctx, d.startX, d.startY, d.endX, d.endY, aw, ann.color)
+        lineStartX = aBase.baseX; lineStartY = aBase.baseY
+      }
+      // Line from (possibly trimmed) start to (possibly trimmed) end
+      applyDash(ctx, ann.dashStyle, aw)
       ctx.beginPath()
-      ctx.moveTo(d.startX, d.startY)
-      ctx.lineTo(aBase.baseX, aBase.baseY)
+      ctx.moveTo(lineStartX, lineStartY)
+      ctx.lineTo(lineEndX, lineEndY)
       ctx.stroke()
+      ctx.setLineDash([])
       break
     }
 
