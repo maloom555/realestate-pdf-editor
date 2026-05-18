@@ -22,31 +22,39 @@ export default function PageEditor({ pdfDoc, onReloadPdf }: PageEditorProps) {
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null)
   const [dragPageNum, setDragPageNum] = useState<number | null>(null)
   const [visiblePages, setVisiblePages] = useState<Set<number>>(new Set())
+  const observerRef = useRef<IntersectionObserver | null>(null)
   const importInputRef = useRef<HTMLInputElement>(null)
   const thumbRefs = useRef<Map<number, HTMLDivElement>>(new Map())
   const renderingRef = useRef<Set<number>>(new Set())
 
-  // IntersectionObserver for lazy thumbnail loading
+  // IntersectionObserver: created once, refs attach via callback ref
+  // (this ensures pages mounted later, e.g. last page, are also observed)
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
-        const newVisible = new Set(visiblePages)
-        let changed = false
-        for (const entry of entries) {
-          const pageNum = Number(entry.target.getAttribute('data-page'))
-          if (entry.isIntersecting && !newVisible.has(pageNum)) {
-            newVisible.add(pageNum)
-            changed = true
+        setVisiblePages((prev) => {
+          let changed = false
+          const next = new Set(prev)
+          for (const entry of entries) {
+            const pageNum = Number(entry.target.getAttribute('data-page'))
+            if (entry.isIntersecting && !next.has(pageNum)) {
+              next.add(pageNum)
+              changed = true
+            }
           }
-        }
-        if (changed) setVisiblePages(newVisible)
+          return changed ? next : prev
+        })
       },
       { rootMargin: '200px' } // Pre-load 200px before visible
     )
-
+    observerRef.current = observer
+    // Observe any refs already registered (in case refs were set before this effect ran)
     thumbRefs.current.forEach((el) => observer.observe(el))
-    return () => observer.disconnect()
-  }, [totalPages, pdfDoc, visiblePages])
+    return () => {
+      observer.disconnect()
+      observerRef.current = null
+    }
+  }, [pdfDoc])
 
   // Render only visible thumbnails, in batches
   useEffect(() => {
@@ -447,7 +455,17 @@ export default function PageEditor({ pdfDoc, onReloadPdf }: PageEditorProps) {
             return (
               <div
                 key={pageNum}
-                ref={(el) => { if (el) thumbRefs.current.set(pageNum, el); else thumbRefs.current.delete(pageNum) }}
+                ref={(el) => {
+                  const prev = thumbRefs.current.get(pageNum)
+                  if (el) {
+                    thumbRefs.current.set(pageNum, el)
+                    // Ensure observer watches this element (catches late-mounted pages)
+                    if (prev !== el) observerRef.current?.observe(el)
+                  } else {
+                    if (prev) observerRef.current?.unobserve(prev)
+                    thumbRefs.current.delete(pageNum)
+                  }
+                }}
                 data-page={pageNum}
                 draggable
                 onDragStart={() => handleDragStart(pageNum)}
