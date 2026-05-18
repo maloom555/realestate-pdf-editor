@@ -35,7 +35,7 @@ const templates = [
 const allFeatures = [
   '墨消し（フラット化で復元不可）', '不動産専用スタンプ 9種', 'テキストテンプレート 29種',
   '署名スタンプ（会社名・ロゴ）', '方位マーク', 'テキスト入力（フォント5種）',
-  '矢印・矢印テキスト（コールアウト）', 'ハイライト（透明度調整可）',
+  '矢印・矢印テキスト（コールアウト）', 'マーカー（固定幅直線）',
   '円・四角・自由線・折線', 'ページ並び替え・回転・削除・複製',
   'PDF結合・ページ抽出', '空白ページ追加', '画像（JPG/PNG/WebP）の取り込み',
   'クリップボード画像の貼り付け', 'PDF圧縮（3段階）', 'ページ番号挿入',
@@ -148,7 +148,7 @@ export default function LandingPage() {
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-5 h-5"><path d="M12 19l7-7 3 3-7 7-3-3z" /><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z" /><path d="M2 2l7.586 7.586" /></svg>
               </div>
               <h3 className="font-display font-bold text-[#1a1a2e] mb-2 text-[15px]">直感的に書き込み・描画</h3>
-              <p className="font-body text-[13px] text-gray-400 leading-relaxed">矢印、ハイライト、円、四角、自由線など11種の描画ツール。手書き感覚でPDFに直接書き込めます。</p>
+              <p className="font-body text-[13px] text-gray-400 leading-relaxed">矢印、マーカー、円、四角、自由線など11種の描画ツール。手書き感覚でPDFに直接書き込めます。</p>
             </div>
 
             {/* カード2: PDF結合 */}

@@ -105,8 +105,8 @@ const sections: HelpSection[] = [
         desc: <>始点から終点へドラッグで矢印を描画。<br/><Hint>線の太さ・色を自由に調整</Hint></>,
       },
       {
-        icon: Icons.highlight, label: 'ハイライト', color: '#eab308',
-        desc: <>ドラッグで半透明のカラーハイライト。<br/><Hint><Key>Shift</Key> + ドラッグ → 水平・垂直に固定</Hint></>,
+        icon: Icons.highlight, label: 'マーカー', color: '#eab308',
+        desc: <>ドラッグで固定幅のマーカー線（横/縦自動判定）。<br/><Hint>描画後はリサイズハンドルでサイズ調整可</Hint></>,
       },
     ],
   },

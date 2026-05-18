@@ -20,7 +20,7 @@ const tools = [
     id: 'pdf-editor',
     icon: icons.pdf,
     title: '不動産PDF工房',
-    desc: '墨消し・テキスト注釈・スタンプ・ハイライト・矢印・図形描画など11種のツールで物件資料を編集。フラット化PDF出力対応。',
+    desc: '墨消し・テキスト注釈・スタンプ・マーカー・矢印・図形描画など11種のツールで物件資料を編集。フラット化PDF出力対応。',
     href: '/editor',
     status: 'available' as const,
     tags: ['PDF', '写真', '墨消し', 'スタンプ', '注釈'],

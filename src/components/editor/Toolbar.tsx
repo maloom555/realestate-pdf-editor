@@ -16,7 +16,7 @@ export const TOOLS: { id: ToolType; label: string; icon: string }[] = [
   { id: 'pen', label: '自由線', icon: '〰' },
   { id: 'polyline', label: '折線', icon: '📐' },
   { id: 'arrow', label: '矢印', icon: '→' },
-  { id: 'highlight', label: 'ハイライト', icon: '🖍' },
+  { id: 'highlight', label: 'マーカー', icon: '🖍' },
   { id: 'text', label: 'テキスト', icon: 'A' },
   { id: 'callout', label: '矢印テキスト', icon: '💬' },
   { id: 'stamp', label: 'スタンプ', icon: '印' },
