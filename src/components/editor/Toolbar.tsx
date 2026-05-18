@@ -162,7 +162,7 @@ function FontSizeInput({ value, onChange }: { value: number; onChange: (v: numbe
         if (e.key === 'Enter') (e.currentTarget as HTMLInputElement).blur()
         if (e.key === 'Escape') { setDraft(null); (e.currentTarget as HTMLInputElement).blur() }
       }}
-      className="w-14 text-center text-xs text-gray-600 font-medium bg-transparent rounded focus:outline-none focus:bg-white focus:ring-1 focus:ring-indigo-300"
+      className="w-10 text-center text-xs text-gray-600 font-medium bg-transparent rounded focus:outline-none focus:bg-white focus:ring-1 focus:ring-indigo-300 px-0"
       title="フォントサイズ（1.0〜100.0、小数可）"
     />
   )
@@ -700,7 +700,7 @@ export default function Toolbar({ pdfDoc }: ToolbarProps = {}) {
       {(showFontOptions || isSelectedText || isSelectedCallout) && (
         <>
           <div className="w-px h-5 bg-gray-300 hidden sm:block" />
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1">
             <label className="text-sm sm:text-xs text-gray-400 font-semibold shrink-0">文字:</label>
             <input type="range" min={1} max={100} step={0.5} value={displayFontSize}
               onChange={(e) => handleSelectedFontSizeChange(parseFloat(e.target.value))}
@@ -728,18 +728,21 @@ export default function Toolbar({ pdfDoc }: ToolbarProps = {}) {
               className={`px-2.5 py-1.5 text-sm sm:px-2 sm:py-1 sm:text-xs font-bold border rounded-lg ${
                 displayBold ? 'border-indigo-500 bg-indigo-50 text-indigo-700' : 'border-gray-200 text-gray-500'
               }`}>B</button>
-            <button onClick={() => {
-              const newVal = !displayUnderline
-              setTextUnderline(newVal)
-              if ((isSelectedText || isSelectedCallout) && selectedAnn) {
-                updateAnnotation(currentPage, selectedAnn.id, {
-                  data: { ...selectedAnn.data, underline: newVal } as never,
-                })
-              }
-            }}
-              className={`px-2.5 py-1.5 text-sm sm:px-2 sm:py-1 sm:text-xs underline border rounded-lg ${
-                displayUnderline ? 'border-indigo-500 bg-indigo-50 text-indigo-700' : 'border-gray-200 text-gray-500'
-              }`}>U</button>
+            {/* Underline: text annotation only (callout doesn't support per-line underline UX-wise) */}
+            {(currentTool === 'text' || isSelectedText) && (
+              <button onClick={() => {
+                const newVal = !displayUnderline
+                setTextUnderline(newVal)
+                if (isSelectedText && selectedAnn) {
+                  updateAnnotation(currentPage, selectedAnn.id, {
+                    data: { ...selectedAnn.data, underline: newVal } as never,
+                  })
+                }
+              }}
+                className={`px-2.5 py-1.5 text-sm sm:px-2 sm:py-1 sm:text-xs underline border rounded-lg ${
+                  displayUnderline ? 'border-indigo-500 bg-indigo-50 text-indigo-700' : 'border-gray-200 text-gray-500'
+                }`}>U</button>
+            )}
             {(currentTool === 'text' || isSelectedText) && (
               <button onClick={() => {
                 const newVal = !displayTextBox
