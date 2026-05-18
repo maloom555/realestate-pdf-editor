@@ -293,9 +293,9 @@ export default function EditorPage() {
         onLoad={handlePdfJsLoad}
       />
 
-      {/* Header - compact */}
+      {/* Header - compact (title is absolutely centered so it doesn't shift) */}
       <header
-        className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-3 sm:px-4 py-1 sm:py-1.5 flex items-center justify-between gap-2"
+        className="relative bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-3 sm:px-4 py-1 sm:py-1.5 flex items-center justify-between gap-2"
       >
         {/* Left: file actions (新規/読込/保存) */}
         <div className="flex items-center gap-1">
@@ -319,7 +319,7 @@ export default function EditorPage() {
             <span className="hidden sm:inline">保存</span>
           </button>
         </div>
-        <h1 className="text-sm sm:text-base font-bold">不動産PDF工房</h1>
+        <h1 className="absolute left-1/2 -translate-x-1/2 text-sm sm:text-base font-bold pointer-events-none select-none">不動産PDF工房</h1>
         <div className="flex items-center gap-2">
           {pdfDoc && (
             <span className={`hidden sm:flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] transition-all ${
