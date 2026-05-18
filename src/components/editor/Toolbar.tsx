@@ -38,6 +38,23 @@ const FONT_FAMILIES = [
   { value: 'Arial', label: 'Arial' },
 ]
 
+// ============================================================================
+// 「透過」スライダー UI の表示切替フラグ
+// ----------------------------------------------------------------------------
+// 2026-05 / 13インチ画面でツールバー右側が溢れる対策で UI を非表示化。
+//
+// 復活方法: この定数を `true` に戻すだけでスライダーが復活します。
+// 関連コード（store / レンダラー / 新規アノテーション作成時のopacity参照）は
+// 一切削除していないので、フラグ切替のみで完全に元に戻ります。
+//
+// 機能影響:
+// - 新規マーカー: store.highlightOpacity (= 0.3) で半透明維持
+// - その他の新規アノテーション: store.elementOpacity (= 1.0) で不透明
+// - 既存データの opacity フィールドは描画時に引き続き読まれる（後方互換）
+// - 「塗り濃さ (fillOpacity)」「スタンプ背景濃さ (bgOpacity)」は別UIなので残存
+// ============================================================================
+const SHOW_OPACITY_SLIDER = false
+
 function uint8ArrayToBase64(bytes: Uint8Array): string {
   let binary = ''
   const chunkSize = 8192
@@ -653,14 +670,18 @@ export default function Toolbar({ pdfDoc }: ToolbarProps = {}) {
       )}
 
 
-      {/* Opacity */}
-      <div className="flex items-center gap-1.5">
-        <label className="text-sm sm:text-xs text-gray-400 font-semibold shrink-0">透過:</label>
-        <input type="range" min={5} max={100} value={displayOpacity}
-          onChange={(e) => handleOpacityChange(parseInt(e.target.value))}
-          className="w-16 accent-indigo-500" />
-        <span className="text-sm sm:text-xs text-gray-400 min-w-[30px]">{displayOpacity}%</span>
-      </div>
+      {/* Opacity slider - 13インチ溢れ対策で非表示化 (2026-05)。
+          SHOW_OPACITY_SLIDER=true で復活可能。
+          マーカーの半透明性は store.highlightOpacity の初期値で維持される。 */}
+      {SHOW_OPACITY_SLIDER && (
+        <div className="flex items-center gap-1.5">
+          <label className="text-sm sm:text-xs text-gray-400 font-semibold shrink-0">透過:</label>
+          <input type="range" min={5} max={100} value={displayOpacity}
+            onChange={(e) => handleOpacityChange(parseInt(e.target.value))}
+            className="w-16 accent-indigo-500" />
+          <span className="text-sm sm:text-xs text-gray-400 min-w-[30px]">{displayOpacity}%</span>
+        </div>
+      )}
 
       {/* Fill controls */}
       {(showFillForTool || showFillForSelected) && (
