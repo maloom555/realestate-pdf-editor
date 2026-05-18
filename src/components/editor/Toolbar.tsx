@@ -787,16 +787,22 @@ export default function Toolbar({ pdfDoc }: ToolbarProps = {}) {
         </div>
       )}
 
-      {/* Stamp leg toggle */}
+      {/* Stamp leg toggle - clicks now place leg at a visible offset immediately */}
       {isSelectedStamp && (
         <button onClick={() => {
           const sd = selectedAnn.data as StampData
           if (sd.legX != null) {
+            // Already has leg → remove
             updateAnnotation(currentPage, selectedAnn.id, {
               data: { ...selectedAnn.data, legX: undefined, legY: undefined } as unknown as typeof selectedAnn.data,
             })
           } else {
-            emit('stamp-leg-mode')
+            // No leg yet → place leg at a visible offset (60px right + 60px below stamp)
+            const cx = sd.x + sd.w / 2
+            const bottomY = sd.y + sd.h
+            updateAnnotation(currentPage, selectedAnn.id, {
+              data: { ...selectedAnn.data, legX: cx + 60, legY: bottomY + 60 } as unknown as typeof selectedAnn.data,
+            })
           }
         }}
           className={`px-2.5 py-1.5 text-sm sm:px-2 sm:py-1 sm:text-xs border rounded-lg ${
@@ -827,30 +833,6 @@ export default function Toolbar({ pdfDoc }: ToolbarProps = {}) {
             title="背景を白で塗りつぶす（下の図を完全に隠す）">
             ⬜ 白塗り{(selectedAnn.data as StampData).whiteFill ? '✓' : ''}
           </button>
-
-          {/* Background opacity (only when not white-fill) */}
-          {!(selectedAnn.data as StampData).whiteFill && (
-            <div className="flex items-center gap-1.5">
-              <label className="text-xs text-gray-500 whitespace-nowrap">背景:</label>
-              <input
-                type="range"
-                min={0}
-                max={100}
-                value={Math.round(((selectedAnn.data as StampData).bgOpacity ?? 0.2) * 100)}
-                onChange={(e) => {
-                  const val = parseInt(e.target.value, 10) / 100
-                  updateAnnotation(currentPage, selectedAnn.id, {
-                    data: { ...selectedAnn.data, bgOpacity: val } as unknown as typeof selectedAnn.data,
-                  })
-                }}
-                className="w-20 accent-indigo-500"
-                title="スタンプの背景塗り濃度（0〜100%）"
-              />
-              <span className="text-xs text-gray-400 min-w-[32px]">
-                {Math.round(((selectedAnn.data as StampData).bgOpacity ?? 0.2) * 100)}%
-              </span>
-            </div>
-          )}
         </>
       )}
 
