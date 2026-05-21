@@ -10,16 +10,16 @@ import { emit } from '@/lib/event-bus'
 import { showToast } from '@/components/ui/Toast'
 
 export const TOOLS: { id: ToolType; label: string; icon: string; desc: string }[] = [
-  { id: 'rect', label: '墨消し', icon: '■', desc: 'ドラッグで黒塗り。フラット化PDFで完全除去できます' },
+  { id: 'rect', label: '墨消し', icon: '■', desc: '機密情報マスキング。ドラッグで黒塗り。フラット化PDFで完全除去できます' },
   { id: 'circle', label: '円', icon: '○', desc: 'ドラッグで円/楕円。Shiftで正円。塗りつぶし可' },
   { id: 'shape-rect', label: '四角', icon: '□', desc: 'ドラッグで四角形。塗りつぶし・角丸・線種を変更可' },
   { id: 'pen', label: '自由線', icon: '〰', desc: 'フリーハンド描画。閉じる・塗り・始点/終点矢印に対応' },
-  { id: 'polyline', label: '折線', icon: '📐', desc: 'クリックで頂点追加、ダブルクリックで確定。DELで頂点を戻す' },
+  { id: 'polyline', label: '折線', icon: '📐', desc: 'クリックで頂点追加、ダブルクリックで確定。DELで頂点を戻す。始点/終点に矢印、閉じて塗りつぶしも可' },
   { id: 'arrow', label: '矢印', icon: '→', desc: '始点から終点へドラッグで矢印を描画' },
   { id: 'highlight', label: 'マーカー', icon: '🖍', desc: 'ドラッグで固定幅マーカー線（横/縦自動判定）' },
   { id: 'text', label: 'テキスト', icon: 'A', desc: 'クリックでテキスト入力。フォント・太字・下線・枠囲み可' },
   { id: 'callout', label: '矢印テキスト', icon: '💬', desc: 'ドラッグで矢印付きテキスト配置。指したい場所から引出線' },
-  { id: 'stamp', label: 'スタンプ', icon: '印', desc: '不動産専用スタンプ・方位マーク・署名スタンプを配置' },
+  { id: 'stamp', label: 'スタンプ', icon: '印', desc: '不動産専用スタンプ・方位マーク・署名スタンプを配置。選択時に引出線も追加可能' },
   { id: 'select', label: '選択', icon: '↖', desc: '要素のクリックで選択、ドラッグで移動。Ctrl+ドラッグで複製' },
 ]
 
