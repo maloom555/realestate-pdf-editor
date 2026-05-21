@@ -451,7 +451,7 @@ export default function PageEditor({ pdfDoc, onReloadPdf }: PageEditorProps) {
 
         {/* Export & Compress */}
         <button onClick={handleExportPdf}
-          {...helpHoverProps('PDFダウンロード', '注釈を焼き込んだPDFをダウンロード')}
+          {...helpHoverProps('PDFダウンロード', '編集内容（注釈・墨消しなど）を反映したPDFをダウンロード')}
           className="px-3 py-1.5 text-sm sm:text-xs border border-indigo-300 text-indigo-600 rounded-lg hover:bg-indigo-50 font-semibold">
           PDFダウンロード
         </button>

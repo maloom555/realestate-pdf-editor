@@ -303,12 +303,14 @@ export default function EditorPage() {
         {/* Left: file actions (新規/読込/保存) */}
         <div className="flex items-center gap-1">
           <button onClick={handleReset} disabled={!pdfDoc}
+            {...helpHoverProps('新規', '現在の編集を破棄してファイル選択画面に戻ります（直前まではブラウザにも自動保存されています）')}
             className="px-2 py-1 text-xs rounded-md bg-white/15 hover:bg-white/25 border border-white/30 transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1"
             title="新規プロジェクト">
             <span>📄</span>
             <span className="hidden sm:inline">新規</span>
           </button>
           <button onClick={() => headerLoadInputRef.current?.click()}
+            {...helpHoverProps('読込', '保存しておいた .rpef プロジェクトファイルを開いて編集を再開')}
             className="px-2 py-1 text-xs rounded-md bg-white/15 hover:bg-white/25 border border-white/30 transition-colors flex items-center gap-1"
             title="プロジェクトファイル(.rpef)を読込">
             <span>📂</span>
@@ -316,6 +318,7 @@ export default function EditorPage() {
           </button>
           <input ref={headerLoadInputRef} type="file" accept=".rpef,.json" className="hidden" onChange={handleHeaderLoadFile} />
           <button onClick={handleHeaderSave} disabled={!pdfDoc}
+            {...helpHoverProps('保存', '編集中のPDF+注釈をまとめた .rpef ファイルとして保存（後で「読込」で続きから編集可能）')}
             className="px-2 py-1 text-xs rounded-md bg-white/15 hover:bg-white/25 border border-white/30 transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1"
             title="プロジェクトを.rpefファイルに保存">
             <span>💾</span>
