@@ -60,6 +60,12 @@ export default function HelpStrip() {
     return off
   }, [])
 
+  // モード切替時はボタンが unmount され onMouseLeave が発火しないため、
+  // hoverHint を明示的にクリアして残留表示を防ぐ
+  useEffect(() => {
+    setHoverHint(null)
+  }, [editorMode])
+
   if (!SHOW_HELP_STRIP) return null
   if (!helpEnabled) return null
 
