@@ -36,6 +36,8 @@ interface EditorState {
   // Defaults for next polyline/pen creation
   lineArrowStart: boolean
   lineArrowEnd: boolean
+  // Help mode: when true, HelpStrip is visible and hover hints are shown
+  helpEnabled: boolean
   textBox: boolean
 
   // Annotations (per-page)
@@ -90,6 +92,7 @@ interface EditorState {
   setTextBox: (textBox: boolean) => void
   setLineArrowStart: (v: boolean) => void
   setLineArrowEnd: (v: boolean) => void
+  setHelpEnabled: (v: boolean) => void
   loadProject: (bytes: Uint8Array, totalPages: number, annotations: Record<number, Annotation[]>, currentPage: number) => void
   addAnnotation: (pageNum: number, annotation: Annotation) => void
   removeAnnotation: (pageNum: number, id: string) => void
@@ -134,6 +137,7 @@ const initialState = {
   textBox: false,
   lineArrowStart: false,
   lineArrowEnd: false,
+  helpEnabled: true,
   annotations: {} as Record<number, Annotation[]>,
   selectedAnnotationId: null,
   selectedAnnotationIds: new Set<string>(),
@@ -186,6 +190,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
 
   setLineArrowStart: (v) => set({ lineArrowStart: v }),
   setLineArrowEnd: (v) => set({ lineArrowEnd: v }),
+  setHelpEnabled: (v) => set({ helpEnabled: v }),
 
   loadProject: (bytes, totalPages, annotations, currentPage) =>
     set({ pdfBytes: bytes, totalPages, annotations, currentPage, undoStack: [], redoStack: [], selectedAnnotationId: null }),

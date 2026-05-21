@@ -4,7 +4,7 @@ import { useState, useCallback, useEffect, useRef } from 'react'
 import { useEditorStore } from '@/hooks/useEditorStore'
 import DropZone from '@/components/editor/DropZone'
 import Toolbar, { TOOLS } from '@/components/editor/Toolbar'
-import HelpStrip, { helpHoverProps } from '@/components/editor/HelpStrip'
+import HelpStrip, { helpHoverProps, useHelpEnabledSync } from '@/components/editor/HelpStrip'
 import EditorCanvas from '@/components/editor/EditorCanvas'
 import PageEditor from '@/components/editor/PageEditor'
 import LoadingOverlay from '@/components/editor/LoadingOverlay'
@@ -19,6 +19,8 @@ export default function EditorPage() {
   const [showHelp, setShowHelp] = useState(false)
   // Auto-save status: 'idle' | 'pending' | 'saving' | 'saved'
   const [saveStatus, setSaveStatus] = useState<'idle' | 'pending' | 'saving' | 'saved'>('idle')
+  // Sync help-enabled state with localStorage
+  useHelpEnabledSync()
 
   const handlePdfJsLoad = useCallback(() => {
     window.pdfjsLib.GlobalWorkerOptions.workerSrc =
@@ -341,6 +343,17 @@ export default function EditorPage() {
                '自動保存中'}
             </span>
           )}
+          {/* Help mode toggle (controls HelpStrip visibility) */}
+          <button onClick={() => store.setHelpEnabled(!store.helpEnabled)}
+            className={`px-2.5 py-1 flex items-center gap-1 rounded-full border transition-colors text-xs font-medium ${
+              store.helpEnabled
+                ? 'bg-white/30 hover:bg-white/40 border-white/60'
+                : 'bg-white/10 hover:bg-white/20 border-white/30 text-white/60'
+            }`}
+            title={store.helpEnabled ? 'ヘルプ表示ON（クリックでOFF）' : 'ヘルプ表示OFF（クリックでON）'}>
+            <span className="text-sm leading-none">💡</span>
+            <span>{store.helpEnabled ? 'ヘルプON' : 'ヘルプOFF'}</span>
+          </button>
           <button onClick={() => setShowHelp(true)}
             className="px-2.5 py-1 flex items-center gap-1 rounded-full bg-white/20 hover:bg-white/30 border border-white/40 transition-colors text-xs font-medium"
             title="使い方ガイド">
@@ -357,6 +370,7 @@ export default function EditorPage() {
             <div className="flex flex-shrink-0">
               <button
                 onClick={() => store.setEditorMode('drawing')}
+                {...helpHoverProps('描画編集', '注釈・墨消し・スタンプなどを書き込むモード。各ツールでPDFに描画できます')}
                 className={`px-4 sm:px-6 py-2 text-sm font-medium transition-colors relative
                   ${store.editorMode === 'drawing'
                     ? 'text-indigo-700'
@@ -370,6 +384,7 @@ export default function EditorPage() {
               </button>
               <button
                 onClick={() => store.setEditorMode('pageEditor')}
+                {...helpHoverProps('ページ編集', 'ページの並び替え・回転・削除・複製・サイズ変更・抽出・追加が可能です')}
                 className={`px-4 sm:px-6 py-2 text-sm font-medium transition-colors relative
                   ${store.editorMode === 'pageEditor'
                     ? 'text-indigo-700'

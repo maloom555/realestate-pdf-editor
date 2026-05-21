@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { on, emit } from '@/lib/event-bus'
+import { useEditorStore } from '@/hooks/useEditorStore'
 
 // ============================================================================
 // HelpStrip
@@ -10,8 +11,8 @@ import { on, emit } from '@/lib/event-bus'
 // page.tsx の編集領域上部に配置されている。
 //
 // 復活/廃止フラグ:
-//   SHOW_HELP_STRIP を false にすると非表示になる。
-//   page.tsx で <HelpStrip /> の表示自体を切る、または本ファイルで return null。
+//   SHOW_HELP_STRIP を false にすると無条件で非表示になる。
+//   ユーザーごとのON/OFFは store.helpEnabled で制御。
 //
 // 仕組み:
 //   emit('help-hover', { title, description }) でホバー開始
@@ -20,8 +21,34 @@ import { on, emit } from '@/lib/event-bus'
 
 export const SHOW_HELP_STRIP = true
 
+const HELP_ENABLED_KEY = 'pdf-editor:help-enabled'
+
+// localStorage と store を同期するヘルパ。最初に呼んだ時点で初期化を行う。
+export function useHelpEnabledSync() {
+  const helpEnabled = useEditorStore((s) => s.helpEnabled)
+  const setHelpEnabled = useEditorStore((s) => s.setHelpEnabled)
+  // 初回マウント時に localStorage 値を反映
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(HELP_ENABLED_KEY)
+      if (raw !== null) {
+        const parsed = JSON.parse(raw)
+        if (typeof parsed === 'boolean' && parsed !== helpEnabled) {
+          setHelpEnabled(parsed)
+        }
+      }
+    } catch { /* ignore */ }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+  // 値変更時に localStorage に保存
+  useEffect(() => {
+    try { localStorage.setItem(HELP_ENABLED_KEY, JSON.stringify(helpEnabled)) } catch { /* ignore */ }
+  }, [helpEnabled])
+}
+
 export default function HelpStrip() {
   const [hint, setHint] = useState<{ title: string; description: string } | null>(null)
+  const helpEnabled = useEditorStore((s) => s.helpEnabled)
 
   useEffect(() => {
     const off = on('help-hover', (payload) => {
@@ -31,6 +58,7 @@ export default function HelpStrip() {
   }, [])
 
   if (!SHOW_HELP_STRIP) return null
+  if (!helpEnabled) return null
 
   return (
     <div className="bg-slate-50 border-b border-slate-200 px-3 py-1 text-xs text-slate-600 flex items-center gap-2 min-h-[24px] overflow-hidden">
@@ -51,6 +79,8 @@ export default function HelpStrip() {
 // ----------------------------------------------------------------------------
 // Hover handlers util: spread these onto buttons.
 //   <button {...helpHoverProps('墨消し', '...')}>...</button>
+// 注意: helpEnabled が false でも emit はしますが、HelpStrip 側で非表示にしているので
+// 副作用なし。コードを簡素にするため敢えてここではフラグを見ません。
 // ----------------------------------------------------------------------------
 export function helpHoverProps(title: string, description: string) {
   return {

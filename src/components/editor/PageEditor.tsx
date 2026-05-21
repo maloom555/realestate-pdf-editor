@@ -8,6 +8,7 @@ import {
   importPages, extractPages, rotatePages,
 } from '@/lib/page-operations'
 import { downloadBlob } from '@/lib/export-engine'
+import HelpStrip, { helpHoverProps } from './HelpStrip'
 
 interface PageEditorProps {
   pdfDoc: pdfjsLib.PDFDocumentProxy
@@ -352,6 +353,7 @@ export default function PageEditor({ pdfDoc, onReloadPdf }: PageEditorProps) {
       {/* Action bar */}
       <div className="bg-white border-b border-gray-200 px-3 py-2 flex items-center gap-2 flex-wrap">
         <button onClick={handleSelectAll}
+          {...helpHoverProps('全選択 / 選択解除', '全ページを一括選択。再度押すと選択解除')}
           className="px-3 py-1.5 text-sm sm:text-xs border border-gray-200 rounded-lg text-gray-600 hover:bg-gray-50">
           {selectedPages.size === totalPages ? '選択解除' : '全選択'}
         </button>
@@ -362,24 +364,29 @@ export default function PageEditor({ pdfDoc, onReloadPdf }: PageEditorProps) {
         <div className="w-px h-5 bg-gray-200" />
 
         <button onClick={handleDelete} disabled={selectedPages.size === 0}
+          {...helpHoverProps('削除', '選択中のページをPDFから削除')}
           className="px-3 py-1.5 text-sm sm:text-xs border border-red-300 text-red-600 rounded-lg hover:bg-red-50 disabled:opacity-30 disabled:cursor-not-allowed">
           削除
         </button>
         <button onClick={handleDuplicate} disabled={selectedPages.size !== 1}
+          {...helpHoverProps('複製', '選択中のページのコピーを直後に追加（1ページ選択時のみ）')}
           className="px-3 py-1.5 text-sm sm:text-xs border border-gray-200 text-gray-600 rounded-lg hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed">
           複製
         </button>
         <button onClick={handleAddBlank}
+          {...helpHoverProps('空白追加', '空白ページを末尾に追加')}
           className="px-3 py-1.5 text-sm sm:text-xs border border-gray-200 text-gray-600 rounded-lg hover:bg-gray-50">
           空白追加
         </button>
         <button onClick={() => importInputRef.current?.click()}
+          {...helpHoverProps('ファイル追加', 'PDFや画像を選択して末尾に追加（ページ結合）')}
           className="px-3 py-1.5 text-sm sm:text-xs border border-blue-300 text-blue-600 rounded-lg hover:bg-blue-50">
           ファイル追加
         </button>
         <input ref={importInputRef} type="file" accept=".pdf,.jpg,.jpeg,.png,.webp,.gif" className="hidden" onChange={handleImport} />
 
         <button onClick={handleExtract} disabled={selectedPages.size === 0}
+          {...helpHoverProps('抽出', '選択中のページだけで新規PDFを生成してダウンロード')}
           className="px-3 py-1.5 text-sm sm:text-xs border border-green-300 text-green-600 rounded-lg hover:bg-green-50 disabled:opacity-30 disabled:cursor-not-allowed">
           抽出
         </button>
@@ -387,6 +394,7 @@ export default function PageEditor({ pdfDoc, onReloadPdf }: PageEditorProps) {
         {/* Rotate dropdown */}
         <div className="relative">
           <button data-pe-menu-trigger onClick={() => setShowRotateMenu(!showRotateMenu)} disabled={selectedPages.size === 0}
+            {...helpHoverProps('回転', '選択中のページを 90°右 / 180° / 90°左 で回転')}
             className="px-3 py-1.5 text-sm sm:text-xs border border-gray-200 text-gray-600 rounded-lg hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed">
             回転 ▾
           </button>
@@ -405,6 +413,7 @@ export default function PageEditor({ pdfDoc, onReloadPdf }: PageEditorProps) {
         {/* Resize dropdown */}
         <div className="relative">
           <button data-pe-menu-trigger onClick={() => setShowResizeMenu(!showResizeMenu)} disabled={selectedPages.size === 0}
+            {...helpHoverProps('サイズ', '選択ページをA4/A3/B4/B5などに変換。全ページ統一は全選択してから')}
             className="px-3 py-1.5 text-sm sm:text-xs border border-gray-200 text-gray-600 rounded-lg hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed"
             title="選択ページのサイズを変更（全ページ統一にする場合は全選択してから）">
             サイズ ▾
@@ -433,6 +442,7 @@ export default function PageEditor({ pdfDoc, onReloadPdf }: PageEditorProps) {
         <div className="w-px h-5 bg-gray-200" />
 
         <button onClick={handleUndo} disabled={store.pageUndoStack.length === 0}
+          {...helpHoverProps('元に戻す', 'ページ操作を1つ前の状態に戻す')}
           className="px-3 py-1.5 text-sm sm:text-xs border border-gray-200 text-gray-600 rounded-lg hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed">
           ↩ 元に戻す
         </button>
@@ -441,11 +451,13 @@ export default function PageEditor({ pdfDoc, onReloadPdf }: PageEditorProps) {
 
         {/* Export & Compress */}
         <button onClick={handleExportPdf}
+          {...helpHoverProps('PDFダウンロード', '注釈を焼き込んだPDFをダウンロード')}
           className="px-3 py-1.5 text-sm sm:text-xs border border-indigo-300 text-indigo-600 rounded-lg hover:bg-indigo-50 font-semibold">
           PDFダウンロード
         </button>
         <div className="relative">
           <button data-pe-menu-trigger onClick={() => setShowCompressMenu(!showCompressMenu)}
+            {...helpHoverProps('圧縮DL', '画像化＋JPEG圧縮でファイルサイズを大幅削減してダウンロード')}
             className="px-3 py-1.5 text-sm sm:text-xs border border-orange-300 text-orange-600 rounded-lg hover:bg-orange-50">
             圧縮DL ▾
           </button>
@@ -458,6 +470,9 @@ export default function PageEditor({ pdfDoc, onReloadPdf }: PageEditorProps) {
           )}
         </div>
       </div>
+
+      {/* Help strip (page editor) */}
+      <HelpStrip />
 
       {/* Thumbnail grid */}
       <div className="flex-1 min-h-0 overflow-auto p-4 bg-gray-100">
