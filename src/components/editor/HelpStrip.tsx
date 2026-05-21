@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { on, emit } from '@/lib/event-bus'
 import { useEditorStore } from '@/hooks/useEditorStore'
+import { TOOLS } from './Toolbar'
 
 // ============================================================================
 // HelpStrip
@@ -47,12 +48,14 @@ export function useHelpEnabledSync() {
 }
 
 export default function HelpStrip() {
-  const [hint, setHint] = useState<{ title: string; description: string } | null>(null)
+  const [hoverHint, setHoverHint] = useState<{ title: string; description: string } | null>(null)
   const helpEnabled = useEditorStore((s) => s.helpEnabled)
+  const currentTool = useEditorStore((s) => s.currentTool)
+  const editorMode = useEditorStore((s) => s.editorMode)
 
   useEffect(() => {
     const off = on('help-hover', (payload) => {
-      setHint(payload)
+      setHoverHint(payload)
     })
     return off
   }, [])
@@ -60,14 +63,24 @@ export default function HelpStrip() {
   if (!SHOW_HELP_STRIP) return null
   if (!helpEnabled) return null
 
+  // 表示優先度:
+  // 1. マウスホバー中のヒント（一時表示）
+  // 2. 描画編集モードで選択中のツールの説明（常駐表示）
+  // 3. プレースホルダ
+  let display: { title: string; description: string } | null = hoverHint
+  if (!display && editorMode === 'drawing') {
+    const tool = TOOLS.find((t) => t.id === currentTool)
+    if (tool) display = { title: tool.label, description: tool.desc }
+  }
+
   return (
     <div className="bg-slate-50 border-b border-slate-200 px-3 py-1 text-xs text-slate-600 flex items-center gap-2 min-h-[24px] overflow-hidden">
-      {hint ? (
+      {display ? (
         <>
           <span className="text-indigo-500">ℹ</span>
-          <span className="font-semibold text-slate-700">{hint.title}</span>
+          <span className="font-semibold text-slate-700">{display.title}</span>
           <span className="text-slate-400">—</span>
-          <span className="truncate">{hint.description}</span>
+          <span className="truncate">{display.description}</span>
         </>
       ) : (
         <span className="text-slate-300">ℹ ボタンにマウスを乗せると説明が表示されます</span>
