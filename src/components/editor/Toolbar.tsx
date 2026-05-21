@@ -855,43 +855,64 @@ export default function Toolbar({ pdfDoc }: ToolbarProps = {}) {
           }`}>閉じる</button>
       )}
 
-      {/* Arrow toggles (polyline + pen) */}
-      {isPolyline && (
+      {/* Arrow toggles (polyline + pen). Tool 選択中も表示し、次の新規線にも反映。 */}
+      {(isPolyline || currentTool === 'polyline' || currentTool === 'pen') && (
         <>
-          <button onClick={() => {
-            if (selectedAnn.type === 'polyline') {
-              const d = selectedAnn.data as { arrowStart: boolean; arrowEnd: boolean }
-              updateAnnotation(currentPage, selectedAnn.id, {
-                data: { ...selectedAnn.data, arrowStart: !d.arrowStart } as unknown as typeof selectedAnn.data,
-              })
-            } else {
-              updateAnnotation(currentPage, selectedAnn.id, { arrowStart: !selectedAnn.arrowStart })
-            }
-          }}
-            className={`px-2.5 py-1.5 text-sm sm:px-2 sm:py-1 sm:text-xs border rounded-lg ${
-              (selectedAnn.type === 'polyline'
+          {(() => {
+            // 表示する値（選択中要素を優先、なければストア値）
+            const arrowStartVal = selectedAnn
+              ? (selectedAnn.type === 'polyline'
                 ? (selectedAnn.data as { arrowStart: boolean }).arrowStart
                 : selectedAnn.arrowStart)
-                ? 'border-indigo-500 bg-indigo-50 text-indigo-700'
-                : 'border-gray-200 text-gray-500'
-            }`}>←始点</button>
-          <button onClick={() => {
-            if (selectedAnn.type === 'polyline') {
-              const d = selectedAnn.data as { arrowStart: boolean; arrowEnd: boolean }
-              updateAnnotation(currentPage, selectedAnn.id, {
-                data: { ...selectedAnn.data, arrowEnd: !d.arrowEnd } as unknown as typeof selectedAnn.data,
-              })
-            } else {
-              updateAnnotation(currentPage, selectedAnn.id, { arrowEnd: !selectedAnn.arrowEnd })
-            }
-          }}
-            className={`px-2.5 py-1.5 text-sm sm:px-2 sm:py-1 sm:text-xs border rounded-lg ${
-              (selectedAnn.type === 'polyline'
+              : store.lineArrowStart
+            const arrowEndVal = selectedAnn
+              ? (selectedAnn.type === 'polyline'
                 ? (selectedAnn.data as { arrowEnd: boolean }).arrowEnd
                 : selectedAnn.arrowEnd)
-                ? 'border-indigo-500 bg-indigo-50 text-indigo-700'
-                : 'border-gray-200 text-gray-500'
-            }`}>終点→</button>
+              : store.lineArrowEnd
+
+            const handleToggleStart = () => {
+              const next = !arrowStartVal
+              store.setLineArrowStart(next)
+              if (selectedAnn) {
+                if (selectedAnn.type === 'polyline') {
+                  updateAnnotation(currentPage, selectedAnn.id, {
+                    data: { ...selectedAnn.data, arrowStart: next } as unknown as typeof selectedAnn.data,
+                  })
+                } else {
+                  updateAnnotation(currentPage, selectedAnn.id, { arrowStart: next })
+                }
+              }
+            }
+            const handleToggleEnd = () => {
+              const next = !arrowEndVal
+              store.setLineArrowEnd(next)
+              if (selectedAnn) {
+                if (selectedAnn.type === 'polyline') {
+                  updateAnnotation(currentPage, selectedAnn.id, {
+                    data: { ...selectedAnn.data, arrowEnd: next } as unknown as typeof selectedAnn.data,
+                  })
+                } else {
+                  updateAnnotation(currentPage, selectedAnn.id, { arrowEnd: next })
+                }
+              }
+            }
+
+            return (
+              <>
+                <button onClick={handleToggleStart}
+                  className={`px-2.5 py-1.5 text-sm sm:px-2 sm:py-1 sm:text-xs border rounded-lg ${
+                    arrowStartVal ? 'border-indigo-500 bg-indigo-50 text-indigo-700' : 'border-gray-200 text-gray-500'
+                  }`}
+                  title="次の/選択中の線の始点に矢印">←始点</button>
+                <button onClick={handleToggleEnd}
+                  className={`px-2.5 py-1.5 text-sm sm:px-2 sm:py-1 sm:text-xs border rounded-lg ${
+                    arrowEndVal ? 'border-indigo-500 bg-indigo-50 text-indigo-700' : 'border-gray-200 text-gray-500'
+                  }`}
+                  title="次の/選択中の線の終点に矢印">終点→</button>
+              </>
+            )
+          })()}
         </>
       )}
 

@@ -545,8 +545,8 @@ export default function EditorCanvas({ pdfDoc }: EditorCanvasProps) {
           size: penSize,
           data: {
             points: [...ds.polylinePoints],
-            arrowStart: false,
-            arrowEnd: false,
+            arrowStart: store.lineArrowStart,
+            arrowEnd: store.lineArrowEnd,
           },
           opacity: elementOpacity, fillEnabled, fillOpacity,
         })
@@ -1231,6 +1231,8 @@ export default function EditorCanvas({ pdfDoc }: EditorCanvasProps) {
           id: generateId(), type: 'pen', color: maskColor,
           data: [...ds.currentPath], size: penSize,
           opacity: elementOpacity, fillEnabled, fillOpacity,
+          arrowStart: store.lineArrowStart,
+          arrowEnd: store.lineArrowEnd,
         })
       }
     } else if (currentTool === 'callout') {

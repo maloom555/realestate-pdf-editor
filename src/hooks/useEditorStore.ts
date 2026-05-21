@@ -33,6 +33,9 @@ interface EditorState {
   fillOpacity: number
   textBold: boolean
   textUnderline: boolean
+  // Defaults for next polyline/pen creation
+  lineArrowStart: boolean
+  lineArrowEnd: boolean
   textBox: boolean
 
   // Annotations (per-page)
@@ -85,6 +88,8 @@ interface EditorState {
   setTextBold: (bold: boolean) => void
   setTextUnderline: (underline: boolean) => void
   setTextBox: (textBox: boolean) => void
+  setLineArrowStart: (v: boolean) => void
+  setLineArrowEnd: (v: boolean) => void
   loadProject: (bytes: Uint8Array, totalPages: number, annotations: Record<number, Annotation[]>, currentPage: number) => void
   addAnnotation: (pageNum: number, annotation: Annotation) => void
   removeAnnotation: (pageNum: number, id: string) => void
@@ -127,6 +132,8 @@ const initialState = {
   textBold: false,
   textUnderline: false,
   textBox: false,
+  lineArrowStart: false,
+  lineArrowEnd: false,
   annotations: {} as Record<number, Annotation[]>,
   selectedAnnotationId: null,
   selectedAnnotationIds: new Set<string>(),
@@ -176,6 +183,9 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   setTextUnderline: (underline) => set({ textUnderline: underline }),
 
   setTextBox: (textBox) => set({ textBox }),
+
+  setLineArrowStart: (v) => set({ lineArrowStart: v }),
+  setLineArrowEnd: (v) => set({ lineArrowEnd: v }),
 
   loadProject: (bytes, totalPages, annotations, currentPage) =>
     set({ pdfBytes: bytes, totalPages, annotations, currentPage, undoStack: [], redoStack: [], selectedAnnotationId: null }),
