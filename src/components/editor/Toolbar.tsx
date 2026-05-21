@@ -9,6 +9,12 @@ import { TEXT_TEMPLATES } from '@/lib/text-templates'
 import { emit } from '@/lib/event-bus'
 import { showToast } from '@/components/ui/Toast'
 
+// HelpStripへホバー説明を流すヘルパ（HelpStripから直接importすると循環参照になるため再定義）
+const helpHoverProps = (title: string, description: string) => ({
+  onMouseEnter: () => emit('help-hover', { title, description }),
+  onMouseLeave: () => emit('help-hover', null),
+})
+
 export const TOOLS: { id: ToolType; label: string; icon: string; desc: string }[] = [
   { id: 'rect', label: '墨消し', icon: '■', desc: '機密情報マスキング。ドラッグで黒塗り。フラット化PDFで完全除去できます' },
   { id: 'circle', label: '円', icon: '○', desc: 'ドラッグで円/楕円。Shiftで正円。塗りつぶし可' },
@@ -1208,21 +1214,26 @@ export default function Toolbar({ pdfDoc }: ToolbarProps = {}) {
         {/* Actions: copy/paste/undo/redo/clear */}
         <div className="flex items-center gap-0.5">
           <button onClick={duplicateAnnotation} disabled={!selectedAnnotationId}
+            {...helpHoverProps('複製', '選択中の要素を即座に複製（コピー＆貼付け同時）。Ctrl+C も同じ動作')}
             className="px-2 py-1 text-xs border border-gray-200 rounded-lg text-gray-500 hover:bg-white disabled:opacity-30 disabled:cursor-not-allowed"
             title="コピー＆貼付け (Ctrl+C)">📋<span className="hidden xl:inline ml-1">複製</span></button>
           <button onClick={() => {
               const fn = (window as unknown as Record<string, () => void>).__pasteClipboardImage
               if (fn) fn()
             }}
+            {...helpHoverProps('貼付け', 'クリップボードの画像（スクリーンショット等）をキャンバスに貼付け。Ctrl+V も同じ動作')}
             className="px-2 py-1 text-xs border border-gray-200 rounded-lg text-gray-500 hover:bg-white"
             title="クリップボード画像を貼付け (Ctrl+V)">📎<span className="hidden xl:inline ml-1">貼付け</span></button>
           <button onClick={undo} disabled={undoStack.length === 0}
+            {...helpHoverProps('戻す', '直前の編集操作を取り消す。Ctrl+Z も同じ動作')}
             className="px-2 py-1 text-xs border border-gray-200 rounded-lg text-gray-500 hover:bg-white disabled:opacity-30 disabled:cursor-not-allowed"
             title="元に戻す (Ctrl+Z)">↩<span className="hidden xl:inline ml-1">戻す</span></button>
           <button onClick={redo} disabled={redoStack.length === 0}
+            {...helpHoverProps('やり直し', '「戻す」で取り消した操作を再実行。Ctrl+Y も同じ動作')}
             className="px-2 py-1 text-xs border border-gray-200 rounded-lg text-gray-500 hover:bg-white disabled:opacity-30 disabled:cursor-not-allowed"
             title="やり直し (Ctrl+Y)">↪<span className="hidden xl:inline ml-1">やり直し</span></button>
           <button onClick={() => clearPage(currentPage)}
+            {...helpHoverProps('クリア', '現在のページ上にある全ての注釈・編集を一括削除（PDF自体は変わりません）')}
             className="px-2 py-1 text-xs border border-gray-200 rounded-lg text-gray-500 hover:bg-white"
             title="このページの注釈を全クリア">クリア</button>
         </div>
@@ -1231,22 +1242,27 @@ export default function Toolbar({ pdfDoc }: ToolbarProps = {}) {
         {pdfDoc && (
           <div className="flex items-center gap-0.5 bg-white border border-gray-200 rounded-lg px-1.5 py-0.5 shadow-sm">
             <button onClick={handlePrev} disabled={currentPage <= 1}
+              {...helpHoverProps('前のページ', '1つ前のページに移動')}
               className="px-1.5 py-0.5 text-xs rounded hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed"
               title="前のページ">◀</button>
             <PageInput currentPage={currentPage} totalPages={totalPages} setCurrentPage={setCurrentPage} />
             <button onClick={handleNext} disabled={currentPage >= totalPages}
+              {...helpHoverProps('次のページ', '1つ後のページに移動')}
               className="px-1.5 py-0.5 text-xs rounded hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed"
               title="次のページ">▶</button>
             <div className="w-px h-4 bg-gray-300 mx-1" />
             <button onClick={handleZoomOut}
+              {...helpHoverProps('縮小', '表示倍率を25%下げる')}
               className="px-1.5 py-0.5 text-xs rounded hover:bg-gray-100"
               title="縮小">−</button>
             <ZoomInput scale={scale} setScale={setScale} />
             <button onClick={handleZoomIn}
+              {...helpHoverProps('拡大', '表示倍率を25%上げる')}
               className="px-1.5 py-0.5 text-xs rounded hover:bg-gray-100"
               title="拡大">+</button>
             <div className="w-px h-4 bg-gray-300 mx-1" />
             <button onClick={handleCycleFit}
+              {...helpHoverProps('表示サイズ切替', '縦フィット / 横フィット / 100% を順番に切替（クリックで次のモードへ）')}
               className="px-2 py-0.5 text-xs rounded hover:bg-gray-100 text-gray-600 font-medium"
               title="表示サイズ切替">{NEXT_FIT_LABELS[fitMode]}</button>
           </div>
@@ -1257,10 +1273,12 @@ export default function Toolbar({ pdfDoc }: ToolbarProps = {}) {
           <div className="relative">
             <div className="flex">
               <button onClick={() => handleExport('none')}
+                {...helpHoverProps('PDFダウンロード', '編集内容（注釈・墨消しなど）を反映したPDFをダウンロード')}
                 className="px-3 py-1 text-xs bg-indigo-600 text-white rounded-l-lg font-semibold hover:bg-indigo-700 transition-colors">
                 PDFダウンロード
               </button>
               <button data-toolbar-menu-trigger onClick={() => setShowExportMenu(!showExportMenu)}
+                {...helpHoverProps('PDFダウンロード オプション', 'ページ番号付きでダウンロードする位置（中央下/右下/左下）を選択')}
                 className="px-1.5 py-1 text-xs bg-indigo-700 text-white rounded-r-lg hover:bg-indigo-800 transition-colors border-l border-indigo-500">
                 ▾
               </button>
@@ -1277,6 +1295,7 @@ export default function Toolbar({ pdfDoc }: ToolbarProps = {}) {
 
           <div className="relative">
             <button data-toolbar-menu-trigger onClick={() => setShowCompressMenu(!showCompressMenu)} disabled={!pdfBytes}
+              {...helpHoverProps('圧縮DL', '画像化＋JPEG圧縮でファイルサイズを大幅削減してダウンロード。3段階の圧縮率から選択')}
               className="px-2 py-1 text-xs border border-orange-300 text-orange-600 rounded-lg hover:bg-orange-50 disabled:opacity-30 disabled:cursor-not-allowed bg-white"
               title="PDFファイルサイズを圧縮します">
               圧縮DL ▾
