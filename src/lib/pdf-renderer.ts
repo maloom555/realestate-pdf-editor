@@ -934,10 +934,13 @@ export function hitTestHandle(
   // Callout: check arrow-start and box-end handles
   if (ann?.type === 'callout') {
     const d = ann.data as CalloutData
+    // 矢印先端のハンドルは離れた場所にあるので広めの判定でOK
     if (Math.hypot(tx - d.startX, ty - d.startY) < hs * 2.5) {
       return 'callout-start'
     }
-    if (Math.hypot(tx - d.endX, ty - d.endY) < hs * 2.5) {
+    // 枠中心のハンドルは「ハンドル真上だけ」反応させる（広いとボックス全域で誤判定）。
+    // 視覚的ハンドルサイズ=6px相当を少し超える 1.2*hs に絞る。
+    if (Math.hypot(tx - d.endX, ty - d.endY) < hs * 1.2) {
       return 'callout-end'
     }
   }
