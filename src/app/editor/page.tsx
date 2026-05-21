@@ -303,7 +303,7 @@ export default function EditorPage() {
         {/* Left: file actions (新規/読込/保存) */}
         <div className="flex items-center gap-1">
           <button onClick={handleReset} disabled={!pdfDoc}
-            {...helpHoverProps('新規', '現在の編集を破棄してファイル選択画面に戻ります（直前まではブラウザにも自動保存されています）')}
+            {...helpHoverProps('新規', 'ファイル選択画面に戻ります（現在のファイルは自動保存されます）')}
             className="px-2 py-1 text-xs rounded-md bg-white/15 hover:bg-white/25 border border-white/30 transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1"
             title="新規プロジェクト">
             <span>📄</span>
