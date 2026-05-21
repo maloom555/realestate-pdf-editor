@@ -13,7 +13,8 @@ type EventMap = {
   'help-hover': { title: string; description: string } | null
 }
 
-type Callback<T> = T extends undefined ? () => void : (data: T) => void
+// [T] 形式で union 分配を防ぐ。null を含む union でも正しく推論されるように。
+type Callback<T> = [T] extends [undefined] ? () => void : (data: T) => void
 
 const listeners = new Map<string, Set<Function>>()
 
