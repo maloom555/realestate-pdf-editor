@@ -9,6 +9,8 @@ type EventMap = {
   'paste-clipboard-image': undefined
   'edit-signature-text': { id: string; text: string }
   'load-project': string
+  // Hover help text for tools/buttons. Pass null to clear.
+  'help-hover': { title: string; description: string } | null
 }
 
 type Callback<T> = T extends undefined ? () => void : (data: T) => void

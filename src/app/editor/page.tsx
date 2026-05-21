@@ -4,6 +4,7 @@ import { useState, useCallback, useEffect, useRef } from 'react'
 import { useEditorStore } from '@/hooks/useEditorStore'
 import DropZone from '@/components/editor/DropZone'
 import Toolbar, { TOOLS } from '@/components/editor/Toolbar'
+import HelpStrip, { helpHoverProps } from '@/components/editor/HelpStrip'
 import EditorCanvas from '@/components/editor/EditorCanvas'
 import PageEditor from '@/components/editor/PageEditor'
 import LoadingOverlay from '@/components/editor/LoadingOverlay'
@@ -396,6 +397,7 @@ export default function EditorPage() {
                       }
                       store.setCurrentTool(tool.id)
                     }}
+                    {...helpHoverProps(tool.label, tool.desc)}
                     className={`flex-shrink-0 flex items-center gap-1 px-2 py-1 border-2 rounded-lg text-xs transition-all
                       ${store.currentTool === tool.id
                         ? 'border-indigo-500 bg-indigo-50 text-indigo-700 font-semibold'
@@ -414,6 +416,7 @@ export default function EditorPage() {
           {store.editorMode === 'drawing' ? (
             <>
               <Toolbar pdfDoc={pdfDoc} />
+              <HelpStrip />
               <main className="flex-1 min-h-0 flex justify-center items-start overflow-auto p-2 sm:p-4">
                 <EditorCanvas pdfDoc={pdfDoc} />
               </main>
