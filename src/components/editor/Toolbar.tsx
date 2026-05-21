@@ -132,6 +132,7 @@ function PageInput({ currentPage, totalPages, setCurrentPage }: { currentPage: n
         }}
         className="w-8 text-right text-xs font-semibold text-gray-700 bg-transparent rounded focus:outline-none focus:bg-gray-50 focus:ring-1 focus:ring-indigo-300"
         title="ページ番号を直接入力"
+        {...helpHoverProps('ページ番号', 'クリックで数字を直接入力できます。Enterで該当ページへジャンプ（◀▶ボタンでも移動可）')}
       />
       <span className="text-gray-400">/{totalPages}</span>
     </span>
@@ -208,6 +209,7 @@ function ZoomInput({ scale, setScale }: { scale: number; setScale: (s: number) =
       }}
       className="w-14 text-center text-xs text-gray-600 font-medium bg-transparent rounded focus:outline-none focus:bg-white focus:ring-1 focus:ring-indigo-300"
       title="表示倍率を直接入力（50〜400%）"
+      {...helpHoverProps('表示倍率', 'クリックで数字を直接入力できます（50〜400%）。Enterで確定。−/＋ボタンや縦/横フィットでも変更可')}
     />
   )
 }
