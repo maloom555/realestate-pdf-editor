@@ -333,20 +333,43 @@ export default function PageEditor({ pdfDoc, onReloadPdf }: PageEditorProps) {
   const handleCompress = async (level: 'high' | 'standard' | 'light') => {
     setShowCompressMenu(false)
     if (!pdfBytes) return
-    const { compressPdf, downloadBlob: dlBlob } = await import('@/lib/export-engine')
-    store.setLoading(true, 'PDFを圧縮中...')
+    // Toolbar.handleCompress と同じく、まずアノテーションをフラット化してから
+    // 圧縮する。ページ編集モードでも描画編集モードと同じ出力（編集反映済み）になる。
+    const { compressPdf, exportFlattenedPdf, downloadBlob: dlBlob } = await import('@/lib/export-engine')
+    store.setLoading(true, '編集内容を反映中...')
     try {
-      const doc = await window.pdfjsLib.getDocument({ data: pdfBytes.slice() }).promise
       const originalSize = pdfBytes.length
-      const result = await compressPdf(doc, level, (current, total) => {
+
+      // Step 1: アノテーションを焼き込み
+      const sourceDoc = await window.pdfjsLib.getDocument({ data: pdfBytes.slice() }).promise
+      const flattenedBytes = await exportFlattenedPdf(
+        sourceDoc,
+        store.annotations,
+        (current, total) => {
+          store.setLoading(true, `編集内容を反映中... ${current} / ${total} ページ`)
+        }
+      )
+
+      // Step 2: 焼き込み後のPDFを圧縮
+      const flattenedDoc = await window.pdfjsLib.getDocument({ data: flattenedBytes.slice() }).promise
+      const result = await compressPdf(flattenedDoc, level, (current, total) => {
         store.setLoading(true, `圧縮中... ${current} / ${total} ページ`)
-      })
-      const ratio = Math.round((1 - result.length / originalSize) * 100)
+      }, flattenedBytes)
+
       const sizeStr = (sz: number) => sz > 1048576 ? (sz / 1048576).toFixed(1) + ' MB' : Math.round(sz / 1024) + ' KB'
       store.setLoading(false)
-      showToast(`圧縮完了！ ${sizeStr(originalSize)} → ${sizeStr(result.length)}（${ratio}%削減）`, 'success')
+
+      // 圧縮結果が焼き込み後よりも大きければ焼き込み後を採用
+      const finalBytes = result.length >= flattenedBytes.length ? flattenedBytes : result
+      const ratio = Math.round((1 - finalBytes.length / originalSize) * 100)
+
+      if (finalBytes.length >= originalSize) {
+        showToast(`圧縮完了 ${sizeStr(originalSize)} → ${sizeStr(finalBytes.length)}（編集反映済み）`, 'success')
+      } else {
+        showToast(`圧縮完了！ ${sizeStr(originalSize)} → ${sizeStr(finalBytes.length)}（${ratio}%削減・編集反映済み）`, 'success')
+      }
       const fileName = store.projectName ? `${store.projectName}_compressed.pdf` : 'compressed.pdf'
-      dlBlob(result, fileName, 'application/pdf')
+      dlBlob(finalBytes, fileName, 'application/pdf')
     } catch (err) {
       showToast('圧縮に失敗しました: ' + (err as Error).message, 'error')
     } finally {
