@@ -1355,7 +1355,7 @@ export default function Toolbar({ pdfDoc }: ToolbarProps = {}) {
       {/* Context bar (color/font/opacity etc) - shown only when tool/selection requires it */}
       <div className="min-h-[40px] border-t border-gray-100 bg-white flex items-center px-3 py-1">
         {showSubMenu ? (
-          <div className="flex-1 flex items-center gap-x-3 gap-y-1 flex-wrap">
+          <div className="flex-1 flex items-center justify-center gap-x-3 gap-y-1 flex-wrap">
             {subMenuContent()}
           </div>
         ) : (
