@@ -585,8 +585,10 @@ export default function EditorCanvas({ pdfDoc }: EditorCanvasProps) {
         const canvas = maskCanvasRef.current!
         const rect = canvas.getBoundingClientRect()
         const dispX = d.endX * scale * (rect.width / canvas.width)
-        const dispY = d.endY * scale * (rect.height / canvas.height) - 20
         const frozenFs = Math.max(12, (d.fontSize || fontSize) * scale * (rect.width / canvas.width))
+        // 確定後の描画では textbox は endY を中心に縦中央配置されるため、
+        // テキストの可視top ≒ endY - frozenFs/2 になる。プレビューも同じ位置に。
+        const dispY = d.endY * scale * (rect.height / canvas.height) - frozenFs * 0.5
         setEditingAnnotationId(ann.id)
         drawStateRef.current.calloutPending = null
         setTextInput({ x: dispX, y: dispY, visible: true, fontSizePx: frozenFs })
@@ -1255,8 +1257,10 @@ export default function EditorCanvas({ pdfDoc }: EditorCanvasProps) {
       const canvas = maskCanvasRef.current!
       const rect = canvas.getBoundingClientRect()
       const dispX = calloutCoords.endX * scale * (rect.width / canvas.width)
-      const dispY = calloutCoords.endY * scale * (rect.height / canvas.height) - 20
       const frozenFs = Math.max(12, fontSize * scale * (rect.width / canvas.width))
+      // textbox は endY を中心に縦中央配置で描画されるので、入力プレビューも
+      // テキスト可視topを endY - frozenFs/2 に合わせる（固定 -20 だと低めに出ていた）
+      const dispY = calloutCoords.endY * scale * (rect.height / canvas.height) - frozenFs * 0.5
       setTextInput({ x: dispX, y: dispY, visible: true, fontSizePx: frozenFs })
       setTextValue('')
       setEditingAnnotationId(null)
@@ -1738,8 +1742,11 @@ export default function EditorCanvas({ pdfDoc }: EditorCanvasProps) {
             }}
             className="absolute bg-white/80 border-2 border-indigo-500 rounded px-1 py-0.5 outline-none resize text-black z-10"
             style={{
-              left: textInput.x,
-              top: textInput.y,
+              // border(2) + padding(px-1=4, py-0.5=2) を相殺し、
+              // 内側のテキスト先頭が (textInput.x, textInput.y) に来るように寄せる。
+              // これでクリック地点と確定後の描画位置のズレを最小化する。
+              left: textInput.x - 6,
+              top: textInput.y - 4,
               fontSize: `${textInput.fontSizePx}px`,
               lineHeight: 1.4,
               color: maskColor,
