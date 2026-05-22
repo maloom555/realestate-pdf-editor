@@ -622,6 +622,32 @@ export default function Toolbar({ pdfDoc }: ToolbarProps = {}) {
   // Sub-menu content (shared between desktop and mobile)
   const subMenuContent = () => (
     <>
+      {/* 連続描画トグル: 描画ツール選択中のみ表示。
+          ON にすると1個描いた後もそのツールに留まり、続けて描ける。
+          既定 OFF（描き終わると自動で選択ツールに戻る従来挙動）。 */}
+      {currentTool !== 'select' && (
+        <>
+          <button
+            type="button"
+            onClick={() => store.setContinuousMode(!store.continuousMode)}
+            className={`px-2.5 py-1.5 text-sm sm:px-2 sm:py-1 sm:text-xs border rounded-lg whitespace-nowrap ${
+              store.continuousMode
+                ? 'border-indigo-500 bg-indigo-50 text-indigo-700 font-semibold'
+                : 'border-gray-200 text-gray-500 hover:border-gray-300'
+            }`}
+            {...helpHoverProps(
+              '連続描画モード',
+              store.continuousMode
+                ? 'ON: 描いた後も同じツールのまま続けて描けます。OFFにすると1個描くごとに選択ツールに戻ります'
+                : 'OFF: 1個描くごとに選択ツールに戻る通常モード。ONにすると同じツールで連続して描けます'
+            )}
+          >
+            {store.continuousMode ? '🔁 連続ON' : '🔁 連続OFF'}
+          </button>
+          <div className="w-px h-5 bg-gray-300 hidden sm:block" />
+        </>
+      )}
+
       {/* Color palette */}
       {(showColorPicker || canChangeColor) && (
         <div className="flex items-center gap-1.5">

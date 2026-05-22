@@ -40,6 +40,9 @@ interface EditorState {
   lineArrowEnd: boolean
   // Help mode: when true, HelpStrip is visible and hover hints are shown
   helpEnabled: boolean
+  // Continuous-draw mode: when true, drawing tools stay active after each
+  // annotation is placed (no auto-switch to 'select'). Default off.
+  continuousMode: boolean
   textBox: boolean
 
   // Annotations (per-page)
@@ -96,6 +99,7 @@ interface EditorState {
   setLineArrowStart: (v: boolean) => void
   setLineArrowEnd: (v: boolean) => void
   setHelpEnabled: (v: boolean) => void
+  setContinuousMode: (v: boolean) => void
   loadProject: (bytes: Uint8Array, totalPages: number, annotations: Record<number, Annotation[]>, currentPage: number) => void
   addAnnotation: (pageNum: number, annotation: Annotation) => void
   removeAnnotation: (pageNum: number, id: string) => void
@@ -142,6 +146,7 @@ const initialState = {
   lineArrowStart: false,
   lineArrowEnd: false,
   helpEnabled: true,
+  continuousMode: false,
   annotations: {} as Record<number, Annotation[]>,
   selectedAnnotationId: null,
   selectedAnnotationIds: new Set<string>(),
@@ -197,6 +202,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   setLineArrowStart: (v) => set({ lineArrowStart: v }),
   setLineArrowEnd: (v) => set({ lineArrowEnd: v }),
   setHelpEnabled: (v) => set({ helpEnabled: v }),
+  setContinuousMode: (v) => set({ continuousMode: v }),
 
   loadProject: (bytes, totalPages, annotations, currentPage) =>
     set({ pdfBytes: bytes, totalPages, annotations, currentPage, undoStack: [], redoStack: [], selectedAnnotationId: null }),

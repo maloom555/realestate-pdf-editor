@@ -224,9 +224,12 @@ export default function EditorCanvas({ pdfDoc }: EditorCanvasProps) {
     return () => window.removeEventListener('annotation-image-loaded', handler)
   }, [redrawAnnotations])
 
-  // Add annotation and auto-switch to select mode with the new annotation selected
+  // Add annotation and auto-switch to select mode with the new annotation selected.
+  // 連続モード（store.continuousMode）が ON のときは、選択もツール切替も行わず、
+  // 同じツールで続けて描画できるようにする。
   const addAndSelect = useCallback((pageNum: number, ann: Annotation) => {
     addAnnotation(pageNum, ann)
+    if (store.continuousMode) return
     store.setCurrentTool('select')
     setSelectedAnnotationId(ann.id)
   }, [addAnnotation, store, setSelectedAnnotationId])
@@ -394,7 +397,7 @@ export default function EditorCanvas({ pdfDoc }: EditorCanvasProps) {
             textBox: false,
           },
         })
-        setCurrentTool('select')
+        if (!store.continuousMode) setCurrentTool('select')
         return
       }
 
@@ -1313,8 +1316,9 @@ export default function EditorCanvas({ pdfDoc }: EditorCanvasProps) {
       ds.calloutPending = null
       setEditingAnnotationId(null)
       // If user opened text/callout input and didn't type anything,
-      // cancel and revert to select tool (avoid spamming text inputs)
-      if (wasNewPlacement && (currentTool === 'text' || currentTool === 'callout')) {
+      // cancel and revert to select tool (avoid spamming text inputs).
+      // 連続モード時は同じツールに留まる（次のクリックでまた入力できる）。
+      if (wasNewPlacement && (currentTool === 'text' || currentTool === 'callout') && !store.continuousMode) {
         setCurrentTool('select')
       }
       return
