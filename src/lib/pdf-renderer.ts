@@ -264,8 +264,12 @@ export function drawAnnotation(ctx: CanvasRenderingContext2D, ann: Annotation, s
       }
 
       if (!d.textBox) {
+        // textBaseline='top' は em-box 天井を ly に合わせるため、可視グリフ topは
+        // フォント内部のアセンダー上余白ぶん下にズレる。0.15*fs 上に補正して、
+        // 可視 cap-top ≒ d.y（クリック位置）になるようにする。
+        const visualCompensate = d.fontSize * 0.15
         for (let i = 0; i < lines.length; i++) {
-          const ly = d.y + i * lineHeight
+          const ly = d.y - visualCompensate + i * lineHeight
           ctx.fillText(lines[i], d.x, ly)
           if (d.underline) {
             const m = ctx.measureText(lines[i])
