@@ -224,17 +224,14 @@ export default function EditorCanvas({ pdfDoc }: EditorCanvasProps) {
     return () => window.removeEventListener('annotation-image-loaded', handler)
   }, [redrawAnnotations])
 
-  // 新しい操作モデル: 描画ツールは描画後も自動で 'select' に切り替わらない。
-  //   連続 OFF (デフォルト): ツール維持 + 直前要素を選択（即編集可能）
-  //   連続 ON: ツール維持 + 選択なし（連投しやすい）
-  // 既存要素を「クリック (ドラッグなし)」 → handleMouseUp 冒頭で select に切替（共通機能）
+  // Add annotation and auto-switch to select mode with the new annotation selected.
+  // 連続モード（store.continuousMode）が ON のときは、選択もツール切替も行わず、
+  // 同じツールで続けて描画できるようにする。
   const addAndSelect = useCallback((pageNum: number, ann: Annotation) => {
     addAnnotation(pageNum, ann)
-    if (store.continuousMode) {
-      setSelectedAnnotationId(null)
-    } else {
-      setSelectedAnnotationId(ann.id)
-    }
+    if (store.continuousMode) return
+    store.setCurrentTool('select')
+    setSelectedAnnotationId(ann.id)
   }, [addAnnotation, store, setSelectedAnnotationId])
 
   const handleMouseDown = useCallback((e: React.MouseEvent | React.TouchEvent) => {
@@ -400,7 +397,7 @@ export default function EditorCanvas({ pdfDoc }: EditorCanvasProps) {
             textBox: false,
           },
         })
-        // 新モデル: ツールは維持。addAndSelect が選択処理を担う
+        if (!store.continuousMode) setCurrentTool('select')
         return
       }
 
@@ -1198,28 +1195,6 @@ export default function EditorCanvas({ pdfDoc }: EditorCanvasProps) {
 
     const pos = getPos(e)
 
-    // クリック (ドラッグなし) で既存要素にヒット → select に切替。
-    // ON/OFF 共通。ドラッグは常に「新規描画意思」と解釈するため、必ず mouseUp で判定する。
-    // 連続モード ON 中ならついでに連続モードも解除し、localStorage に保存する。
-    {
-      const CLICK_THRESHOLD = 5
-      const dragDist = Math.hypot(pos.x - ds.startX, pos.y - ds.startY)
-      if (dragDist < CLICK_THRESHOLD) {
-        const pageAnnsNow = annotations[currentPage] || []
-        for (let i = pageAnnsNow.length - 1; i >= 0; i--) {
-          if (hitTestAnnotation(pos.x, pos.y, pageAnnsNow[i])) {
-            if (store.continuousMode) {
-              store.setContinuousMode(false)
-              try { localStorage.setItem('pdf-kobo:continuous-mode', 'false') } catch { /* ignore */ }
-            }
-            setCurrentTool('select')
-            setSelectedAnnotationId(pageAnnsNow[i].id)
-            return
-          }
-        }
-      }
-    }
-
     if (currentTool === 'rect') {
       const x = Math.min(ds.startX, pos.x)
       const y = Math.min(ds.startY, pos.y)
@@ -1341,10 +1316,15 @@ export default function EditorCanvas({ pdfDoc }: EditorCanvasProps) {
 
     if (!textValue.trim()) {
       setTextInput((prev) => ({ ...prev, visible: false }))
+      const wasNewPlacement = !editingAnnotationId
       ds.calloutPending = null
       setEditingAnnotationId(null)
-      // 新モデル: 空入力でキャンセルしてもツール切替はしない（描画ツールは描画後も維持）。
-      // 別ツールに切り替えるのは、ツールバーのボタンを押す/Escでpolyline解除する等の明示操作のみ。
+      // If user opened text/callout input and didn't type anything,
+      // cancel and revert to select tool (avoid spamming text inputs).
+      // 連続モード時は同じツールに留まる（次のクリックでまた入力できる）。
+      if (wasNewPlacement && (currentTool === 'text' || currentTool === 'callout') && !store.continuousMode) {
+        setCurrentTool('select')
+      }
       return
     }
 
@@ -1514,12 +1494,6 @@ export default function EditorCanvas({ pdfDoc }: EditorCanvasProps) {
       if (e.key === 'Escape' && drawStateRef.current.polylinePoints.length > 0) {
         drawStateRef.current.polylinePoints = []
         redrawAnnotations()
-        return
-      }
-      // Esc: 連続モードを解除（描画中の入力でなければ）
-      if (e.key === 'Escape' && store.continuousMode) {
-        store.setContinuousMode(false)
-        try { localStorage.setItem('pdf-kobo:continuous-mode', 'false') } catch { /* ignore */ }
         return
       }
 

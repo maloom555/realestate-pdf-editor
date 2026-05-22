@@ -4,7 +4,7 @@ import { useState, useCallback, useEffect, useRef } from 'react'
 import { useEditorStore } from '@/hooks/useEditorStore'
 import DropZone from '@/components/editor/DropZone'
 import Toolbar, { TOOLS } from '@/components/editor/Toolbar'
-import HelpStrip, { helpHoverProps, useHelpEnabledSync, useContinuousModeSync } from '@/components/editor/HelpStrip'
+import HelpStrip, { helpHoverProps, useHelpEnabledSync } from '@/components/editor/HelpStrip'
 import EditorCanvas from '@/components/editor/EditorCanvas'
 import PageEditor from '@/components/editor/PageEditor'
 import LoadingOverlay from '@/components/editor/LoadingOverlay'
@@ -21,8 +21,6 @@ export default function EditorPage() {
   const [saveStatus, setSaveStatus] = useState<'idle' | 'pending' | 'saving' | 'saved'>('idle')
   // Sync help-enabled state with localStorage
   useHelpEnabledSync()
-  // 連続描画モードも localStorage で永続化
-  useContinuousModeSync()
 
   const handlePdfJsLoad = useCallback(() => {
     window.pdfjsLib.GlobalWorkerOptions.workerSrc =
