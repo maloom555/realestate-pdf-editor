@@ -1742,11 +1742,12 @@ export default function EditorCanvas({ pdfDoc }: EditorCanvasProps) {
             }}
             className="absolute bg-white/80 border-2 border-indigo-500 rounded px-1 py-0.5 outline-none resize text-black z-10"
             style={{
-              // border(2) + padding(px-1=4, py-0.5=2) を相殺し、
-              // 内側のテキスト先頭が (textInput.x, textInput.y) に来るように寄せる。
-              // これでクリック地点と確定後の描画位置のズレを最小化する。
+              // border(2) + padding(px-1=4, py-0.5=2) を相殺。さらに lineHeight 1.4 で
+              // 行ボックス内のグリフが (1.4-1)/2 * fs ≒ 0.2*fs 下にずれる分も相殺し、
+              // テキスト可視top が (textInput.x, textInput.y) ≒ クリック地点に来るように寄せる。
+              // これにより確定後の描画位置（canvas textBaseline=top）とほぼ一致する。
               left: textInput.x - 6,
-              top: textInput.y - 4,
+              top: textInput.y - 4 - textInput.fontSizePx * 0.2,
               fontSize: `${textInput.fontSizePx}px`,
               lineHeight: 1.4,
               color: maskColor,
