@@ -239,18 +239,24 @@ export default function PageEditor({ pdfDoc, onReloadPdf }: PageEditorProps) {
     // fromIdx: dragging page's current index (0-based)
     const fromIdx = dragPageNum - 1
 
-    // No-op if dropping at same position or immediately after itself
-    if (targetIdx === fromIdx || targetIdx === fromIdx + 1) {
+    // 自分自身の上にドロップしたら何もしない
+    if (targetIdx === fromIdx) {
       setDragPageNum(null)
       return
     }
 
-    // Build new order
+    // 新しい挙動: 「黄色く反転したスロット」がドロップ先になる。
+    // splice(fromIdx, 1) で削除 → splice(targetIdx, 0, dragged) で挿入。
+    // target > source / target < source どちらも同じ式で動く。
+    //   例) P1 を P5 にドロップ (fromIdx=0, targetIdx=4):
+    //       remove P1 → [P2,P3,P4,P5,P6] → insert at 4 → [P2,P3,P4,P5,P1,P6]
+    //   例) P5 を P2 にドロップ (fromIdx=4, targetIdx=1):
+    //       remove P5 → [P1,P2,P3,P4,P6] → insert at 1 → [P1,P5,P2,P3,P4,P6]
+    //   例) 真隣 P1 を P2 にドロップ (fromIdx=0, targetIdx=1):
+    //       remove P1 → [P2,P3,P4,P5,P6] → insert at 1 → [P2,P1,P3,P4,P5,P6]
     const order = Array.from({ length: totalPages }, (_, i) => i + 1)
     order.splice(fromIdx, 1)
-    // After removal, if target was after the removed item, shift index by 1
-    const insertAt = targetIdx > fromIdx ? targetIdx - 1 : targetIdx
-    order.splice(Math.max(0, Math.min(insertAt, order.length)), 0, dragPageNum)
+    order.splice(Math.max(0, Math.min(targetIdx, order.length)), 0, dragPageNum)
 
     setDragPageNum(null)
     executeOp(
