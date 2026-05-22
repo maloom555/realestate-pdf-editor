@@ -80,7 +80,7 @@ export default function HelpStrip() {
   }
 
   return (
-    <div className="bg-slate-50 border-b border-slate-200 px-3 py-1 text-xs text-slate-600 flex items-center gap-2 min-h-[24px] overflow-hidden">
+    <div className="bg-slate-50 border-b border-slate-200 px-3 py-1 text-xs text-slate-600 flex items-center justify-center gap-2 min-h-[24px] overflow-hidden">
       {display ? (
         <>
           <span className="text-indigo-500">ℹ</span>
