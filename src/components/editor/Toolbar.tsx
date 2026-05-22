@@ -630,7 +630,7 @@ export default function Toolbar({ pdfDoc }: ToolbarProps = {}) {
           <button
             type="button"
             onClick={() => store.setContinuousMode(!store.continuousMode)}
-            className={`px-2.5 py-1.5 text-sm sm:px-2 sm:py-1 sm:text-xs border rounded-lg whitespace-nowrap ${
+            className={`px-2.5 py-1.5 text-sm sm:px-2 sm:py-1 sm:text-xs border rounded-lg whitespace-nowrap inline-flex items-center justify-center gap-1 ${
               store.continuousMode
                 ? 'border-indigo-500 bg-indigo-50 text-indigo-700 font-semibold'
                 : 'border-gray-200 text-gray-500 hover:border-gray-300'
@@ -642,7 +642,11 @@ export default function Toolbar({ pdfDoc }: ToolbarProps = {}) {
                 : 'OFF: 1個描くごとに選択ツールに戻る通常モード。ONにすると同じツールで連続して描けます'
             )}
           >
-            {store.continuousMode ? '🔁 連続ON' : '🔁 連続OFF'}
+            <span>🔁 連続</span>
+            {/* ON/OFF は文字数差で右側がズレるので等幅のスロットに固定 */}
+            <span className="inline-block text-center w-[26px] sm:w-[24px] tabular-nums">
+              {store.continuousMode ? 'ON' : 'OFF'}
+            </span>
           </button>
           <div className="w-px h-5 bg-gray-300 hidden sm:block" />
         </>
