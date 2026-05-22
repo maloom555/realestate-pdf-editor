@@ -8,6 +8,7 @@ import {
   importPages, extractPages, rotatePages,
 } from '@/lib/page-operations'
 import { downloadBlob } from '@/lib/export-engine'
+import { drawAnnotationScaled } from '@/lib/pdf-renderer'
 import HelpStrip, { helpHoverProps } from './HelpStrip'
 
 interface PageEditorProps {
@@ -89,12 +90,25 @@ export default function PageEditor({ pdfDoc, onReloadPdf }: PageEditorProps) {
         try {
           const page = await myDoc.getPage(pageNum)
           if (myDoc !== pdfDocRef.current) return
-          const viewport = page.getViewport({ scale: 0.3 })
+          const THUMB_SCALE = 0.3
+          const viewport = page.getViewport({ scale: THUMB_SCALE })
           const canvas = document.createElement('canvas')
           canvas.width = viewport.width
           canvas.height = viewport.height
           const ctx = canvas.getContext('2d')!
           await page.render({ canvasContext: ctx, viewport }).promise
+          // 描画注釈 (rect/circle/text/...) を thumbnail にも反映。
+          // drawAnnotationScaled は store の PDF 単位座標を THUMB_SCALE 倍して描画する。
+          // page 編集中は signatureImages（署名画像）の渡し方は省略しており、
+          // 署名スタンプは画像なしで描画されるが、注釈の存在は thumbnail で把握できる。
+          const pageAnns = annotations[pageNum]
+          if (pageAnns && pageAnns.length > 0 && myDoc === pdfDocRef.current) {
+            for (const ann of pageAnns) {
+              try {
+                drawAnnotationScaled(ctx, ann, THUMB_SCALE)
+              } catch { /* 個別失敗は無視 */ }
+            }
+          }
           if (myDoc === pdfDocRef.current) {
             const dataUrl = canvas.toDataURL('image/jpeg', 0.6)
             thumbnailsRef.current.set(pageNum, dataUrl)
