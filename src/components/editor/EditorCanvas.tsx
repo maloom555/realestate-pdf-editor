@@ -1743,11 +1743,11 @@ export default function EditorCanvas({ pdfDoc }: EditorCanvasProps) {
             className="absolute bg-white/80 border-2 border-indigo-500 rounded px-1 py-0.5 outline-none resize text-black z-10"
             style={{
               // border(2) + padding(px-1=4, py-0.5=2) を相殺。さらに lineHeight 1.4 の
-              // half-leading (0.2*fs) と フォント内部のアセンダー上余白 (~0.15*fs) を相殺。
+              // half-leading (0.2*fs) と フォント内部のアセンダー上余白 (~0.25*fs) を相殺。
               // canvas 側も同量上シフト（lib/pdf-renderer.ts 参照）するため、
               // プレビュー位置と確定後の描画位置が一致する。
               left: textInput.x - 6,
-              top: textInput.y - 4 - textInput.fontSizePx * 0.35,
+              top: textInput.y - 4 - textInput.fontSizePx * 0.45,
               fontSize: `${textInput.fontSizePx}px`,
               lineHeight: 1.4,
               color: maskColor,
