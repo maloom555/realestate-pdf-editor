@@ -268,7 +268,7 @@ export function drawAnnotation(ctx: CanvasRenderingContext2D, ann: Annotation, s
         // フォント内部のアセンダー上余白ぶん下にズレる。0.35*fs 上に補正して、
         // 可視 cap-top ≒ d.y（クリック位置）になるようにする。
         // 数値は visual tuning（Noto Sans JP は特にアセンダーが高い）。
-        const visualCompensate = d.fontSize * 0.35
+        const visualCompensate = d.fontSize * 0.5
         for (let i = 0; i < lines.length; i++) {
           const ly = d.y - visualCompensate + i * lineHeight
           ctx.fillText(lines[i], d.x, ly)

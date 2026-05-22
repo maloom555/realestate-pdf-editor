@@ -1747,7 +1747,7 @@ export default function EditorCanvas({ pdfDoc }: EditorCanvasProps) {
               // canvas 側も同量上シフト（lib/pdf-renderer.ts 参照）するため、
               // プレビュー位置と確定後の描画位置が一致する。
               left: textInput.x - 6,
-              top: textInput.y - 4 - textInput.fontSizePx * 0.55,
+              top: textInput.y - 4 - textInput.fontSizePx * 0.7,
               fontSize: `${textInput.fontSizePx}px`,
               lineHeight: 1.4,
               color: maskColor,
