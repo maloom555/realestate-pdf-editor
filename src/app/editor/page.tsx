@@ -403,9 +403,10 @@ export default function EditorPage() {
               </button>
             </div>
 
-            {/* Tool buttons inline (drawing mode only) - hidden on small screens */}
+            {/* Tool buttons inline (drawing mode only) - hidden on small screens.
+                flex-1 + justify-center で帯全体の中央に寄せる */}
             {store.editorMode === 'drawing' && (
-              <div className="hidden md:flex items-center gap-0.5 flex-1 overflow-x-auto py-1">
+              <div className="hidden md:flex items-center justify-center gap-0.5 flex-1 overflow-x-auto py-1">
                 {TOOLS.map((tool) => (
                   <button
                     key={tool.id}
