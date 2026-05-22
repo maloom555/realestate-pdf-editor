@@ -404,33 +404,43 @@ export default function EditorPage() {
             </div>
 
             {/* Tool buttons inline (drawing mode only) - hidden on small screens.
-                flex-1 + justify-center で帯全体の中央に寄せる */}
+                flex-1 + justify-center で中央寄せ。さらに右側にタブと同じ幅の
+                ダミー要素を置き、行全体に対して真ん中に来るようにする
+                （下段アクション行の justify-center と視覚的に揃える） */}
             {store.editorMode === 'drawing' && (
-              <div className="hidden md:flex items-center justify-center gap-0.5 flex-1 overflow-x-auto py-1">
-                {TOOLS.map((tool) => (
-                  <button
-                    key={tool.id}
-                    onClick={() => {
-                      if (tool.id === 'stamp') {
-                        store.setShowStampPicker(!store.showStampPicker)
-                      } else {
-                        store.setShowStampPicker(false)
-                      }
-                      store.setCurrentTool(tool.id)
-                    }}
-                    {...helpHoverProps(tool.label, tool.desc)}
-                    className={`flex-shrink-0 flex items-center gap-1 px-2 py-1 border-2 rounded-lg text-xs transition-all
-                      ${store.currentTool === tool.id
-                        ? 'border-indigo-500 bg-indigo-50 text-indigo-700 font-semibold'
-                        : 'border-gray-200 text-gray-500 hover:border-indigo-400 hover:text-indigo-500'
-                      }`}
-                    title={tool.label}
-                  >
-                    <span className="text-base leading-none">{tool.icon}</span>
-                    <span className="hidden lg:inline">{tool.label}</span>
-                  </button>
-                ))}
-              </div>
+              <>
+                <div className="hidden md:flex items-center justify-center gap-0.5 flex-1 overflow-x-auto py-1">
+                  {TOOLS.map((tool) => (
+                    <button
+                      key={tool.id}
+                      onClick={() => {
+                        if (tool.id === 'stamp') {
+                          store.setShowStampPicker(!store.showStampPicker)
+                        } else {
+                          store.setShowStampPicker(false)
+                        }
+                        store.setCurrentTool(tool.id)
+                      }}
+                      {...helpHoverProps(tool.label, tool.desc)}
+                      className={`flex-shrink-0 flex items-center gap-1 px-2 py-1 border-2 rounded-lg text-xs transition-all
+                        ${store.currentTool === tool.id
+                          ? 'border-indigo-500 bg-indigo-50 text-indigo-700 font-semibold'
+                          : 'border-gray-200 text-gray-500 hover:border-indigo-400 hover:text-indigo-500'
+                        }`}
+                      title={tool.label}
+                    >
+                      <span className="text-base leading-none">{tool.icon}</span>
+                      <span className="hidden lg:inline">{tool.label}</span>
+                    </button>
+                  ))}
+                </div>
+                {/* 左タブと同じ実寸を持つ「見えない双子」。行幅に対するツール群の
+                    真の中央寄せを実現するための balance spacer */}
+                <div className="hidden md:flex flex-shrink-0 invisible pointer-events-none" aria-hidden="true">
+                  <span className="px-4 sm:px-6 py-2 text-sm font-medium">描画編集</span>
+                  <span className="px-4 sm:px-6 py-2 text-sm font-medium">ページ編集</span>
+                </div>
+              </>
             )}
           </div>
 
