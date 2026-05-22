@@ -16,7 +16,7 @@ const helpHoverProps = (title: string, description: string) => ({
 })
 
 export const TOOLS: { id: ToolType; label: string; icon: string; desc: string }[] = [
-  { id: 'rect', label: '墨消し', icon: '■', desc: '機密情報マスキング。ドラッグで黒塗り。フラット化PDFで完全除去できます' },
+  { id: 'rect', label: '墨消し', icon: '■', desc: '機密情報マスキング。ドラッグで黒塗り。フラット化PDFで完全除去できます。透過スライダーで濃度調整も可（既定100%）' },
   { id: 'circle', label: '円', icon: '○', desc: 'ドラッグで円/楕円。Shiftで正円。塗りつぶし可' },
   { id: 'shape-rect', label: '四角', icon: '□', desc: 'ドラッグで四角形。塗りつぶし・角丸・線種を変更可' },
   { id: 'pen', label: '自由線', icon: '〰', desc: 'フリーハンド描画。閉じる・塗り・始点/終点矢印に対応' },
@@ -218,11 +218,12 @@ export default function Toolbar({ pdfDoc }: ToolbarProps = {}) {
   const store = useEditorStore()
   const {
     currentTool, maskColor, penSize, fontSize, fontFamily, highlightOpacity, elementOpacity,
+    redactionOpacity,
     fillEnabled, fillOpacity, textBold, textUnderline, textBox,
     selectedAnnotationId, annotations, currentPage, pdfBytes,
     totalPages, scale, fitMode, setCurrentPage, setScale, setFitMode,
     setCurrentTool, setMaskColor, setPenSize, setFontSize, setFontFamily, setHighlightOpacity,
-    setElementOpacity, setFillEnabled, setFillOpacity,
+    setElementOpacity, setRedactionOpacity, setFillEnabled, setFillOpacity,
     setTextBold, setTextUnderline, setTextBox,
     removeAnnotation, updateAnnotation, undo, redo, clearPage, undoStack, redoStack,
     copyAnnotation, pasteAnnotation, clipboardAnnotation, duplicateAnnotation,
@@ -540,6 +541,8 @@ export default function Toolbar({ pdfDoc }: ToolbarProps = {}) {
       updateAnnotation(currentPage, selectedAnn.id, { opacity })
     } else if (currentTool === 'highlight') {
       setHighlightOpacity(opacity)
+    } else if (currentTool === 'rect') {
+      setRedactionOpacity(opacity)
     } else {
       setElementOpacity(opacity)
     }
@@ -606,7 +609,9 @@ export default function Toolbar({ pdfDoc }: ToolbarProps = {}) {
     ? Math.round((selectedAnn.opacity ?? 1) * 100)
     : currentTool === 'highlight'
       ? Math.round(highlightOpacity * 100)
-      : Math.round(elementOpacity * 100)
+      : currentTool === 'rect'
+        ? Math.round(redactionOpacity * 100)
+        : Math.round(elementOpacity * 100)
 
   // Fill display
   const displayFillEnabled = selectedAnn ? (selectedAnn.fillEnabled ?? false) : fillEnabled
@@ -823,15 +828,19 @@ export default function Toolbar({ pdfDoc }: ToolbarProps = {}) {
 
 
       {/* Opacity slider:
-          13インチ溢れ対策で、他ツールでは非表示。マーカーのみ表示する。
+          13インチ溢れ対策で、他ツールでは非表示。マーカー / 墨消し のみ表示する。
           - 完全に元に戻したい場合: SHOW_OPACITY_SLIDER = true
-          - マーカー以外でも表示したい場合: 下の条件を緩める */}
-      {(SHOW_OPACITY_SLIDER || currentTool === 'highlight' || selectedAnn?.type === 'highlight') && (
+          - 墨消しは redactionOpacity（既定100%）を編集。下にすると下地が透けて見える */}
+      {(SHOW_OPACITY_SLIDER
+        || currentTool === 'highlight' || selectedAnn?.type === 'highlight'
+        || currentTool === 'rect' || selectedAnn?.type === 'rect'
+      ) && (
         <div className="flex items-center gap-1.5">
           <label className="text-sm sm:text-xs text-gray-400 font-semibold shrink-0">透過:</label>
           <input type="range" min={5} max={100} value={displayOpacity}
             onChange={(e) => handleOpacityChange(parseInt(e.target.value))}
-            className="w-16 accent-indigo-500" />
+            className="w-16 accent-indigo-500"
+            {...helpHoverProps('透過（不透明度）', '100%で完全に隠す（墨消し既定）。値を下げると下地が透けて見える。マーカーは下げて重ね塗りに使う')} />
           <span className="text-sm sm:text-xs text-gray-400 min-w-[30px]">{displayOpacity}%</span>
         </div>
       )}

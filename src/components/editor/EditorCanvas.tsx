@@ -18,7 +18,7 @@ export default function EditorCanvas({ pdfDoc }: EditorCanvasProps) {
   const store = useEditorStore()
   const {
     currentPage, scale, currentTool, maskColor, penSize, fontSize, fontFamily, highlightOpacity,
-    elementOpacity, fillEnabled, fillOpacity, textBold, textUnderline, textBox,
+    elementOpacity, redactionOpacity, fillEnabled, fillOpacity, textBold, textUnderline, textBox,
     annotations, selectedAnnotationId,
     addAnnotation, updateAnnotation, setSelectedAnnotationId, setCurrentTool,
   } = store
@@ -1198,7 +1198,7 @@ export default function EditorCanvas({ pdfDoc }: EditorCanvasProps) {
       if (w > 2 && h > 2) {
         addAndSelect(currentPage, {
           id: generateId(), type: 'rect', color: maskColor,
-          data: { x, y, w, h }, opacity: elementOpacity,
+          data: { x, y, w, h }, opacity: redactionOpacity,
         })
       }
     } else if (currentTool === 'highlight') {
@@ -1301,7 +1301,7 @@ export default function EditorCanvas({ pdfDoc }: EditorCanvasProps) {
     }
 
     ds.currentPath = []
-  }, [currentTool, getPos, maskColor, penSize, highlightOpacity, currentPage, addAnnotation, addAndSelect])
+  }, [currentTool, getPos, maskColor, penSize, highlightOpacity, redactionOpacity, currentPage, addAnnotation, addAndSelect])
 
   // Text input commit
   const commitText = useCallback(() => {

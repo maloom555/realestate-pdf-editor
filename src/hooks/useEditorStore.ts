@@ -29,6 +29,8 @@ interface EditorState {
   fontFamily: string
   highlightOpacity: number
   elementOpacity: number
+  // 墨消し（rect）専用の透過。デフォルト1.0=100%（完全不透明）
+  redactionOpacity: number
   fillEnabled: boolean
   fillOpacity: number
   textBold: boolean
@@ -85,6 +87,7 @@ interface EditorState {
   setFontFamily: (family: string) => void
   setHighlightOpacity: (opacity: number) => void
   setElementOpacity: (opacity: number) => void
+  setRedactionOpacity: (opacity: number) => void
   setFillEnabled: (enabled: boolean) => void
   setFillOpacity: (opacity: number) => void
   setTextBold: (bold: boolean) => void
@@ -130,6 +133,7 @@ const initialState = {
   fontFamily: 'Noto Sans JP',
   highlightOpacity: 0.3,
   elementOpacity: 1.0,
+  redactionOpacity: 1.0,
   fillEnabled: false,
   fillOpacity: 0.3,
   textBold: false,
@@ -177,6 +181,8 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   setHighlightOpacity: (opacity) => set({ highlightOpacity: opacity }),
 
   setElementOpacity: (opacity) => set({ elementOpacity: opacity }),
+
+  setRedactionOpacity: (opacity) => set({ redactionOpacity: opacity }),
 
   setFillEnabled: (enabled) => set({ fillEnabled: enabled }),
 
