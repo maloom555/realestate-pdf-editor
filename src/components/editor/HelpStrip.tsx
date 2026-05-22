@@ -47,6 +47,29 @@ export function useHelpEnabledSync() {
   }, [helpEnabled])
 }
 
+// 連続描画モード（store.continuousMode）も localStorage 永続化する
+const CONTINUOUS_MODE_KEY = 'pdf-kobo:continuous-mode'
+export function useContinuousModeSync() {
+  const continuousMode = useEditorStore((s) => s.continuousMode)
+  const setContinuousMode = useEditorStore((s) => s.setContinuousMode)
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(CONTINUOUS_MODE_KEY)
+      if (raw !== null) {
+        // 'true' / 'false' の生文字列も JSON も両方許容
+        const parsed = raw === 'true' || raw === 'false' ? raw === 'true' : JSON.parse(raw)
+        if (typeof parsed === 'boolean' && parsed !== continuousMode) {
+          setContinuousMode(parsed)
+        }
+      }
+    } catch { /* ignore */ }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+  useEffect(() => {
+    try { localStorage.setItem(CONTINUOUS_MODE_KEY, String(continuousMode)) } catch { /* ignore */ }
+  }, [continuousMode])
+}
+
 export default function HelpStrip() {
   const [hoverHint, setHoverHint] = useState<{ title: string; description: string } | null>(null)
   const helpEnabled = useEditorStore((s) => s.helpEnabled)

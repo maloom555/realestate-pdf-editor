@@ -623,8 +623,9 @@ export default function Toolbar({ pdfDoc }: ToolbarProps = {}) {
   const subMenuContent = () => (
     <>
       {/* 連続描画トグル: 描画ツール選択中のみ表示。
-          ON にすると1個描いた後もそのツールに留まり、続けて描ける。
-          既定 OFF（描き終わると自動で選択ツールに戻る従来挙動）。 */}
+          OFF (デフォルト): 描いた後ツール維持 + 直前要素を選択（即編集可能）
+          ON: 描いた後ツール維持 + 選択なし（連投しやすい）
+          ※ 既存要素をクリックすると ON/OFF とも select に切替（共通機能）*/}
       {currentTool !== 'select' && (
         <>
           <button
@@ -635,11 +636,14 @@ export default function Toolbar({ pdfDoc }: ToolbarProps = {}) {
                 ? 'border-indigo-500 bg-indigo-50 text-indigo-700 font-semibold'
                 : 'border-gray-200 text-gray-500 hover:border-gray-300'
             }`}
+            title={store.continuousMode
+              ? '連続モード ON — Escまたは再押下でOFF'
+              : '連続モード OFF — 押すとONで連投モードに'}
             {...helpHoverProps(
               '連続描画モード',
               store.continuousMode
-                ? 'ON: 描いた後も同じツールのまま続けて描けます。OFFにすると1個描くごとに選択ツールに戻ります'
-                : 'OFF: 1個描くごとに選択ツールに戻る通常モード。ONにすると同じツールで連続して描けます'
+                ? 'ON: 同じツールで続けて描けます。直前の要素は選択されません（連投向け）。Escキーまたはこのボタンで OFF'
+                : 'OFF: 描いた直後の要素が自動選択されます（即編集可能）。ON にすると選択スキップで連続描画に切り替わります'
             )}
           >
             <span>🔁 連続</span>
