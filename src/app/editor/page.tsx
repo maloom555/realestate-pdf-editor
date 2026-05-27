@@ -407,7 +407,8 @@ export default function EditorPage() {
                 ツールが見切れないようにする (flex-shrink-0 を外す)。 */}
             {store.editorMode === 'drawing' && (
               <>
-                <div className="hidden md:flex items-center justify-center gap-0.5 flex-1 min-w-0 py-1">
+                {/* ml-6: タブと最初のツール (墨消し) の間に余白を追加 */}
+                <div className="hidden md:flex items-center justify-center gap-0.5 flex-1 min-w-0 py-1 ml-6">
                   {TOOLS.map((tool) => (
                     <button
                       key={tool.id}
