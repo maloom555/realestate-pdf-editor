@@ -619,39 +619,34 @@ export default function Toolbar({ pdfDoc }: ToolbarProps = {}) {
     ? Math.round((selectedAnn.fillOpacity ?? 0.3) * 100)
     : Math.round(fillOpacity * 100)
 
+  // 連続描画トグル単体 (右端に分離配置するため独立コンポーネント化)
+  const continuousToggleButton = () => (
+    <button
+      type="button"
+      onClick={() => store.setContinuousMode(!store.continuousMode)}
+      className={`px-2.5 py-1.5 text-sm sm:px-2 sm:py-1 sm:text-xs border rounded-lg whitespace-nowrap inline-flex items-center justify-center gap-1 ${
+        store.continuousMode
+          ? 'border-indigo-500 bg-indigo-50 text-indigo-700 font-semibold'
+          : 'border-gray-200 text-gray-500 hover:border-gray-300'
+      }`}
+      {...helpHoverProps(
+        '連続描画モード',
+        store.continuousMode
+          ? 'ON: 描いた後も同じツールのまま続けて描けます。OFFにすると1個描くごとに選択ツールに戻ります'
+          : 'OFF: 1個描くごとに選択ツールに戻る通常モード。ONにすると同じツールで連続して描けます'
+      )}
+    >
+      <span>🔁 連続</span>
+      {/* ON/OFF は文字数差で右側がズレるので等幅のスロットに固定 */}
+      <span className="inline-block text-center w-[26px] sm:w-[24px] tabular-nums">
+        {store.continuousMode ? 'ON' : 'OFF'}
+      </span>
+    </button>
+  )
+
   // Sub-menu content (shared between desktop and mobile)
   const subMenuContent = () => (
     <>
-      {/* 連続描画トグル: 描画ツール選択中のみ表示。
-          ON にすると1個描いた後もそのツールに留まり、続けて描ける。
-          既定 OFF（描き終わると自動で選択ツールに戻る従来挙動）。 */}
-      {currentTool !== 'select' && (
-        <>
-          <button
-            type="button"
-            onClick={() => store.setContinuousMode(!store.continuousMode)}
-            className={`px-2.5 py-1.5 text-sm sm:px-2 sm:py-1 sm:text-xs border rounded-lg whitespace-nowrap inline-flex items-center justify-center gap-1 ${
-              store.continuousMode
-                ? 'border-indigo-500 bg-indigo-50 text-indigo-700 font-semibold'
-                : 'border-gray-200 text-gray-500 hover:border-gray-300'
-            }`}
-            {...helpHoverProps(
-              '連続描画モード',
-              store.continuousMode
-                ? 'ON: 描いた後も同じツールのまま続けて描けます。OFFにすると1個描くごとに選択ツールに戻ります'
-                : 'OFF: 1個描くごとに選択ツールに戻る通常モード。ONにすると同じツールで連続して描けます'
-            )}
-          >
-            <span>🔁 連続</span>
-            {/* ON/OFF は文字数差で右側がズレるので等幅のスロットに固定 */}
-            <span className="inline-block text-center w-[26px] sm:w-[24px] tabular-nums">
-              {store.continuousMode ? 'ON' : 'OFF'}
-            </span>
-          </button>
-          <div className="w-px h-5 bg-gray-300 hidden sm:block" />
-        </>
-      )}
-
       {/* Color palette */}
       {(showColorPicker || canChangeColor) && (
         <div className="flex items-center gap-1.5">
@@ -1168,10 +1163,16 @@ export default function Toolbar({ pdfDoc }: ToolbarProps = {}) {
           </div>
         )}
 
-        {/* Sub-menu - fixed at bottom on mobile */}
+        {/* Sub-menu - fixed at bottom on mobile.
+            連続トグルは ml-auto で右端に寄せる (モバイルでも視認しやすい位置に) */}
         {showSubMenu && (
           <div className="fixed bottom-0 left-0 right-0 z-40 px-3 py-2 bg-white border-t border-gray-200 shadow-[0_-2px_10px_rgba(0,0,0,0.1)] flex items-center gap-2.5 flex-wrap overflow-x-auto safe-bottom">
             {subMenuContent()}
+            {currentTool !== 'select' && (
+              <div className="ml-auto flex-shrink-0">
+                {continuousToggleButton()}
+              </div>
+            )}
           </div>
         )}
 
@@ -1352,12 +1353,29 @@ export default function Toolbar({ pdfDoc }: ToolbarProps = {}) {
         </div>
       </div>
 
-      {/* Context bar (color/font/opacity etc) - shown only when tool/selection requires it */}
-      <div className="min-h-[40px] border-t border-gray-100 bg-white flex items-center px-3 py-1">
+      {/* Context bar (color/font/opacity etc) - shown only when tool/selection requires it.
+          右端に「連続描画モード」トグル (描画ツール選択中のみ表示)。
+          中央寄せを維持するため、左側に同寸の不可視ダミーを置いて行幅に対する
+          真の中央寄せを確保する。 */}
+      <div className="min-h-[40px] border-t border-gray-100 bg-white flex items-center px-3 py-1 gap-2">
         {showSubMenu ? (
-          <div className="flex-1 flex items-center justify-center gap-x-3 gap-y-1 flex-wrap">
-            {subMenuContent()}
-          </div>
+          <>
+            {/* 左側の不可視ダミー (連続ボタンが表示される時のみ。中央寄せのバランス取り) */}
+            {currentTool !== 'select' && (
+              <div className="invisible pointer-events-none flex-shrink-0" aria-hidden="true">
+                {continuousToggleButton()}
+              </div>
+            )}
+            <div className="flex-1 min-w-0 flex items-center justify-center gap-x-3 gap-y-1 flex-wrap">
+              {subMenuContent()}
+            </div>
+            {/* 右端: 連続描画モード トグル */}
+            {currentTool !== 'select' && (
+              <div className="flex-shrink-0">
+                {continuousToggleButton()}
+              </div>
+            )}
+          </>
         ) : (
           <div className="flex-1" />
         )}
