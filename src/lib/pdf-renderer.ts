@@ -412,18 +412,28 @@ export function drawAnnotation(ctx: CanvasRenderingContext2D, ann: Annotation, s
 
       // Draw leg/arrow if present (draw behind stamp)
       if (d.legX != null && d.legY != null) {
-        // Determine which edge of stamp is closest to the leg target
+        // スタンプ中心 (cx,cy) から target (legX,legY) への半直線が外枠と
+        // 交差する点を始点にする。これで target を斜めに動かしても線が
+        // カクつかず、常に「中心から一直線」に見える。
+        // (旧: |dx|>=|dy| で左右辺中点/上下辺中点へスナップする方式は
+        //  4方向にしか出口がなくジャンプして見えた)
         const dx = d.legX - cx
         const dy = d.legY - cy
+        const adx = Math.abs(dx)
+        const ady = Math.abs(dy)
+        const hw = d.w / 2
+        const hh = d.h / 2
         let edgeX: number, edgeY: number
-        if (Math.abs(dx) >= Math.abs(dy)) {
-          // Horizontal: left or right edge
-          edgeX = dx >= 0 ? d.x + d.w : d.x
+        if (adx < 1e-6 && ady < 1e-6) {
+          // target がほぼ中心の場合は便宜上 cx,cy
+          edgeX = cx
           edgeY = cy
         } else {
-          // Vertical: top or bottom edge
-          edgeX = cx
-          edgeY = dy >= 0 ? d.y + d.h : d.y
+          const tx = adx > 1e-6 ? hw / adx : Infinity
+          const ty = ady > 1e-6 ? hh / ady : Infinity
+          const t = Math.min(tx, ty)
+          edgeX = cx + dx * t
+          edgeY = cy + dy * t
         }
         // Line from stamp edge to target
         ctx.strokeStyle = stampColor
