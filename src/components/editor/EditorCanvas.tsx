@@ -18,7 +18,7 @@ export default function EditorCanvas({ pdfDoc }: EditorCanvasProps) {
   const store = useEditorStore()
   const {
     currentPage, scale, currentTool, maskColor, penSize, fontSize, fontFamily, highlightOpacity,
-    elementOpacity, redactionOpacity, fillEnabled, fillOpacity, textBold, textUnderline, textBox,
+    elementOpacity, redactionOpacity, fillEnabled, fillOpacity, textBold, textUnderline, textBox, textBg,
     annotations, selectedAnnotationId,
     addAnnotation, updateAnnotation, setSelectedAnnotationId, setCurrentTool,
   } = store
@@ -395,6 +395,7 @@ export default function EditorCanvas({ pdfDoc }: EditorCanvasProps) {
             bold: false,
             underline: false,
             textBox: false,
+            textBg: false,
           },
         })
         if (!store.continuousMode) setCurrentTool('select')
@@ -1393,6 +1394,7 @@ export default function EditorCanvas({ pdfDoc }: EditorCanvasProps) {
           bold: textBold,
           underline: textUnderline,
           textBox: textBox,
+          textBg: textBg,
         },
         opacity: elementOpacity,
       })

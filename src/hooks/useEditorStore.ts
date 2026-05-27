@@ -44,6 +44,7 @@ interface EditorState {
   // annotation is placed (no auto-switch to 'select'). Default off.
   continuousMode: boolean
   textBox: boolean
+  textBg: boolean
 
   // Annotations (per-page)
   annotations: Record<number, Annotation[]>
@@ -96,6 +97,7 @@ interface EditorState {
   setTextBold: (bold: boolean) => void
   setTextUnderline: (underline: boolean) => void
   setTextBox: (textBox: boolean) => void
+  setTextBg: (textBg: boolean) => void
   setLineArrowStart: (v: boolean) => void
   setLineArrowEnd: (v: boolean) => void
   setHelpEnabled: (v: boolean) => void
@@ -143,6 +145,7 @@ const initialState = {
   textBold: false,
   textUnderline: false,
   textBox: false,
+  textBg: false,
   lineArrowStart: false,
   lineArrowEnd: false,
   helpEnabled: true,
@@ -198,6 +201,8 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   setTextUnderline: (underline) => set({ textUnderline: underline }),
 
   setTextBox: (textBox) => set({ textBox }),
+
+  setTextBg: (textBg) => set({ textBg }),
 
   setLineArrowStart: (v) => set({ lineArrowStart: v }),
   setLineArrowEnd: (v) => set({ lineArrowEnd: v }),

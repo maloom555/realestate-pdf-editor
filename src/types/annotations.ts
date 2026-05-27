@@ -23,6 +23,9 @@ export interface TextData {
   bold?: boolean
   underline?: boolean
   textBox?: boolean
+  // 枠 (textBox) と独立した白塗り背景。枠と同じ大きさで白く塗るだけ。
+  // textBox=true は元から白塗り+枠を含むので、textBg は枠なしで白塗りだけ欲しい時用。
+  textBg?: boolean
 }
 
 export interface StampData {

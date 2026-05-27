@@ -219,12 +219,12 @@ export default function Toolbar({ pdfDoc }: ToolbarProps = {}) {
   const {
     currentTool, maskColor, penSize, fontSize, fontFamily, highlightOpacity, elementOpacity,
     redactionOpacity,
-    fillEnabled, fillOpacity, textBold, textUnderline, textBox,
+    fillEnabled, fillOpacity, textBold, textUnderline, textBox, textBg,
     selectedAnnotationId, annotations, currentPage, pdfBytes,
     totalPages, scale, fitMode, setCurrentPage, setScale, setFitMode,
     setCurrentTool, setMaskColor, setPenSize, setFontSize, setFontFamily, setHighlightOpacity,
     setElementOpacity, setRedactionOpacity, setFillEnabled, setFillOpacity,
-    setTextBold, setTextUnderline, setTextBox,
+    setTextBold, setTextUnderline, setTextBox, setTextBg,
     removeAnnotation, updateAnnotation, undo, redo, clearPage, undoStack, redoStack,
     copyAnnotation, pasteAnnotation, clipboardAnnotation, duplicateAnnotation,
     bringForward, sendBackward,
@@ -603,6 +603,9 @@ export default function Toolbar({ pdfDoc }: ToolbarProps = {}) {
   const displayTextBox = isSelectedText && selectedAnn
     ? ((selectedAnn.data as { textBox?: boolean }).textBox ?? false)
     : textBox
+  const displayTextBg = isSelectedText && selectedAnn
+    ? ((selectedAnn.data as { textBg?: boolean }).textBg ?? false)
+    : textBg
 
   // Opacity display
   const displayOpacity = selectedAnn
@@ -793,7 +796,26 @@ export default function Toolbar({ pdfDoc }: ToolbarProps = {}) {
               }}
                 className={`px-2.5 py-1.5 text-sm sm:px-2 sm:py-1 sm:text-xs border rounded-lg ${
                   displayTextBox ? 'border-indigo-500 bg-indigo-50 text-indigo-700' : 'border-gray-200 text-gray-500'
-                }`} title="テキストボックス">枠</button>
+                }`}
+                {...helpHoverProps('枠', 'テキストの周りに枠と白塗り背景を付ける')}
+                title="テキストボックス">枠</button>
+            )}
+            {/* 白塗り背景: 枠なしで白く塗るだけ。textBox(枠+白塗り)と独立にON/OFF可。 */}
+            {(currentTool === 'text' || isSelectedText) && (
+              <button onClick={() => {
+                const newVal = !displayTextBg
+                setTextBg(newVal)
+                if (isSelectedText && selectedAnn) {
+                  updateAnnotation(currentPage, selectedAnn.id, {
+                    data: { ...selectedAnn.data, textBg: newVal } as never,
+                  })
+                }
+              }}
+                className={`px-2.5 py-1.5 text-sm sm:px-2 sm:py-1 sm:text-xs border rounded-lg ${
+                  displayTextBg ? 'border-indigo-500 bg-indigo-50 text-indigo-700' : 'border-gray-200 text-gray-500'
+                }`}
+                {...helpHoverProps('白塗り', 'テキストの背景だけ白く塗って浮き立たせる（枠線は付けない）。枠と同じサイズ')}
+                title="白塗り背景">白塗り</button>
             )}
           </div>
           {/* Text template button */}

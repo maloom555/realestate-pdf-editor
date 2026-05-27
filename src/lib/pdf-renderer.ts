@@ -265,10 +265,37 @@ export function drawAnnotation(ctx: CanvasRenderingContext2D, ann: Annotation, s
 
       if (!d.textBox) {
         // textBaseline='top' は em-box 天井を ly に合わせるため、可視グリフ topは
-        // フォント内部のアセンダー上余白ぶん下にズレる。0.35*fs 上に補正して、
+        // フォント内部のアセンダー上余白ぶん下にズレる。0.5*fs 上に補正して、
         // 可視 cap-top ≒ d.y（クリック位置）になるようにする。
         // 数値は visual tuning（Noto Sans JP は特にアセンダーが高い）。
         const visualCompensate = d.fontSize * 0.5
+
+        // 白塗り背景 (textBg): 枠 (textBox) と同寸で白く塗るだけ。
+        // textBox=true は既に上の分岐で白塗り＋枠を描画しているので、ここは
+        // textBg のみのケース。visualCompensate を効かせた後のテキスト位置
+        // を基準に bbox を計算する。
+        if (d.textBg) {
+          const padding = 6
+          let maxWidth = 0
+          for (const line of lines) {
+            const m = ctx.measureText(line)
+            if (m.width > maxWidth) maxWidth = m.width
+          }
+          const boxW = maxWidth + padding * 2
+          const boxH = lines.length * lineHeight + padding * 2
+          const tbr = ann.borderRadius || 0
+          const bgTop = d.y - visualCompensate - padding
+          const savedFill = ctx.fillStyle
+          const savedAlpha = ctx.globalAlpha
+          ctx.globalAlpha = 1
+          ctx.fillStyle = '#ffffff'
+          ctx.beginPath()
+          ctx.roundRect(d.x - padding, bgTop, boxW, boxH, tbr)
+          ctx.fill()
+          ctx.globalAlpha = savedAlpha
+          ctx.fillStyle = savedFill
+        }
+
         for (let i = 0; i < lines.length; i++) {
           const ly = d.y - visualCompensate + i * lineHeight
           ctx.fillText(lines[i], d.x, ly)
