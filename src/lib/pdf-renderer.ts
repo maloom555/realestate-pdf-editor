@@ -135,19 +135,13 @@ export function drawAnnotation(ctx: CanvasRenderingContext2D, ann: Annotation, s
     case 'callout': {
       const d = ann.data as CalloutData
       const lineW = d.arrowSize || ann.size || 2
-      // Arrowhead at start (pointing to the target) - draw first to get base
-      const arrowBase = drawArrowhead(ctx, d.startX, d.startY, d.endX, d.endY, lineW, ann.color)
-      // Arrow line from base of arrowhead to end
-      ctx.strokeStyle = ann.color
-      ctx.fillStyle = ann.color
-      ctx.lineWidth = lineW
-      ctx.lineCap = 'round'
-      ctx.setLineDash([])
-      ctx.beginPath()
-      ctx.moveTo(arrowBase.baseX, arrowBase.baseY)
-      ctx.lineTo(d.endX, d.endY)
-      ctx.stroke()
-      // Text box - position depends on arrow direction
+
+      // 先にテキストボックスの寸法を確定させて、矢印の足がボックスの
+      // 「中央」ではなく「外枠の縁」で終わるようにする。
+      let lineEndX = d.endX
+      let lineEndY = d.endY
+      let boxGeom: { boxX: number; boxY: number; boxW: number; boxH: number;
+                     lines: string[]; fs: number; lineHeight: number; padding: number } | null = null
       if (d.text) {
         const lines = d.text.split('\n')
         const fs = d.fontSize || 16
@@ -163,9 +157,41 @@ export function drawAnnotation(ctx: CanvasRenderingContext2D, ann: Annotation, s
         }
         const boxW = maxWidth + padding * 2
         const boxH = lines.length * lineHeight + padding * 2
-        // Box is fixed at endX (left edge), endY centered vertically
         const boxX = d.endX - boxW / 2
         const boxY = d.endY - boxH / 2
+        boxGeom = { boxX, boxY, boxW, boxH, lines, fs, lineHeight, padding }
+
+        // 足の終端 = (endX, endY) から (startX, startY) 方向への半直線と
+        // 矩形外枠の交点。t = min(hw/|dx|, hh/|dy|) で最初にぶつかる辺を判定。
+        const dx = d.startX - d.endX
+        const dy = d.startY - d.endY
+        const adx = Math.abs(dx)
+        const ady = Math.abs(dy)
+        if (adx > 0.5 || ady > 0.5) {
+          const tx = adx > 1e-6 ? (boxW / 2) / adx : Infinity
+          const ty = ady > 1e-6 ? (boxH / 2) / ady : Infinity
+          const t = Math.min(tx, ty)
+          lineEndX = d.endX + dx * t
+          lineEndY = d.endY + dy * t
+        }
+      }
+
+      // Arrowhead at start (pointing to the target) - draw first to get base
+      const arrowBase = drawArrowhead(ctx, d.startX, d.startY, d.endX, d.endY, lineW, ann.color)
+      // Arrow line from base of arrowhead to box edge (or to end if no text/box)
+      ctx.strokeStyle = ann.color
+      ctx.fillStyle = ann.color
+      ctx.lineWidth = lineW
+      ctx.lineCap = 'round'
+      ctx.setLineDash([])
+      ctx.beginPath()
+      ctx.moveTo(arrowBase.baseX, arrowBase.baseY)
+      ctx.lineTo(lineEndX, lineEndY)
+      ctx.stroke()
+
+      // Text box drawing (if any)
+      if (boxGeom) {
+        const { boxX, boxY, boxW, boxH, lines, fs, lineHeight, padding } = boxGeom
         const br = ann.borderRadius || 0
         // Background is always opaque white (no transparency)
         ctx.fillStyle = '#ffffff'
