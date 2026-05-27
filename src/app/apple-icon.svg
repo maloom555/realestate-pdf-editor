@@ -2,8 +2,8 @@
   <!-- 不動産PDF工房 apple-touch-icon: 大きめサイズ用 -->
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="180" y2="180" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#6366f1"/>
-      <stop offset="1" stop-color="#7c3aed"/>
+      <stop offset="0" stop-color="#3b82f6"/>
+      <stop offset="1" stop-color="#1d4ed8"/>
     </linearGradient>
   </defs>
   <rect x="0" y="0" width="180" height="180" rx="40" fill="url(#bg)"/>
