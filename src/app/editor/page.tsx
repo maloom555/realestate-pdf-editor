@@ -402,12 +402,12 @@ export default function EditorPage() {
             </div>
 
             {/* Tool buttons inline (drawing mode only) - hidden on small screens.
-                flex-1 + justify-center で中央寄せ。さらに右側にタブと同じ幅の
-                ダミー要素を置き、行全体に対して真ん中に来るようにする
-                （下段アクション行の justify-center と視覚的に揃える） */}
+                flex-1 + justify-center で中央寄せ。右側にタブと同寸の「balance spacer」
+                を置いて行全体での中央寄せを実現。ただし狭い窓では spacer から縮んで
+                ツールが見切れないようにする (flex-shrink-0 を外す)。 */}
             {store.editorMode === 'drawing' && (
               <>
-                <div className="hidden md:flex items-center justify-center gap-0.5 flex-1 overflow-x-auto py-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                <div className="hidden md:flex items-center justify-center gap-0.5 flex-1 min-w-0 py-1">
                   {TOOLS.map((tool) => (
                     <button
                       key={tool.id}
@@ -428,13 +428,16 @@ export default function EditorPage() {
                       title={tool.label}
                     >
                       <span className="text-base leading-none">{tool.icon}</span>
-                      <span className="hidden lg:inline">{tool.label}</span>
+                      {/* ラベルは xl(1280px+) 以上でのみ表示。それ未満はアイコンのみで
+                          幅を稼ぎ、見切れにくくする */}
+                      <span className="hidden xl:inline">{tool.label}</span>
                     </button>
                   ))}
                 </div>
-                {/* 左タブと同じ実寸を持つ「見えない双子」。行幅に対するツール群の
-                    真の中央寄せを実現するための balance spacer */}
-                <div className="hidden md:flex flex-shrink-0 invisible pointer-events-none" aria-hidden="true">
+                {/* 左タブと同寸の不可視ダミー。窓が狭いときはここから縮ませて
+                    ツールの見切れを防ぐ (flex-shrink-0 なし)。min-w-0 で完全に
+                    0 まで縮めることも可能 */}
+                <div className="hidden md:flex min-w-0 invisible pointer-events-none overflow-hidden" aria-hidden="true">
                   <span className="px-4 sm:px-6 py-2 text-sm font-medium">描画編集</span>
                   <span className="px-4 sm:px-6 py-2 text-sm font-medium">ページ編集</span>
                 </div>
