@@ -1086,6 +1086,15 @@ export default function Toolbar({ pdfDoc }: ToolbarProps = {}) {
             className="px-3 py-1.5 text-sm sm:text-xs border border-red-300 text-red-500 rounded-lg hover:bg-red-50">削除</button>
         </>
       )}
+
+      {/* 連続描画トグル: サブメニューの末尾に配置。描画ツール選択中のみ表示。
+          中央寄せされた要素群の「最後」に並ぶ形 (完全な右寄せではない) */}
+      {currentTool !== 'select' && (
+        <>
+          <div className="w-px h-5 bg-gray-300 hidden sm:block" />
+          {continuousToggleButton()}
+        </>
+      )}
     </>
   )
 
@@ -1164,15 +1173,10 @@ export default function Toolbar({ pdfDoc }: ToolbarProps = {}) {
         )}
 
         {/* Sub-menu - fixed at bottom on mobile.
-            連続トグルは ml-auto で右端に寄せる (モバイルでも視認しやすい位置に) */}
+            連続トグルは subMenuContent 末尾に組み込み済み */}
         {showSubMenu && (
           <div className="fixed bottom-0 left-0 right-0 z-40 px-3 py-2 bg-white border-t border-gray-200 shadow-[0_-2px_10px_rgba(0,0,0,0.1)] flex items-center gap-2.5 flex-wrap overflow-x-auto safe-bottom">
             {subMenuContent()}
-            {currentTool !== 'select' && (
-              <div className="ml-auto flex-shrink-0">
-                {continuousToggleButton()}
-              </div>
-            )}
           </div>
         )}
 
@@ -1354,28 +1358,13 @@ export default function Toolbar({ pdfDoc }: ToolbarProps = {}) {
       </div>
 
       {/* Context bar (color/font/opacity etc) - shown only when tool/selection requires it.
-          右端に「連続描画モード」トグル (描画ツール選択中のみ表示)。
-          中央寄せを維持するため、左側に同寸の不可視ダミーを置いて行幅に対する
-          真の中央寄せを確保する。 */}
-      <div className="min-h-[40px] border-t border-gray-100 bg-white flex items-center px-3 py-1 gap-2">
+          連続描画トグルは subMenuContent 末尾に組み込まれており、中央寄せされる
+          一群の「最後」に並ぶ。 */}
+      <div className="min-h-[40px] border-t border-gray-100 bg-white flex items-center px-3 py-1">
         {showSubMenu ? (
-          <>
-            {/* 左側の不可視ダミー (連続ボタンが表示される時のみ。中央寄せのバランス取り) */}
-            {currentTool !== 'select' && (
-              <div className="invisible pointer-events-none flex-shrink-0" aria-hidden="true">
-                {continuousToggleButton()}
-              </div>
-            )}
-            <div className="flex-1 min-w-0 flex items-center justify-center gap-x-3 gap-y-1 flex-wrap">
-              {subMenuContent()}
-            </div>
-            {/* 右端: 連続描画モード トグル */}
-            {currentTool !== 'select' && (
-              <div className="flex-shrink-0">
-                {continuousToggleButton()}
-              </div>
-            )}
-          </>
+          <div className="flex-1 flex items-center justify-center gap-x-3 gap-y-1 flex-wrap">
+            {subMenuContent()}
+          </div>
         ) : (
           <div className="flex-1" />
         )}
