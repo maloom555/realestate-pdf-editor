@@ -407,7 +407,7 @@ export default function EditorPage() {
                 （下段アクション行の justify-center と視覚的に揃える） */}
             {store.editorMode === 'drawing' && (
               <>
-                <div className="hidden md:flex items-center justify-center gap-0.5 flex-1 overflow-x-auto py-1">
+                <div className="hidden md:flex items-center justify-center gap-0.5 flex-1 overflow-x-auto py-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                   {TOOLS.map((tool) => (
                     <button
                       key={tool.id}
