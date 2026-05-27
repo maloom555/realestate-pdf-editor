@@ -374,13 +374,14 @@ export default function EditorPage() {
               <button
                 onClick={() => store.setEditorMode('drawing')}
                 {...helpHoverProps('描画編集', '注釈・墨消し・スタンプなどを書き込むモード。各ツールでPDFに描画できます')}
-                className={`px-4 sm:px-6 py-2 text-sm font-medium transition-colors relative
+                className={`px-4 sm:px-6 py-2 text-sm font-medium transition-colors relative inline-flex items-center gap-1.5
                   ${store.editorMode === 'drawing'
                     ? 'text-indigo-700'
                     : 'text-gray-400 hover:text-gray-600'
                   }`}
               >
-                描画編集
+                <span aria-hidden="true">✏️</span>
+                <span>描画編集</span>
                 {store.editorMode === 'drawing' && (
                   <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-indigo-600" />
                 )}
@@ -388,13 +389,14 @@ export default function EditorPage() {
               <button
                 onClick={() => store.setEditorMode('pageEditor')}
                 {...helpHoverProps('ページ編集', 'ページの並び替え・回転・削除・複製・サイズ変更・抽出・追加が可能です')}
-                className={`px-4 sm:px-6 py-2 text-sm font-medium transition-colors relative
+                className={`px-4 sm:px-6 py-2 text-sm font-medium transition-colors relative inline-flex items-center gap-1.5
                   ${store.editorMode === 'pageEditor'
                     ? 'text-indigo-700'
                     : 'text-gray-400 hover:text-gray-600'
                   }`}
               >
-                ページ編集
+                <span aria-hidden="true">📄</span>
+                <span>ページ編集</span>
                 {store.editorMode === 'pageEditor' && (
                   <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-indigo-600" />
                 )}
@@ -437,10 +439,15 @@ export default function EditorPage() {
                 </div>
                 {/* 左タブと同寸の不可視ダミー。窓が狭いときはここから縮ませて
                     ツールの見切れを防ぐ (flex-shrink-0 なし)。min-w-0 で完全に
-                    0 まで縮めることも可能 */}
+                    0 まで縮めることも可能。アイコンを含めて実寸が一致するよう
+                    タブと同じ構造でレンダリング */}
                 <div className="hidden md:flex min-w-0 invisible pointer-events-none overflow-hidden" aria-hidden="true">
-                  <span className="px-4 sm:px-6 py-2 text-sm font-medium">描画編集</span>
-                  <span className="px-4 sm:px-6 py-2 text-sm font-medium">ページ編集</span>
+                  <span className="px-4 sm:px-6 py-2 text-sm font-medium inline-flex items-center gap-1.5">
+                    <span>✏️</span><span>描画編集</span>
+                  </span>
+                  <span className="px-4 sm:px-6 py-2 text-sm font-medium inline-flex items-center gap-1.5">
+                    <span>📄</span><span>ページ編集</span>
+                  </span>
                 </div>
               </>
             )}
