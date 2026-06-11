@@ -17,7 +17,7 @@ export default function EditorCanvas({ pdfDoc }: EditorCanvasProps) {
 
   const store = useEditorStore()
   const {
-    currentPage, scale, currentTool, maskColor, penSize, fontSize, fontFamily, highlightOpacity,
+    currentPage, scale, currentTool, maskColor, highlightColor, penSize, fontSize, fontFamily, highlightOpacity,
     elementOpacity, redactionOpacity, fillEnabled, fillOpacity, textBold, textUnderline, textBox, textBg,
     annotations, selectedAnnotationId,
     addAnnotation, updateAnnotation, setSelectedAnnotationId, setCurrentTool,
@@ -1058,7 +1058,7 @@ export default function EditorCanvas({ pdfDoc }: EditorCanvasProps) {
       ctx.restore()
     } else if (currentTool === 'highlight') {
       ctx.save()
-      ctx.fillStyle = maskColor
+      ctx.fillStyle = highlightColor
       ctx.globalAlpha = highlightOpacity
       // Marker: always a fixed-width straight strip following dominant drag direction
       const rawW = Math.abs(pos.x - ds.startX)
@@ -1174,7 +1174,7 @@ export default function EditorCanvas({ pdfDoc }: EditorCanvasProps) {
     }
 
     ctx.restore() // End PDF-space preview scale
-  }, [isDrawing, currentTool, getPos, maskColor, penSize, highlightOpacity, scale, annotations, currentPage, selectedAnnotationId, updateAnnotation, redrawAnnotations])
+  }, [isDrawing, currentTool, getPos, maskColor, highlightColor, penSize, highlightOpacity, scale, annotations, currentPage, selectedAnnotationId, updateAnnotation, redrawAnnotations])
 
   const handleMouseUp = useCallback((e: React.MouseEvent | React.TouchEvent) => {
     if ('touches' in e) e.preventDefault()
@@ -1226,7 +1226,7 @@ export default function EditorCanvas({ pdfDoc }: EditorCanvasProps) {
       }
       if (hw > 2 && hh > 2) {
         addAndSelect(currentPage, {
-          id: generateId(), type: 'highlight', color: maskColor,
+          id: generateId(), type: 'highlight', color: highlightColor,
           data: { x: hx, y: hy, w: hw, h: hh },
           opacity: highlightOpacity,
         })
@@ -1309,7 +1309,7 @@ export default function EditorCanvas({ pdfDoc }: EditorCanvasProps) {
     }
 
     ds.currentPath = []
-  }, [currentTool, getPos, maskColor, penSize, highlightOpacity, redactionOpacity, currentPage, addAnnotation, addAndSelect])
+  }, [currentTool, getPos, maskColor, highlightColor, penSize, highlightOpacity, redactionOpacity, currentPage, addAnnotation, addAndSelect])
 
   // Text input commit
   const commitText = useCallback(() => {

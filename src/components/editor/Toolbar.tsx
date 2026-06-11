@@ -217,12 +217,12 @@ function ZoomInput({ scale, setScale }: { scale: number; setScale: (s: number) =
 export default function Toolbar({ pdfDoc }: ToolbarProps = {}) {
   const store = useEditorStore()
   const {
-    currentTool, maskColor, penSize, fontSize, fontFamily, highlightOpacity, elementOpacity,
+    currentTool, maskColor, highlightColor, penSize, fontSize, fontFamily, highlightOpacity, elementOpacity,
     redactionOpacity,
     fillEnabled, fillOpacity, textBold, textUnderline, textBox, textBg,
     selectedAnnotationId, annotations, currentPage, pdfBytes,
     totalPages, scale, fitMode, setCurrentPage, setScale, setFitMode,
-    setCurrentTool, setMaskColor, setPenSize, setFontSize, setFontFamily, setHighlightOpacity,
+    setCurrentTool, setMaskColor, setHighlightColor, setPenSize, setFontSize, setFontFamily, setHighlightOpacity,
     setElementOpacity, setRedactionOpacity, setFillEnabled, setFillOpacity,
     setTextBold, setTextUnderline, setTextBox, setTextBg,
     removeAnnotation, updateAnnotation, undo, redo, clearPage, undoStack, redoStack,
@@ -453,6 +453,9 @@ export default function Toolbar({ pdfDoc }: ToolbarProps = {}) {
   const canAdjustSize = selectedAnn && ['circle', 'shape-rect', 'arrow', 'polyline', 'pen'].includes(selectedAnn.type)
   const isPolyline = selectedAnn && (selectedAnn.type === 'polyline' || selectedAnn.type === 'pen')
   const canChangeColor = !!selectedAnn
+  // 現在ツールの「アクティブ色」。マーカーは専用記憶色、それ以外は共有色。
+  // カラーパレットでどのスウォッチを選択中として強調するかに使う。
+  const toolColor = currentTool === 'highlight' ? highlightColor : maskColor
   const isSelectedText = selectedAnn?.type === 'text'
   const isSelectedCallout = selectedAnn?.type === 'callout'
   const isSelectedStamp = selectedAnn?.type === 'stamp'
@@ -492,11 +495,23 @@ export default function Toolbar({ pdfDoc }: ToolbarProps = {}) {
 
   // Handle color change. If a custom color (not in palette) is chosen,
   // auto-save it to "My Colors" for quick reuse.
+  //
+  // 記憶色の同期ルール:
+  //   マーカー(highlight)は専用の highlightColor、それ以外は共有の maskColor に
+  //   保存する。これによりマーカーで設定した色は別ツールで色を変えても影響を
+  //   受けず、マーカー再選択時に保持される。
   const handleColorChange = (color: string, registerToMy = false) => {
     if (currentTool === 'select' && selectedAnn) {
+      // 選択中の注釈の色を更新。さらに「その注釈の種類に対応する記憶色」も
+      // 同期しておく（マーカー注釈ならマーカー記憶色を更新）。
       updateAnnotation(currentPage, selectedAnn.id, { color })
+      if (selectedAnn.type === 'highlight') setHighlightColor(color)
+      else setMaskColor(color)
+    } else if (currentTool === 'highlight') {
+      setHighlightColor(color)
+    } else {
+      setMaskColor(color)
     }
-    setMaskColor(color)
     if (registerToMy && color && !PALETTE_SET.has(color.toLowerCase())) {
       setMyColors((prev) => {
         const next = [color, ...prev.filter((c) => c.toLowerCase() !== color.toLowerCase())].slice(0, MY_COLORS_MAX)
@@ -658,7 +673,7 @@ export default function Toolbar({ pdfDoc }: ToolbarProps = {}) {
             {COLOR_PALETTE.map((c) => (
               <button key={c} onClick={() => handleColorChange(c)}
                 className={`w-6 h-6 sm:w-5 sm:h-5 rounded-sm border-2 transition-all ${
-                  (canChangeColor ? selectedAnn.color : maskColor) === c
+                  (canChangeColor ? selectedAnn.color : toolColor) === c
                     ? 'border-indigo-500 scale-125' : 'border-gray-300 hover:border-indigo-400'
                 }`}
                 style={{ backgroundColor: c }} title={c} />
@@ -684,7 +699,7 @@ export default function Toolbar({ pdfDoc }: ToolbarProps = {}) {
                 <div className="text-[10px] text-gray-400 font-semibold mb-1">カスタムカラー</div>
                 <input
                   type="color"
-                  value={canChangeColor ? selectedAnn.color : maskColor}
+                  value={canChangeColor ? selectedAnn.color : toolColor}
                   onChange={(e) => handleColorChange(e.target.value, true)}
                   className="w-full h-8 border border-gray-200 rounded cursor-pointer p-0"
                 />
@@ -701,7 +716,7 @@ export default function Toolbar({ pdfDoc }: ToolbarProps = {}) {
                         onClick={() => { handleColorChange(c); setShowCustomColor(false) }}
                         onContextMenu={(e) => { e.preventDefault(); handleRemoveMyColor(c) }}
                         className={`w-6 h-6 rounded-sm border-2 transition-all ${
-                          (canChangeColor ? selectedAnn.color : maskColor) === c
+                          (canChangeColor ? selectedAnn.color : toolColor) === c
                             ? 'border-indigo-500 scale-110' : 'border-gray-300 hover:border-indigo-400'
                         }`}
                         style={{ backgroundColor: c }}

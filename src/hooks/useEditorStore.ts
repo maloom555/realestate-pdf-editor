@@ -24,6 +24,9 @@ interface EditorState {
   // Tools
   currentTool: ToolType
   maskColor: string
+  // マーカー(highlight)専用の記憶色。maskColor が全描画ツール共有なのに対し、
+  // マーカーだけは別ツールで色を変えても影響を受けないよう独立して保持する。
+  highlightColor: string
   penSize: number
   fontSize: number
   fontFamily: string
@@ -86,6 +89,7 @@ interface EditorState {
   setFitMode: (mode: number) => void
   setCurrentTool: (tool: ToolType) => void
   setMaskColor: (color: string) => void
+  setHighlightColor: (color: string) => void
   setPenSize: (size: number) => void
   setFontSize: (size: number) => void
   setFontFamily: (family: string) => void
@@ -134,6 +138,8 @@ const initialState = {
   fitMode: 2, // 0=縦フィット, 1=横フィット, 2=100%
   currentTool: 'select' as ToolType,
   maskColor: '#000000',
+  // 既定はマーカーも黒（従来挙動を維持）。色を変えた後はマーカー側で独立保持される。
+  highlightColor: '#000000',
   penSize: 3,
   fontSize: 15,
   fontFamily: 'Noto Sans JP',
@@ -179,6 +185,8 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   setCurrentTool: (tool) => set({ currentTool: tool, selectedAnnotationId: null }),
 
   setMaskColor: (color) => set({ maskColor: color }),
+
+  setHighlightColor: (color) => set({ highlightColor: color }),
 
   setPenSize: (size) => set({ penSize: size }),
 
