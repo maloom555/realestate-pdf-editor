@@ -1736,10 +1736,10 @@ export default function EditorCanvas({ pdfDoc }: EditorCanvasProps) {
                 commitText()
               }
               if (e.key === 'Escape') {
-                setTextInput((prev) => ({ ...prev, visible: false }))
-                setTextValue('')
-                setEditingAnnotationId(null)
-                drawStateRef.current.calloutPending = null
+                e.preventDefault()
+                // ESC でも確定する: 文字が入っていれば commitText() が保存し、
+                // 空なら commitText() 側でそのままキャンセル（破棄）処理になる。
+                commitText()
               }
             }}
             className="absolute bg-white/80 border-2 border-indigo-500 rounded px-1 py-0.5 outline-none resize text-black z-10"
