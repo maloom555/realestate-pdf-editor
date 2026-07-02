@@ -4,6 +4,8 @@
   "description": "不動産事業者向けPDF編集ツール - 無料オンラインPDF編集",
   "private": true,
   "scripts": {
+    "typecheck": "tsc --noEmit",
+    "check": "npm run typecheck && npm run build",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
