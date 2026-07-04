@@ -10,6 +10,32 @@ interface EditorCanvasProps {
   pdfDoc: pdfjsLib.PDFDocumentProxy
 }
 
+// 再編集時に「表示されている状態」に近いサイズで textarea を開くための測定。
+// text はそのままの文字列（\n 改行を含む）。fontPx は display px、fontFamily は
+// 注釈のフォント。戻り値は textarea に与える推奨 width/height(px)。
+// textarea 側は lineHeight:1.4 / padding(px-1=4,py-0.5=2) / border 2px を持つので
+// それを見込んで余白を足す。ブラウザの実フォント差を吸収するため幅に少し slack。
+function measureTextBoxSize(text: string, fontPx: number, fontFamily: string): { w: number; h: number } {
+  const lines = text.split('\n')
+  let maxW = 0
+  if (typeof document !== 'undefined') {
+    const c = document.createElement('canvas')
+    const cx = c.getContext('2d')
+    if (cx) {
+      cx.font = `${fontPx}px "${fontFamily}"`
+      for (const ln of lines) {
+        const w = cx.measureText(ln.length ? ln : ' ').width
+        if (w > maxW) maxW = w
+      }
+    }
+  }
+  const paddingX = 4 * 2 + 2 * 2 // px-1 両側 + border 両側
+  const paddingY = 2 * 2 + 2 * 2 // py-0.5 両側 + border 両側
+  const w = maxW + paddingX + 8 // slack 8px
+  const h = lines.length * fontPx * 1.4 + paddingY + 2
+  return { w, h }
+}
+
 export default function EditorCanvas({ pdfDoc }: EditorCanvasProps) {
   const pdfCanvasRef = useRef<HTMLCanvasElement>(null)
   const maskCanvasRef = useRef<HTMLCanvasElement>(null)
@@ -62,8 +88,13 @@ export default function EditorCanvas({ pdfDoc }: EditorCanvasProps) {
     return () => { window.removeEventListener('keydown', down); window.removeEventListener('keyup', up) }
   }, [])
 
-  // Text input state - fontSizePx is the display size frozen at input start
-  const [textInput, setTextInput] = useState<{ x: number; y: number; visible: boolean; fontSizePx: number }>({
+  // Text input state - fontSizePx is the display size frozen at input start.
+  // boxW/boxH/fontFamily/color は、再編集時に「表示されている状態」と同じ見た目で
+  // 編集できるように、内容から測って初期サイズ・フォント・色を渡すための任意フィールド。
+  const [textInput, setTextInput] = useState<{
+    x: number; y: number; visible: boolean; fontSizePx: number
+    boxW?: number; boxH?: number; fontFamily?: string; color?: string
+  }>({
     x: 0, y: 0, visible: false, fontSizePx: 16,
   })
   const [textValue, setTextValue] = useState('')
@@ -409,7 +440,8 @@ export default function EditorCanvas({ pdfDoc }: EditorCanvasProps) {
       const dispY = pos.y * scale * (rect.height / canvas.height)
       // Freeze font size based on current scale - won't change if user zooms
       const frozenFontSize = Math.max(12, fontSize * scale * (rect.width / canvas.width))
-      setTextInput({ x: dispX, y: dispY, visible: true, fontSizePx: frozenFontSize })
+      // 新規は最小サイズで開く（boxW/boxH は渡さない）。フォント・色はプレビュー一致用。
+      setTextInput({ x: dispX, y: dispY, visible: true, fontSizePx: frozenFontSize, fontFamily, color: maskColor })
       setTextValue('')
       setEditingAnnotationId(null)
       setTimeout(() => textInputRef.current?.focus(), 50)
@@ -574,8 +606,11 @@ export default function EditorCanvas({ pdfDoc }: EditorCanvasProps) {
         const dispX = ann.data.x * scale * (rect.width / canvas.width)
         const dispY = ann.data.y * scale * (rect.height / canvas.height)
         const frozenFs = Math.max(12, (ann.data.fontSize || fontSize) * scale * (rect.width / canvas.width))
+        // 表示されている状態と同じサイズ・フォント・色で編集ボックスを開く
+        const ff = ann.data.fontFamily || fontFamily
+        const { w: boxW, h: boxH } = measureTextBoxSize(ann.data.text, frozenFs, ff)
         setEditingAnnotationId(ann.id)
-        setTextInput({ x: dispX, y: dispY, visible: true, fontSizePx: frozenFs })
+        setTextInput({ x: dispX, y: dispY, visible: true, fontSizePx: frozenFs, boxW, boxH, fontFamily: ff, color: ann.color })
         setTextValue(ann.data.text)
         setTimeout(() => textInputRef.current?.focus(), 50)
         return
@@ -1751,10 +1786,15 @@ export default function EditorCanvas({ pdfDoc }: EditorCanvasProps) {
               left: textInput.x - 6,
               top: textInput.y - 4 - textInput.fontSizePx * 0.7,
               fontSize: `${textInput.fontSizePx}px`,
+              fontFamily: textInput.fontFamily ? `"${textInput.fontFamily}"` : undefined,
               lineHeight: 1.4,
-              color: maskColor,
+              color: textInput.color || maskColor,
               minWidth: '120px',
               minHeight: '40px',
+              // 再編集時は内容に合わせた初期サイズ（表示状態に近づける）。
+              // resize ハンドルは残るので、その後の手動リサイズも可能。
+              width: textInput.boxW ? `${Math.max(120, textInput.boxW)}px` : undefined,
+              height: textInput.boxH ? `${Math.max(40, textInput.boxH)}px` : undefined,
             }}
             placeholder="テキストを入力..."
           />
